@@ -24,8 +24,10 @@ int evalBoard(struct position pos) {
 			if ((piece >= 'a') && (piece <= 'z')) {
 				pval = -pval;
 			}
+			/*
 			int pstscore = PSTval(piece,i);
 			score += pstscore;
+			 */
 			score += pval;
 		}
 	}
