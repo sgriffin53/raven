@@ -926,7 +926,7 @@ int genLegalMoves(struct position *pos, struct move *moves) {
 			a++;
 		}
 		pos->tomove = !pos->tomove;
-		*pos = unmakeMove();
+		unmakeMove(pos);
 	}
 	movesend = 0;
 	//moves = newmoves;
@@ -936,29 +936,29 @@ int genLegalMoves(struct position *pos, struct move *moves) {
 	}
 	return movesend;
 }
-U64 perft(struct position pos, int depth) {
+U64 perft(struct position *pos, int depth) {
 	if (depth == 0) return 1;
 	U64 nodes = 0;
 	struct move moves[MAX_MOVES];
-	int n_moves = genLegalMoves(&pos,moves);
+	int n_moves = genLegalMoves(pos,moves);
 	for (int i = 0; i < n_moves;i++) {
-		makeMove(&moves[i], &pos);
+		makeMove(&moves[i], pos);
 		nodes += perft(pos,depth - 1);
-		pos = unmakeMove();
+		unmakeMove(pos);
 	}
 	return nodes;
 }
-int splitperft(struct position pos, int depth) {
+int splitperft(struct position *pos, int depth) {
 	int n_moves, i;
 	struct move moves[2048];
 	int nodes = 0;
 	if (depth == 0) return 1;
-	n_moves = genLegalMoves(&pos,moves);
+	n_moves = genLegalMoves(pos,moves);
 	for (i = 0; i < n_moves;i++) {
-		makeMove(&moves[i], &pos);
+		makeMove(&moves[i], pos);
 		printf("%s - %d\n",movetostr(moves[i]), perft(pos,depth - 1));
 		nodes += perft(pos,depth - 1);
-		pos = unmakeMove();
+		unmakeMove(pos);
 	}
 	return nodes;
 }

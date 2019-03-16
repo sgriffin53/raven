@@ -119,9 +119,9 @@ int main() {
 		}
 		if (strcmp(splitstr[0],"board") == 0) dspboard(pos);
 		if (strcmp(splitstr[0],"move") == 0) makeMovestr(splitstr[1], &pos);
-		if (strcmp(splitstr[0],"unmove") == 0) pos = unmakeMove();
+		if (strcmp(splitstr[0],"unmove") == 0) unmakeMove(&pos);
 		if (strcmp(splitstr[0],"eval") == 0) {
-			printf("score: %d",evalBoard(pos));
+			printf("score: %d",evalBoard(&pos));
 			fflush(stdout);
 		}
 		if (strcmp(splitstr[0],"perft") == 0) {
@@ -132,7 +132,7 @@ int main() {
 			i = 1;
 			while (i <= depth) {
 				clock_t begin = clock();
-				pnodes = perft(pos,i);
+				pnodes = perft(&pos,i);
 				clock_t end = clock();
 				double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 				nps = pnodes / time_spent;
@@ -153,7 +153,7 @@ int main() {
 		
 		if (strcmp(splitstr[0],"sperft") == 0) {
 			int depth = atoi(splitstr[1]);
-			splitperft(pos,depth);
+			splitperft(&pos,depth);
 		}
 		if ( (strcmp(splitstr[0],"position") == 0) && (strcmp(splitstr[1],"fen") == 0) ) {
 			char fen[1024] = "";

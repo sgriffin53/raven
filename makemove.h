@@ -93,17 +93,18 @@ void makeMove(struct move *move, struct position *pos) {
 	posstackend++;
 	//return pos;
 }
-struct position unmakeMove() {
+void unmakeMove(struct position *pos) {
 	posstackend--;
 	if (posstackend <= 0) {
 		posstackend = 1;
-		return posstack[0];
+		*pos = posstack[0];
 	}
-	struct position pos = posstack[posstackend - 1];
+	else {
+	*pos = posstack[posstackend - 1];
 	struct position blankpos = {.epsquare=0,.board={},.WcastleQS=0,.WcastleKS=0,.BcastleQS=0,.BcastleKS=0,
 				.tomove=0,.Wkingpos=0,.Bkingpos=0};;
 	posstack[posstackend] = blankpos;
-	return pos;
+	}
 }
 struct position makeMovestr(char move[], struct position *pos) {
 	int startsquareidx;

@@ -15,10 +15,10 @@ int pieceval(char inpiece) {
 	printf("inpiece: %d\n",inpiece);
 	return 0;
 }
-int evalBoard(struct position pos) {
+int evalBoard(struct position *pos) {
 	int score = 0;
 	for (int i = 0;i<64;i++) {
-		char piece = pos.board[i];
+		char piece = pos->board[i];
 		if (piece != '0') {
 			int pval = pieceval(piece);
 			if ((piece >= 'a') && (piece <= 'z')) {
@@ -29,10 +29,10 @@ int evalBoard(struct position pos) {
 			score += pval;
 		}
 	}
-	if (pos.tomove == BLACK) return -score;
+	if (pos->tomove == BLACK) return -score;
 	return score;
 }
-int negaMax(struct position pos,int depth) {
+int negaMax(struct position *pos,int depth) {
 	assert(depth >= 0);
 	nodesSearched++;
 	if (depth == 0) {
@@ -40,11 +40,11 @@ int negaMax(struct position pos,int depth) {
 	}
 	struct move moves[MAX_MOVES];
 	int maxScore = -9999;
-	int num_moves = genLegalMoves(&pos,moves);
+	int num_moves = genLegalMoves(pos,moves);
 	for (int i = 0;i < num_moves;i++) {
-		makeMove(&moves[i],&pos);
+		makeMove(&moves[i],pos);
 		int score = -negaMax(pos,depth - 1);
-		pos = unmakeMove();
+		unmakeMove(pos);
 		if (score > maxScore) {
 			maxScore = score;
 		}
@@ -59,13 +59,13 @@ struct move search(struct position pos, int searchdepth) {
 	struct move bestmove = moves[0];
 	for (int i = 0;i < num_moves;i++) {
 		makeMove(&moves[i],&pos);
-		int curscore = -negaMax(pos,searchdepth-1);
+		int curscore = -negaMax(&pos,searchdepth-1);
 		//printf("%s - %d\n",movetostr(moves[i]),curscore);
 		if (curscore > bestScore) {
 			bestScore = curscore;
 			bestmove = moves[i];
 		}
-		pos = unmakeMove();
+		unmakeMove(&pos);
 	}
 	return bestmove;
 }
