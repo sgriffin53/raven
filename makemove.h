@@ -1,97 +1,97 @@
 
-struct position makeMove(struct move move, struct position pos) {
-	char piece = pos.board[move.from];
+void makeMove(struct move *move, struct position *pos) {
+	char piece = pos->board[move->from];
 	int newepsquare = -1; // init to -1, will be changed to en passant square if there is one
-	int newWkingpos = pos.Wkingpos;
-	int newBkingpos = pos.Bkingpos;
-	int newWcastleQS = pos.WcastleQS;
-	int newWcastleKS = pos.WcastleKS;
-	int newBcastleQS = pos.BcastleQS;
-	int newBcastleKS = pos.BcastleKS;
-	int torank = getrank(move.to);
-	pos.board[move.to] = piece;
-	pos.board[move.from] = '0';
+	int newWkingpos = pos->Wkingpos;
+	int newBkingpos = pos->Bkingpos;
+	int newWcastleQS = pos->WcastleQS;
+	int newWcastleKS = pos->WcastleKS;
+	int newBcastleQS = pos->BcastleQS;
+	int newBcastleKS = pos->BcastleKS;
+	int torank = getrank(move->to);
+	pos->board[move->to] = piece;
+	pos->board[move->from] = '0';
 	
 	if (piece == 'P') { // white pawn
 		if (torank == 0) { // promotion
-			pos.board[move.to] = toupper(move.prom);
+			pos->board[move->to] = toupper(move->prom);
 		}
-		if (move.to == pos.epsquare) { // white en passant move
-			pos.board[(pos.epsquare + 8)] = '0'; // remove captured piece
+		if (move->to == pos->epsquare) { // white en passant move
+			pos->board[(pos->epsquare + 8)] = '0'; // remove captured piece
 		}
-		if ((move.from - move.to) == 16) { // pawn moved 2 spaces forward
-			newepsquare = move.to + 8; // set ep square
+		if ((move->from - move->to) == 16) { // pawn moved 2 spaces forward
+			newepsquare = move->to + 8; // set ep square
 		}
 		
 	}
 	if (piece == 'p') { // black pawn
 		if (torank == 7) { // promotion
-			pos.board[move.to] = move.prom;
+			pos->board[move->to] = move->prom;
 		}
-		if (move.to == pos.epsquare) { // black en passant move
-			pos.board[(pos.epsquare - 8)] = '0'; // remove captured piece
+		if (move->to == pos->epsquare) { // black en passant move
+			pos->board[(pos->epsquare - 8)] = '0'; // remove captured piece
 		}
-		if ((move.to - move.from) == 16) { // pawn moved 2 spaces forward
-			newepsquare = move.to - 8; // set ep square
+		if ((move->to - move->from) == 16) { // pawn moved 2 spaces forward
+			newepsquare = move->to - 8; // set ep square
 		}
 	}
 	if (piece == 'K') { // white king
 		newWcastleQS = 0;
 		newWcastleKS = 0;
-		newWkingpos = move.to;
-		if ((move.from == 60) && (move.to == 62)) { // white kingside castling
-			pos.board[60] = '0';
-			pos.board[62] = 'K';
-			pos.board[61] = 'R';
-			pos.board[63] = '0';
+		newWkingpos = move->to;
+		if ((move->from == 60) && (move->to == 62)) { // white kingside castling
+			pos->board[60] = '0';
+			pos->board[62] = 'K';
+			pos->board[61] = 'R';
+			pos->board[63] = '0';
 		}
-		if ((move.from == 60) && (move.to == 58)) { // white queenside castling
-			pos.board[60] = '0';
-			pos.board[58] = 'K';
-			pos.board[59] = 'R';
-			pos.board[56] = '0';
+		if ((move->from == 60) && (move->to == 58)) { // white queenside castling
+			pos->board[60] = '0';
+			pos->board[58] = 'K';
+			pos->board[59] = 'R';
+			pos->board[56] = '0';
 		}
 	}
 	if (piece == 'k') { // black king
 		newBcastleQS = 0;
 		newBcastleKS = 0;
-		newBkingpos = move.to;
-		if ((move.from == 4) && (move.to == 6)) { // white kingside castling
-			pos.board[4] = '0';
-			pos.board[6] = 'k';
-			pos.board[5] = 'r';
-			pos.board[7] = '0';
+		newBkingpos = move->to;
+		if ((move->from == 4) && (move->to == 6)) { // white kingside castling
+			pos->board[4] = '0';
+			pos->board[6] = 'k';
+			pos->board[5] = 'r';
+			pos->board[7] = '0';
 		}
-		if ((move.from == 4) && (move.to == 2)) { // white queenside castling
-			pos.board[4] = '0';
-			pos.board[2] = 'k';
-			pos.board[3] = 'r';
-			pos.board[0] = '0';
+		if ((move->from == 4) && (move->to == 2)) { // white queenside castling
+			pos->board[4] = '0';
+			pos->board[2] = 'k';
+			pos->board[3] = 'r';
+			pos->board[0] = '0';
 		}
 	}
-	if (pos.board[0] != 'r') { // black a8 rook moved or captured
+	if (pos->board[0] != 'r') { // black a8 rook moved or captured
 		newBcastleQS = 0;
 	}
-	if (pos.board[7] != 'r') { // black h8 rook moved or captured
+	if (pos->board[7] != 'r') { // black h8 rook moved or captured
 		newBcastleKS = 0;
 	}
-	if (pos.board[56] != 'R') { // white a1 rook moved or captured
+	if (pos->board[56] != 'R') { // white a1 rook moved or captured
 		newWcastleQS = 0;
 	}
-	if (pos.board[63] != 'R') { // white h1 rook moved or captured
+	if (pos->board[63] != 'R') { // white h1 rook moved or captured
 		newWcastleKS = 0;
 	}
-	pos.tomove = !pos.tomove;
-	pos.epsquare = newepsquare;
-	pos.Bkingpos = newBkingpos;
-	pos.Wkingpos = newWkingpos;
-	pos.WcastleQS = newWcastleQS;
-	pos.WcastleKS = newWcastleKS;
-	pos.BcastleQS = newBcastleQS;
-	pos.BcastleKS = newBcastleKS;
-	posstack[posstackend] = pos;
+	pos->tomove = !pos->tomove;
+	pos->epsquare = newepsquare;
+	pos->Bkingpos = newBkingpos;
+	pos->Wkingpos = newWkingpos;
+	pos->WcastleQS = newWcastleQS;
+	pos->WcastleKS = newWcastleKS;
+	pos->BcastleQS = newBcastleQS;
+	pos->BcastleKS = newBcastleKS;
+	posstack[posstackend] = *pos;
 	posstackend++;
-	return pos;
+	//return pos;
 }
 struct position unmakeMove() {
 	posstackend--;
@@ -105,7 +105,7 @@ struct position unmakeMove() {
 	posstack[posstackend] = blankpos;
 	return pos;
 }
-struct position makeMovestr(char move[], struct position pos) {
+struct position makeMovestr(char move[], struct position *pos) {
 	int startsquareidx;
 	int endsquareidx;
 	char startsquare[3];
@@ -122,5 +122,5 @@ struct position makeMovestr(char move[], struct position pos) {
 	startsquareidx = strsquaretoidx(startsquare);
 	endsquareidx = strsquaretoidx(endsquare);
 	struct move moveobj = {.from=startsquareidx,.to=endsquareidx,.prom=prompiece[0]};
-	return makeMove(moveobj, pos);
+	makeMove(&moveobj, pos);
 }

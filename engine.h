@@ -24,10 +24,8 @@ int evalBoard(struct position pos) {
 			if ((piece >= 'a') && (piece <= 'z')) {
 				pval = -pval;
 			}
-			/*
 			int pstscore = PSTval(piece,i);
 			score += pstscore;
-			 */
 			score += pval;
 		}
 	}
@@ -44,7 +42,7 @@ int negaMax(struct position pos,int depth) {
 	int maxScore = -9999;
 	int num_moves = genLegalMoves(&pos,moves);
 	for (int i = 0;i < num_moves;i++) {
-		pos = makeMove(moves[i],pos);
+		makeMove(&moves[i],&pos);
 		int score = -negaMax(pos,depth - 1);
 		pos = unmakeMove();
 		if (score > maxScore) {
@@ -60,7 +58,7 @@ struct move search(struct position pos, int searchdepth) {
 	int num_moves = genLegalMoves(&pos,moves);
 	struct move bestmove = moves[0];
 	for (int i = 0;i < num_moves;i++) {
-		pos = makeMove(moves[i],pos);
+		makeMove(&moves[i],&pos);
 		int curscore = -negaMax(pos,searchdepth-1);
 		//printf("%s - %d\n",movetostr(moves[i]),curscore);
 		if (curscore > bestScore) {

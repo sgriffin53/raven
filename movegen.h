@@ -915,7 +915,7 @@ int genLegalMoves(struct position *pos, struct move *moves) {
 	int a = 0;
 	int newmovesend = 0;
 	for (int i = 0;i < num_moves;i++) {
-		*pos = makeMove(moves[i],*pos);
+		makeMove(&moves[i],pos);
 		pos->tomove = !pos->tomove;
 		if (pos->tomove == WHITE) kingpos = pos->Wkingpos;
 		if (pos->tomove == BLACK) kingpos = pos->Bkingpos;
@@ -942,7 +942,7 @@ U64 perft(struct position pos, int depth) {
 	struct move moves[MAX_MOVES];
 	int n_moves = genLegalMoves(&pos,moves);
 	for (int i = 0; i < n_moves;i++) {
-		pos = makeMove(moves[i], pos);
+		makeMove(&moves[i], &pos);
 		nodes += perft(pos,depth - 1);
 		pos = unmakeMove();
 	}
@@ -955,7 +955,7 @@ int splitperft(struct position pos, int depth) {
 	if (depth == 0) return 1;
 	n_moves = genLegalMoves(&pos,moves);
 	for (i = 0; i < n_moves;i++) {
-		pos = makeMove(moves[i], pos);
+		makeMove(&moves[i], &pos);
 		printf("%s - %d\n",movetostr(moves[i]), perft(pos,depth - 1));
 		nodes += perft(pos,depth - 1);
 		pos = unmakeMove();

@@ -118,7 +118,7 @@ int main() {
 			fflush(stdout);
 		}
 		if (strcmp(splitstr[0],"board") == 0) dspboard(pos);
-		if (strcmp(splitstr[0],"move") == 0) pos = makeMovestr(splitstr[1], pos);
+		if (strcmp(splitstr[0],"move") == 0) makeMovestr(splitstr[1], &pos);
 		if (strcmp(splitstr[0],"unmove") == 0) pos = unmakeMove();
 		if (strcmp(splitstr[0],"eval") == 0) {
 			printf("score: %d",evalBoard(pos));
@@ -175,7 +175,7 @@ int main() {
 				i = 3;
 				while (i < splitstrend) {
 					// make move
-					pos = makeMovestr(splitstr[i],pos);
+					pos = makeMovestr(splitstr[i],&pos);
 					i++;
 				}
 			}
