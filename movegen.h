@@ -802,9 +802,9 @@ int genLegalKingMoves(struct position *pos, int square, struct move *Kmoves) {
 			outofbounds = 1;
 		}
 		//if (isCheck(pos,57) == 1) outofbounds = 1;
-		if (isCheck(*pos,58) == 1) outofbounds = 1;
-		if (isCheck(*pos,59) == 1) outofbounds = 1;
-		if (isCheck(*pos,60) == 1) outofbounds = 1;
+		if (isCheck(pos,58) == 1) outofbounds = 1;
+		if (isCheck(pos,59) == 1) outofbounds = 1;
+		if (isCheck(pos,60) == 1) outofbounds = 1;
 		if (pos->WcastleQS == 0) outofbounds = 1;
 		if (outofbounds == 0) {
 			Kmoves[kmovesend].from = 60;
@@ -817,9 +817,9 @@ int genLegalKingMoves(struct position *pos, int square, struct move *Kmoves) {
 		if ((pos->board[60] != 'K') || (pos->board[61] != '0') || (pos->board[62] != '0') || (pos->board[63] != 'R')) {
 			outofbounds = 1;
 		}
-		if (isCheck(*pos,61) == 1) outofbounds = 1;
-		if (isCheck(*pos,62) == 1) outofbounds = 1;
-		if (isCheck(*pos,60) == 1) outofbounds = 1;
+		if (isCheck(pos,61) == 1) outofbounds = 1;
+		if (isCheck(pos,62) == 1) outofbounds = 1;
+		if (isCheck(pos,60) == 1) outofbounds = 1;
 		if (pos->WcastleKS == 0) outofbounds = 1;
 		if (outofbounds == 0) {
 			Kmoves[kmovesend].from = 60;
@@ -856,9 +856,9 @@ int genLegalKingMoves(struct position *pos, int square, struct move *Kmoves) {
 			outofbounds = 1;
 		}
 		//if (isCheck(pos,1) == 1) outofbounds = 1;
-		if (isCheck(*pos,2) == 1) outofbounds = 1;
-		if (isCheck(*pos,3) == 1) outofbounds = 1;
-		if (isCheck(*pos,4) == 1) outofbounds = 1;
+		if (isCheck(pos,2) == 1) outofbounds = 1;
+		if (isCheck(pos,3) == 1) outofbounds = 1;
+		if (isCheck(pos,4) == 1) outofbounds = 1;
 		if (pos->BcastleQS == 0) outofbounds = 1;
 		if (outofbounds == 0) {
 			Kmoves[kmovesend].from = 4;
@@ -871,9 +871,9 @@ int genLegalKingMoves(struct position *pos, int square, struct move *Kmoves) {
 		if ((pos->board[4] != 'k') || (pos->board[5] != '0') || (pos->board[6] != '0') || (pos->board[7] != 'r')) {
 			outofbounds = 1;
 		}
-		if (isCheck(*pos,4) == 1) outofbounds = 1;
-		if (isCheck(*pos,5) == 1) outofbounds = 1;
-		if (isCheck(*pos,6) == 1) outofbounds = 1;
+		if (isCheck(pos,4) == 1) outofbounds = 1;
+		if (isCheck(pos,5) == 1) outofbounds = 1;
+		if (isCheck(pos,6) == 1) outofbounds = 1;
 		if (pos->BcastleKS == 0) outofbounds = 1;
 		if (outofbounds == 0) {
 			Kmoves[kmovesend].from = 4;
@@ -919,7 +919,7 @@ int genLegalMoves(struct position *pos, struct move *moves) {
 		pos->tomove = !pos->tomove;
 		if (pos->tomove == WHITE) kingpos = pos->Wkingpos;
 		if (pos->tomove == BLACK) kingpos = pos->Bkingpos;
-		int incheck = isCheck(*pos,kingpos);
+		int incheck = isCheck(pos,kingpos);
 		if (!incheck) {
 			newmoves[a] = moves[i];
 			newmovesend++;

@@ -25,7 +25,7 @@ void dspboard(struct position pos) {
 	int kingpos;
 	if (pos.tomove == WHITE) kingpos = pos.Wkingpos;
 	if (pos.tomove == BLACK) kingpos = pos.Bkingpos;
-	printf("Is Check: %d",isCheck(pos,kingpos));
+	printf("Is Check: %d",isCheck(&pos,kingpos));
 	printf("\n");
 	printf("EP Square: %d",pos.epsquare);
 	printf("\n");
