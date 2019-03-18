@@ -1,7 +1,6 @@
 int genLegalPawnMoves(struct position *pos, int square, struct move *Pmoves) {
 	int file, rank;
 	int newfile, newrank;
-	int oneforward;
 	int outofbounds;
 	int startsquare;
 	int newsquare;
@@ -443,7 +442,6 @@ int genLegalPawnMoves(struct position *pos, int square, struct move *Pmoves) {
 int genLegalKnightMoves(struct position *pos, int square, struct move *Nmoves) {
 	int file, rank;
 	int newfile, newrank;
-	int outofbounds;
 	int startsquare;
 	int newsquare;
 	char cappiece;
@@ -457,47 +455,41 @@ int genLegalKnightMoves(struct position *pos, int square, struct move *Nmoves) {
 	if ((pos->tomove == WHITE) && (piece == 'N')) {
 		int Ndirs[8][2] = {{-2,-1},{-1,-2},{+1,-2},{+2,-1},{+2,+1},{+1,+2},{-1,+2},{-2,+1}};
 		for (i = 0;i < 8;i++) {
-			outofbounds = 0;
 			newfile = file + Ndirs[i][0];
 			newrank = rank + Ndirs[i][1];
 			newsquare = fileranktosquareidx(newfile,newrank);
 			cappiece = pos->board[newsquare];
 			if ((newfile < 0) || (newfile > 7) || (newrank < 0) || (newrank > 7)) {
-				outofbounds = 1;
+				continue;
 			}
 			if ((cappiece >= 'A') && (cappiece <= 'Z')) {
 				// piece is white piece
-				outofbounds = 1;
+				continue;
 			}
-			if (outofbounds == 0) {
-				Nmoves[nmovesend].from = startsquare;
-				Nmoves[nmovesend].to = newsquare;
-				Nmoves[nmovesend].prom = 0;
-				nmovesend += 1;
-			}
+			Nmoves[nmovesend].from = startsquare;
+			Nmoves[nmovesend].to = newsquare;
+			Nmoves[nmovesend].prom = 0;
+			nmovesend += 1;
 		}
 	}
 	if ((pos->tomove == BLACK) && (piece == 'n')) {
 		int Ndirs[8][2] = {{-2,-1},{-1,-2},{+1,-2},{+2,-1},{+2,+1},{+1,+2},{-1,+2},{-2,+1}};
 		for (i = 0;i < 8;i++) {
-			outofbounds = 0;
 			newfile = file + Ndirs[i][0];
 			newrank = rank + Ndirs[i][1];
 			newsquare = fileranktosquareidx(newfile,newrank);
 			cappiece = pos->board[newsquare];
 			if ((newfile < 0) || (newfile > 7) || (newrank < 0) || (newrank > 7)) {
-				outofbounds = 1;
+				continue;
 			}
 			if ((cappiece >= 'a') && (cappiece <= 'z')) {
 				// piece is black piece
-				outofbounds = 1;
+				continue;
 			}
-			if (outofbounds == 0) {
-				Nmoves[nmovesend].from = startsquare;
-				Nmoves[nmovesend].to = newsquare;
-				Nmoves[nmovesend].prom = 0;
-				nmovesend += 1;
-			}
+			Nmoves[nmovesend].from = startsquare;
+			Nmoves[nmovesend].to = newsquare;
+			Nmoves[nmovesend].prom = 0;
+			nmovesend += 1;
 		}
 	}
 	return nmovesend;
@@ -508,7 +500,6 @@ int genLegalBishopMoves(struct position *pos, int square, struct move *Bmoves) {
 	int outofbounds;
 	int startsquare;
 	int newsquare;
-	char cappiece;
 	int bmovesend = 0;
 	char piece;
 	int i;
@@ -595,7 +586,6 @@ int genLegalRookMoves(struct position *pos, int square, struct move *Rmoves) {
 	int outofbounds;
 	int startsquare;
 	int newsquare;
-	char cappiece;
 	int rmovesend = 0;
 	char piece;
 	int i;
@@ -681,7 +671,6 @@ int genLegalQueenMoves(struct position *pos, int square, struct move *Qmoves) {
 	int outofbounds;
 	int startsquare;
 	int newsquare;
-	char cappiece;
 	int qmovesend = 0;
 	char piece;
 	int i;
@@ -766,7 +755,6 @@ int genLegalKingMoves(struct position *pos, int square, struct move *Kmoves) {
 	int outofbounds;
 	int startsquare;
 	int newsquare;
-	char cappiece;
 	int kmovesend = 0;
 	char piece;
 	int i;
@@ -781,12 +769,14 @@ int genLegalKingMoves(struct position *pos, int square, struct move *Kmoves) {
 			newfile = file + Kdirs[i][0];
 			newrank = rank + Kdirs[i][1];
 			newsquare = fileranktosquareidx(newfile,newrank);
-			cappiece = pos->board[newsquare];
+			char cappiece = pos->board[newsquare];
 			if ((newfile < 0) || (newfile > 7) || (newrank < 0) || (newrank > 7)) {
+				continue;
 				outofbounds = 1;
 			}
 			if ((cappiece >= 'A') && (cappiece <= 'Z')) {
 				// piece is white piece
+				continue;
 				outofbounds = 1;
 			}
 			if (outofbounds == 0) {
@@ -835,12 +825,14 @@ int genLegalKingMoves(struct position *pos, int square, struct move *Kmoves) {
 			newfile = file + Kdirs[i][0];
 			newrank = rank + Kdirs[i][1];
 			newsquare = fileranktosquareidx(newfile,newrank);
-			cappiece = pos->board[newsquare];
+			char cappiece = pos->board[newsquare];
 			if ((newfile < 0) || (newfile > 7) || (newrank < 0) || (newrank > 7)) {
+				continue;
 				outofbounds = 1;
 			}
 			if ((cappiece >= 'a') && (cappiece <= 'z')) {
 				// piece is black piece
+				continue;
 				outofbounds = 1;
 			}
 			if (outofbounds == 0) {
@@ -885,9 +877,7 @@ int genLegalKingMoves(struct position *pos, int square, struct move *Kmoves) {
 	return kmovesend;
 }
 int genLegalMoves(struct position *pos, struct move *moves) {
-	struct move newmoves[MAX_MOVES];
 	char piece;
-	int movesend = 0; // end of moves array
 	int num_moves = 0;
 	for (int i = 0;i < 64;i++) {
 		piece = pos->board[i]; 
@@ -911,6 +901,7 @@ int genLegalMoves(struct position *pos, struct move *moves) {
 		}
 	}
 	// remove moves which result in check
+	/*
 	int kingpos;
 	int a = 0;
 	int newmovesend = 0;
@@ -934,15 +925,26 @@ int genLegalMoves(struct position *pos, struct move *moves) {
 		moves[i] = newmoves[i];
 		movesend++;
 	}
-	return movesend;
+	 */
+	return num_moves;
 }
 U64 perft(struct position *pos, int depth) {
 	if (depth == 0) return 1;
 	U64 nodes = 0;
 	struct move moves[MAX_MOVES];
 	int n_moves = genLegalMoves(pos,moves);
+	int kingpos;
 	for (int i = 0; i < n_moves;i++) {
 		makeMove(&moves[i], pos);
+		pos->tomove = !pos->tomove;
+		if (pos->tomove == WHITE) kingpos = pos->Wkingpos;
+		if (pos->tomove == BLACK) kingpos = pos->Bkingpos;
+		int incheck = isCheck(pos,kingpos);
+		if (incheck) {
+			unmakeMove(pos);
+			continue;
+		}
+		pos->tomove = !pos->tomove;
 		nodes += perft(pos,depth - 1);
 		unmakeMove(pos);
 	}
@@ -952,11 +954,21 @@ int splitperft(struct position *pos, int depth) {
 	int n_moves, i;
 	struct move moves[2048];
 	int nodes = 0;
+	int kingpos;
 	if (depth == 0) return 1;
 	n_moves = genLegalMoves(pos,moves);
 	for (i = 0; i < n_moves;i++) {
 		makeMove(&moves[i], pos);
-		printf("%s - %d\n",movetostr(moves[i]), perft(pos,depth - 1));
+		pos->tomove = !pos->tomove;
+		if (pos->tomove == WHITE) kingpos = pos->Wkingpos;
+		if (pos->tomove == BLACK) kingpos = pos->Bkingpos;
+		int incheck = isCheck(pos,kingpos);
+		if (incheck) {
+			unmakeMove(pos);
+			continue;
+		}
+		pos->tomove = !pos->tomove;
+		printf("%s - %" PRIu64 "\n",movetostr(moves[i]), perft(pos,depth - 1));
 		nodes += perft(pos,depth - 1);
 		unmakeMove(pos);
 	}

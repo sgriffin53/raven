@@ -106,7 +106,7 @@ void unmakeMove(struct position *pos) {
 	posstack[posstackend] = blankpos;
 	}
 }
-struct position makeMovestr(char move[], struct position *pos) {
+void makeMovestr(char move[], struct position *pos) {
 	int startsquareidx;
 	int endsquareidx;
 	char startsquare[3];

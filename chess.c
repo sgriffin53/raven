@@ -4,6 +4,7 @@
 # include <stdlib.h>
 # include <time.h>
 # include <assert.h>
+# include <inttypes.h>
 
 # define WHITE 1
 # define BLACK 0
@@ -60,7 +61,6 @@ int main() {
 	char * token;
 	int i;
 	int splitstrend;
-	int newpostomove;
 	struct position pos = setstartpos(); // set start position
 	posstack[0] = pos;
 	posstackend = 1;
@@ -80,31 +80,36 @@ int main() {
 		}
 		splitstrend = i; // position of end of splitstr array
 		if (strcmp(splitstr[0],"legalmoves") == 0) {
-			struct move moves[2048];
+			struct move moves[MAX_MOVES];
 			int num_moves = genLegalMoves(&pos,moves);
 			i = 0;
-			while (i < num_moves) {
+			int kingpos;
+			for (i = 0;i < num_moves;i++) {
+				makeMove(&moves[i], &pos);
+				pos.tomove = !pos.tomove;
+				if (pos.tomove == WHITE) kingpos = pos.Wkingpos;
+				if (pos.tomove == BLACK) kingpos = pos.Bkingpos;
+				int incheck = isCheck(&pos,kingpos);
+				if (incheck) {
+					unmakeMove(&pos);
+					continue;
+				}
+				pos.tomove = !pos.tomove;
+				unmakeMove(&pos);
 				printf("%s ",movetostr(moves[i]));
 				fflush(stdout);
-				i++;
 			}
 			printf("\n");
 		}
 		if (strcmp(splitstr[0],"quit") == 0) keeprunning = 0;
 		if (strcmp(splitstr[0],"go") == 0) {
-			int searchdepth = 4;
+			int searchdepth = 25;
 			if (strcmp(splitstr[1],"depth") == 0) {
 				searchdepth = atoi(splitstr[2]);
 			}
 			assert(searchdepth >= 1);
 			nodesSearched = 0;
-			clock_t begin = clock();
-			struct move bestmove = search(pos, searchdepth);
-			clock_t end = clock();
-			double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-			if (time_spent < 0.01) time_spent = 0.01;
-			int nps = nodesSearched / time_spent;
-			printf("info depth %d nodes %d time %d nps %d\n",(searchdepth),nodesSearched,((int)(time_spent*1000)),nps);
+			struct move bestmove = search(pos,searchdepth,3000);
 			fflush(stdout);
 			printf("bestmove %s\n",movetostr(bestmove));
 			fflush(stdout);
@@ -136,12 +141,14 @@ int main() {
 				clock_t end = clock();
 				double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 				nps = pnodes / time_spent;
-				printf("info depth %d nodes %llu time %f nps %llu\n",i,pnodes,time_spent,nps);
+				printf("info depth %d nodes %" PRIu64 " time %f nps %" PRIu64 "\n",i,pnodes,time_spent,nps);
 				//printf("info depth %d nodes %llu\n",i,pnodes);
 				fflush(stdout);
 				i++;
 			}
-			printf("nodes %llu\n",pnodes);
+			//printf("nodes %llu\n",pnodes);
+			printf("nodes %" PRIu64 "\n", pnodes);
+			//printf("nodes %" PRIu64 "\n", pnodes);
 			fflush(stdout);
 		}
 		if (strcmp(splitstr[0],"PST") == 0) {
@@ -175,7 +182,7 @@ int main() {
 				i = 3;
 				while (i < splitstrend) {
 					// make move
-					pos = makeMovestr(splitstr[i],&pos);
+					makeMovestr(splitstr[i],&pos);
 					i++;
 				}
 			}

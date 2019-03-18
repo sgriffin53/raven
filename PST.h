@@ -1,6 +1,4 @@
-int PSTval(char piece, int square) {
-	if (piece == 'K') {
-		int PST[] = {
+int PSTWK[] = {
       -30, -40, -40, -50, -50, -40, -40, -30,
       -30, -40, -40, -50, -50, -40, -40, -30,
       -30, -40, -40, -50, -50, -40, -40, -30,
@@ -10,23 +8,17 @@ int PSTval(char piece, int square) {
        20,  20,   0,   0,   0,   0,  20,  20,
        20,  30,  50,   0,   0,   0,  50,  20
 		};
-		return PST[square];
-	}
-	if (piece == 'k') {
-		int PST[] = {
-      -30, -40, -40, -50, -50, -40, -40, -30,
-      -30, -40, -40, -50, -50, -40, -40, -30,
-      -30, -40, -40, -50, -50, -40, -40, -30,
-      -30, -40, -40, -50, -50, -40, -40, -30,
-      -20, -30, -30, -40, -40, -30, -30, -20,
-      -10, -20, -20, -20, -20, -20, -20, -10,
-       20,  20,   0,   0,   0,   0,  20,  20,
-       20,  30,  50,   0,   0,   0,  50,  20
+int PSTBK[] = {
+		-20,  -30,  -50,   0,   0,  0,  -50,  -20,
+		-20,  -20,   0,   0,   0,   0,  -20,  -20,
+		10, 20, 20, 20, 20, 20, 20, 10,
+		20, 30, 30, 40, 40, 30, 30, 20,
+		30, 40, 40, 50, 50, 40, 40, 30,
+		30, 40, 40, 50, 50, 40, 40, 30,
+		30, 40, 40, 50, 50, 40, 40, 30,
+		30, 40, 40, 50, 50, 40, 40, 30
 		};
-		return PST[square];
-	}	
-	if (piece == 'B') {
-		int PST[] = {
+int PSTWB[] = {
 			-20,-10,-10,-10,-10,-10,-10,-20,
 			-10,  0,  0,  0,  0,  0,  0,-10,
 			-10,  0,  5, 10, 10,  5,  0,-10,
@@ -36,10 +28,7 @@ int PSTval(char piece, int square) {
 			-10,  10,  0,  0,  0,  0,  10,-10,
 			-20,-10,-40,-10,-10,-40,-10,-20,
 		};
-		return PST[square];
-	}	
-	if (piece == 'b') {
-		int PST[] = {
+int PSTBB[] = {
 			20,10,40,10,10,40,10,20,
 			10,  -10,  0,  0,  0,  0,  -10,10,
 			10, -10, -10, -5, -5, -10, -10,10,
@@ -49,10 +38,7 @@ int PSTval(char piece, int square) {
 			10,  0,  0,  0,  0,  0,  0,10,
 			20,10,10,10,10,10,10,20
 		};
-		return PST[square];
-	}	
-	if (piece == 'N') {
-		int PST[] = {
+int PSTWN[] = {
 			-50,-40,-30,-30,-30,-30,-40,-50,
 			-40,-20,  0,  0,  0,  0,-20,-40,
 			-30,  0, 10, 15, 15, 10,  0,-30,
@@ -62,10 +48,7 @@ int PSTval(char piece, int square) {
 			-40,-20,  0,  5,  5,  0,-20,-40,
 			-50,-40,-20,-30,-30,-20,-40,-50
 		};
-		return PST[square];
-	}	
-	if (piece == 'n') {
-		int PST[] = {
+int PSTBN[] = {
 			-50,-40,-30,-30,-30,-30,-40,-50,
 			-40,-20,  0,  0,  0,  0,-20,-40,
 			-30,  0, 10, 15, 15, 10,  0,-30,
@@ -75,10 +58,7 @@ int PSTval(char piece, int square) {
 			-40,-20,  0,  5,  5,  0,-20,-40,
 			-50,-40,-20,-30,-30,-20,-40,-50
 		};
-		return PST[square];
-	}	
-	if (piece == 'R') {
-		int PST[] = {
+int PSTWR[] = {
 			0,0,20,30,30,20,10,10,
 			40,50,50,50,50,50,50,40,
 			0,0,0,0,0,0,0,0,
@@ -88,10 +68,7 @@ int PSTval(char piece, int square) {
 			0,10,10,10,10,10,10,0,
 			0,10,20,50,50,20,10,10
 		};
-		return PST[square];
-	}	
-	if (piece == 'r') {
-		int PST[] = {
+int PSTBR[] = {
 			0,-10,-20,-50,-50,-20,-10,-10,
 			0,-10,-10,-10,-10,-10,-10,0,
 			0,0,0,0,0,0,0,0,
@@ -101,10 +78,7 @@ int PSTval(char piece, int square) {
 			-40,-50,-50,-50,-50,-50,-50,-40,
 			0,-10,-20,-30,-30,-20,-10,-10,
 		};
-		return PST[square];
-	}	
-	if (piece == 'Q') {
-		int PST[] = {
+int PSTWQ[] = {
 			-50,-40,-30,-30,-30,-30,-40,-50,
 			-40,-20,  0,  0,  0,  0,-20,-40,
 			-30,  0, 10, 15, 15, 10,  0,-30,
@@ -114,10 +88,7 @@ int PSTval(char piece, int square) {
 			-40,-20,  0,  5,  5,  0,-20,-40,
 			-50,-40,-20,-30,-30,-20,-40,-50
 		};
-		return PST[square];
-	}	
-	if (piece == 'q') {
-		int PST[] = {
+int PSTBQ[] = {
 			50,40,20,30,30,20,40,50,
 			40,20,  0,  -5,  -5,  0,20,40,
 			30,  -5, -10, -15, -15, -10,  -5,30,
@@ -127,10 +98,7 @@ int PSTval(char piece, int square) {
 			40,20,  0,  0,  0,  0,20,40,
 			50,40,30,30,30,30,40,50
 		};
-		return PST[square];
-	}	
-	if (piece == 'P') {
-		int PST[] = {
+int PSTWP[] = {
 			900,  900,  900, 900,  900,  900,  900,  900,
 			50, 50, 50, 80, 80, 50, 50, 50,
 			10, 10, 20, 30, 30, 20, 10, 10,
@@ -140,10 +108,7 @@ int PSTval(char piece, int square) {
 			 5, 10, 10,-25,-25, 10, 10,  5,
 			 0,  0,  0,  0,  0,  0,  0,  0
 		};
-		return PST[square];
-	}	
-	if (piece == 'p') {
-		int PST[] = {
+int PSTBP[] = {
 			0,  0,  0,  0,  0,  0,  0,  0,
 			-5, -10, -10,25,25, -10, -10,  -5,
 			-5, 5,10,  0,  0,10, 5,  -5,
@@ -153,7 +118,42 @@ int PSTval(char piece, int square) {
 			-50, -50, -50, -80, -80, -50, -50, -50,
 			-900,  -900,  -900, -900,  -900,  -900,  -900,  -900
 		};
-		return PST[square];
+int PSTval(char piece, int square) {
+	if (piece == 'K') {
+		return PSTWK[square];
+	}
+	if (piece == 'k') {
+		return PSTBK[square];
+	}	
+	if (piece == 'B') {
+		return PSTWB[square];
+	}	
+	if (piece == 'b') {
+		return PSTBB[square];
+	}	
+	if (piece == 'N') {
+		return PSTWN[square];
+	}	
+	if (piece == 'n') {
+		return PSTBN[square];
+	}	
+	if (piece == 'R') {
+		return PSTWR[square];
+	}	
+	if (piece == 'r') {
+		return PSTBR[square];
+	}	
+	if (piece == 'Q') {
+		return PSTWQ[square];
+	}	
+	if (piece == 'q') {
+		return PSTBQ[square];
+	}	
+	if (piece == 'P') {
+		return PSTWP[square];
+	}	
+	if (piece == 'p') {
+		return PSTBP[square];
 	}	
 	return 0;
 }

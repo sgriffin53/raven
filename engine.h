@@ -32,7 +32,7 @@ int evalBoard(struct position *pos) {
 	if (pos->tomove == BLACK) return -score;
 	return score;
 }
-int negaMax(struct position *pos,int depth) {
+int negaMax(struct position *pos,int depth,int timeLeft) {
 	assert(depth >= 0);
 	nodesSearched++;
 	if (depth == 0) {
@@ -41,9 +41,28 @@ int negaMax(struct position *pos,int depth) {
 	struct move moves[MAX_MOVES];
 	int maxScore = -9999;
 	int num_moves = genLegalMoves(pos,moves);
-	for (int i = 0;i < num_moves;i++) {
+	clock_t begin = clock();
+	int timeElapsed = 0;
+	for (int i = 0;(i < num_moves && timeElapsed == 0);i++) {
+		clock_t end = clock();
+		double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+		int time_spentms = (int)(time_spent * 1000);
+		if (time_spentms >= timeLeft) {
+			timeElapsed = 1;
+			break;
+		}
 		makeMove(&moves[i],pos);
-		int score = -negaMax(pos,depth - 1);
+		pos->tomove = !pos->tomove;
+		int kingpos;
+		if (pos->tomove == WHITE) kingpos = pos->Wkingpos;
+		if (pos->tomove == BLACK) kingpos = pos->Bkingpos;
+		int incheck = isCheck(pos,kingpos);
+		if (incheck) {
+			unmakeMove(pos);
+			continue;
+		}
+		pos->tomove = !pos->tomove;
+		int score = -negaMax(pos,depth - 1, (timeLeft - time_spentms));
 		unmakeMove(pos);
 		if (score > maxScore) {
 			maxScore = score;
@@ -51,21 +70,77 @@ int negaMax(struct position *pos,int depth) {
 	}
 	return maxScore;
 }
-struct move search(struct position pos, int searchdepth) {
+struct move search(struct position pos, int searchdepth,int movetime) {
 	int bestScore = -9999;
 	nodesSearched = 0;
 	struct move moves[MAX_MOVES];
-	int num_moves = genLegalMoves(&pos,moves);
+	int kingpos;
 	struct move bestmove = moves[0];
-	for (int i = 0;i < num_moves;i++) {
-		makeMove(&moves[i],&pos);
-		int curscore = -negaMax(&pos,searchdepth-1);
-		//printf("%s - %d\n",movetostr(moves[i]),curscore);
-		if (curscore > bestScore) {
-			bestScore = curscore;
-			bestmove = moves[i];
+	clock_t begin = clock();
+	int timeElapsed = 0;
+	double time_spent;
+	int curdepth;
+	int nps;
+	int num_moves = genLegalMoves(&pos,moves);
+	struct move lastbestmove = moves[0];
+	for (curdepth = 1; (curdepth < searchdepth+1 && timeElapsed == 0);curdepth++) {
+		int bestScore = -9999;
+		for (int i = 0;i < num_moves;i++) {
+			clock_t end = clock();
+			time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+			int time_spentms = (int)(time_spent * 1000);
+			if (time_spentms >= movetime) {
+				bestmove = lastbestmove;
+				timeElapsed = 1;
+				break;
+			}
+			makeMove(&moves[i],&pos);
+			pos.tomove = !pos.tomove;
+			if (pos.tomove == WHITE) kingpos = pos.Wkingpos;
+			if (pos.tomove == BLACK) kingpos = pos.Bkingpos;
+			int incheck = isCheck(&pos,kingpos);
+			if (incheck) {
+				unmakeMove(&pos);
+				continue;
+			}
+			pos.tomove = !pos.tomove;
+			int curscore = -negaMax(&pos,curdepth-1,(movetime - time_spentms));
+			//printf("%s - %d\n",movetostr(moves[i]),curscore);
+			if (curscore > bestScore) {
+				bestScore = curscore;
+				bestmove = moves[i];
+			}
+			unmakeMove(&pos);
+			nps = nodesSearched / time_spent;
 		}
-		unmakeMove(&pos);
+		lastbestmove = bestmove;
+		printf("info depth %d nodes %d time %d nps %d\n",(curdepth),nodesSearched,((int)(time_spent*1000)),nps);
+	}
+	return bestmove;
+}
+struct move itersearch(struct position pos, int searchdepth,int movetime) {
+	struct move moves[MAX_MOVES];
+	struct move bestmove;
+	int num_moves = genLegalMoves(&pos,moves);
+	clock_t start = clock();
+	int timeElapsed = 0;
+	for (int i = 0;(i < searchdepth && timeElapsed == 0);i++) {
+		clock_t end = clock();
+		double tot_time_spent = (double)(end - start) / CLOCKS_PER_SEC;
+		int tot_time_spentms = (int)(tot_time_spent * 1000);
+		clock_t begin = clock();
+		struct move lastbestmove = bestmove;
+		bestmove = search(pos, i+1,(movetime - tot_time_spentms));
+		end = clock();
+		double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+		int time_spentms = (int)(time_spent * 1000);
+		if (time_spent < 0.001) time_spent = 0.001;
+		int nps = nodesSearched / time_spent;
+		if (time_spentms >= movetime) {
+			timeElapsed = 1;
+			bestmove = lastbestmove;
+		}
+		printf("info depth %d nodes %d time %d nps %d\n",(i+1),nodesSearched,((int)(time_spent*1000)),nps);
 	}
 	return bestmove;
 }
