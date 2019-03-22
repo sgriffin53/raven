@@ -38,11 +38,26 @@ int negaMax(struct position *pos,int depth,int timeLeft) {
 	if (depth == 0) {
 		return evalBoard(pos);
 	}
+	int kingpos;
 	struct move moves[MAX_MOVES];
 	int maxScore = -9999;
 	int num_moves = genLegalMoves(pos,moves);
 	clock_t begin = clock();
 	int timeElapsed = 0;
+	/*
+	if (num_moves == 0) {
+		if (pos->tomove == WHITE) kingpos = pos->Wkingpos;
+		if (pos->tomove == BLACK) kingpos = pos->Bkingpos;
+		int incheck = isCheck(pos,kingpos);
+		if (incheck) {
+			return -9999;
+		}
+		else {
+			return 0;
+		}
+	}
+	 */
+	int numcheckmoves = 0;
 	for (int i = 0;(i < num_moves && timeElapsed == 0);i++) {
 		clock_t end = clock();
 		double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
@@ -53,12 +68,12 @@ int negaMax(struct position *pos,int depth,int timeLeft) {
 		}
 		makeMove(&moves[i],pos);
 		pos->tomove = !pos->tomove;
-		int kingpos;
 		if (pos->tomove == WHITE) kingpos = pos->Wkingpos;
 		if (pos->tomove == BLACK) kingpos = pos->Bkingpos;
 		int incheck = isCheck(pos,kingpos);
 		if (incheck) {
 			unmakeMove(pos);
+			numcheckmoves++;
 			continue;
 		}
 		pos->tomove = !pos->tomove;
@@ -68,7 +83,91 @@ int negaMax(struct position *pos,int depth,int timeLeft) {
 			maxScore = score;
 		}
 	}
+	//printf("%d - %d\n",num_moves,numcheckmoves);
+	if (num_moves == numcheckmoves) {
+		// no legal moves
+		if (pos->tomove == WHITE) kingpos = pos->Wkingpos;
+		if (pos->tomove == BLACK) kingpos = pos->Bkingpos;
+		int incheck = isCheck(pos,kingpos);
+		if (incheck) {
+			// side to move is in checkmate
+			return -99999;
+		}
+		else {
+			// stalemate
+			return 0;
+		}
+	}
+	if (isThreefold(*pos)) return 0;
+	if (pos->halfmoves >= 100) return 0;
 	return maxScore;
+}
+int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int timeLeft) {
+	nodesSearched++;
+	if (isThreefold(*pos)) return 0;
+	if (pos->halfmoves >= 100) return 0;
+	if (depthleft == 0) {
+		return evalBoard(pos);
+	}
+	int kingpos;
+	struct move moves[MAX_MOVES];
+	int maxScore = -9999;
+	int num_moves = genLegalMoves(pos,moves);
+	clock_t begin = clock();
+	int timeElapsed = 0;
+	int numcheckmoves = 0;
+	for (int i = 0;(i < num_moves && timeElapsed == 0);i++) {
+		clock_t end = clock();
+		double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+		int time_spentms = (int)(time_spent * 1000);
+		if (time_spentms >= timeLeft) {
+			timeElapsed = 1;
+			break;
+		}
+		makeMove(&moves[i],pos);
+		pos->tomove = !pos->tomove;
+		if (pos->tomove == WHITE) kingpos = pos->Wkingpos;
+		if (pos->tomove == BLACK) kingpos = pos->Bkingpos;
+		int incheck = isCheck(pos,kingpos);
+		if (incheck) {
+			unmakeMove(pos);
+			numcheckmoves++;
+			continue;
+		}
+		pos->tomove = !pos->tomove;
+		if (isThreefold(*pos)) {
+			unmakeMove(pos);
+			return 0;
+		}
+		if (pos->halfmoves >= 100) {
+			unmakeMove(pos);
+			return 0;
+		}
+		int score = -alphaBeta(pos,-beta,-alpha, depthleft - 1,(timeLeft - time_spentms));
+		unmakeMove(pos);
+		if (score >= beta) {
+			return beta;
+		}
+		if (score > alpha) {
+			alpha = score;
+		}
+	}
+	//printf("%d - %d\n",num_moves,numcheckmoves);
+	if (num_moves == numcheckmoves) {
+		// no legal moves
+		if (pos->tomove == WHITE) kingpos = pos->Wkingpos;
+		if (pos->tomove == BLACK) kingpos = pos->Bkingpos;
+		int incheck = isCheck(pos,kingpos);
+		if (incheck) {
+			// side to move is in checkmate
+			return -99999;
+		}
+		else {
+			// stalemate
+			return 0;
+		}
+	}
+	return alpha;
 }
 struct move search(struct position pos, int searchdepth,int movetime) {
 	int bestScore = -9999;
@@ -104,8 +203,24 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 				continue;
 			}
 			pos.tomove = !pos.tomove;
-			int curscore = -negaMax(&pos,curdepth-1,(movetime - time_spentms));
-			//printf("%s - %d\n",movetostr(moves[i]),curscore);
+			int curscore;
+			//int curscore = -negaMax(&pos,curdepth-1,(movetime - time_spentms));
+			if (isThreefold(pos)) {
+				curscore = 0;
+			}
+			else if (pos.halfmoves >= 100) {
+				curscore = 0;
+			}
+			else {
+				curscore = -alphaBeta(&pos,-99999,99999,curdepth-1,(movetime - time_spentms));
+			}
+			//printf("%d - %s - %d\n",curdepth,movetostr(moves[i]),curscore);
+			if (curscore == 99999) {
+				printf("info depth %d nodes %d time %d nps %d score mate %d pv %s\n",(curdepth),nodesSearched,((int)(time_spent*1000)),nps,curdepth,movetostr(moves[i]));
+				fflush(stdout);
+				unmakeMove(&pos);
+				return moves[i];
+			}
 			if (curscore > bestScore) {
 				bestScore = curscore;
 				bestmove = moves[i];
@@ -114,9 +229,22 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 			nps = nodesSearched / time_spent;
 		}
 		lastbestmove = bestmove;
-		printf("info depth %d nodes %d time %d nps %d\n",(curdepth),nodesSearched,((int)(time_spent*1000)),nps);
+		printf("info depth %d nodes %d time %d nps %d score cp %d pv %s\n",(curdepth),nodesSearched,((int)(time_spent*1000)),nps,bestScore,movetostr(bestmove));
+		fflush(stdout);
 	}
 	return bestmove;
+}
+/*
+int alphaBeta( int alpha, int beta, int depthleft ) {
+   if( depthleft == 0 ) return quiesce( alpha, beta );
+   for ( all moves)  {
+      score = -alphaBeta( -beta, -alpha, depthleft - 1 );
+      if( score >= beta )
+         return beta;   //  fail hard beta-cutoff
+      if( score > alpha )
+         alpha = score; // alpha acts like max in MiniMax
+   }
+   return alpha;
 }
 struct move itersearch(struct position pos, int searchdepth,int movetime) {
 	struct move moves[MAX_MOVES];
@@ -144,6 +272,7 @@ struct move itersearch(struct position pos, int searchdepth,int movetime) {
 	}
 	return bestmove;
 }
+ */
 /*
 def negaMax(depth):
     globals.nodesSearched += 1

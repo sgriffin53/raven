@@ -79,9 +79,22 @@ struct position parsefen(char fen[]) {
 		//en passant square given
 		pos.epsquare = strsquaretoidx(splitstr[3]);
 	}
+	pos.halfmoves = atoi(splitstr[4]);
+	if (splitstr[4][0] == '-') pos.halfmoves = 0;
 	return pos;
 }
 int isThreefold(struct position pos) {
+	int numrepeats = 0;
+	U64 curposhash = generateHash(&pos);
+	for (int i = 0;i < pos.halfmoves;i++) {
+		struct position checkpos = posstack[i];
+		if (generateHash(&checkpos) == curposhash) {
+			numrepeats++;
+			if (numrepeats >= 2) {
+				return 1;
+			}
+		}
+	}
 	return 0;
 }
 int isCheck(struct position *pos, int kingpos) {

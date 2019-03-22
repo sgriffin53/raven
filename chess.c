@@ -21,6 +21,7 @@ struct position {
 	int tomove;
 	int Wkingpos;
 	int Bkingpos;
+	int halfmoves;
 };
 struct move {
 	int from;
@@ -32,6 +33,7 @@ struct position posstack[1024];
 int posstackend = 0;
 int nodesSearched = 0;
 
+# include "hash.h"
 # include "functions.h"
 # include "board.h"
 # include "makemove.h"
@@ -48,7 +50,7 @@ struct position setstartpos() {
 				'0','0','0','0','0','0','0','0',
 				'P','P','P','P','P','P','P','P',
 				'R','N','B','Q','K','B','N','R'},.WcastleQS=1,.WcastleKS=1,.BcastleQS=1,.BcastleKS=1,
-				.tomove=WHITE,.Wkingpos=60,.Bkingpos=4};
+				.tomove=WHITE,.Wkingpos=60,.Bkingpos=4,.halfmoves=0};
 	return pos;
 }
 int main() {
@@ -60,11 +62,14 @@ int main() {
 	char splitstr[1000][200];
 	char * token;
 	int i;
+	int wtime, btime;
+	int movetime;
 	int splitstrend;
 	struct position pos = setstartpos(); // set start position
 	posstack[0] = pos;
 	posstackend = 1;
 	int keeprunning = 1;
+	initZobrist();
 	while (keeprunning) {
 		// read input from stdin
 		fgets(instr, 8192, stdin);
@@ -102,14 +107,40 @@ int main() {
 			printf("\n");
 		}
 		if (strcmp(splitstr[0],"quit") == 0) keeprunning = 0;
+		if (strcmp(splitstr[0],"hash") == 0) {
+			U64 hash = generateHash(&pos);
+			printf("%" PRIu64 "\n",hash);
+		}
 		if (strcmp(splitstr[0],"go") == 0) {
 			int searchdepth = 25;
+			movetime = 2147483646;
 			if (strcmp(splitstr[1],"depth") == 0) {
 				searchdepth = atoi(splitstr[2]);
 			}
+			i = 1;
+			wtime = -1;
+			btime = -1;
+			while (i < splitstrend) {
+				if (strcmp(splitstr[i],"wtime") == 0) {
+					wtime = atoi(splitstr[i+1]);
+				}
+				if (strcmp(splitstr[i],"btime") == 0) {
+					btime = atoi(splitstr[i+1]);
+				}
+				i++;
+			}
+			if (pos.tomove == WHITE) {
+				if (wtime != -1) movetime = wtime / 25;
+			}
+			if (pos.tomove == BLACK) {
+				if (btime != -1) movetime = btime / 25;
+			}
+			if (strcmp(splitstr[1],"movetime") == 0) {
+				movetime = atoi(splitstr[2]);
+			}
 			assert(searchdepth >= 1);
 			nodesSearched = 0;
-			struct move bestmove = search(pos,searchdepth,3000);
+			struct move bestmove = search(pos,searchdepth,movetime);
 			fflush(stdout);
 			printf("bestmove %s\n",movetostr(bestmove));
 			fflush(stdout);

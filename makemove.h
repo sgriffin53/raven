@@ -9,9 +9,13 @@ void makeMove(struct move *move, struct position *pos) {
 	int newBcastleQS = pos->BcastleQS;
 	int newBcastleKS = pos->BcastleKS;
 	int torank = getrank(move->to);
+	char cappiece = pos->board[move->to];
 	pos->board[move->to] = piece;
 	pos->board[move->from] = '0';
-	
+	pos->halfmoves = pos->halfmoves + 1;
+	if (cappiece != '0') {
+		pos->halfmoves = 0;
+	}
 	if (piece == 'P') { // white pawn
 		if (torank == 0) { // promotion
 			pos->board[move->to] = toupper(move->prom);
@@ -22,7 +26,7 @@ void makeMove(struct move *move, struct position *pos) {
 		if ((move->from - move->to) == 16) { // pawn moved 2 spaces forward
 			newepsquare = move->to + 8; // set ep square
 		}
-		
+		pos->halfmoves = 0;
 	}
 	if (piece == 'p') { // black pawn
 		if (torank == 7) { // promotion
@@ -34,6 +38,7 @@ void makeMove(struct move *move, struct position *pos) {
 		if ((move->to - move->from) == 16) { // pawn moved 2 spaces forward
 			newepsquare = move->to - 8; // set ep square
 		}
+		pos->halfmoves = 0;
 	}
 	if (piece == 'K') { // white king
 		newWcastleQS = 0;
@@ -91,7 +96,6 @@ void makeMove(struct move *move, struct position *pos) {
 	pos->BcastleKS = newBcastleKS;
 	posstack[posstackend] = *pos;
 	posstackend++;
-	//return pos;
 }
 void unmakeMove(struct position *pos) {
 	posstackend--;
@@ -102,7 +106,7 @@ void unmakeMove(struct position *pos) {
 	else {
 	*pos = posstack[posstackend - 1];
 	struct position blankpos = {.epsquare=0,.board={},.WcastleQS=0,.WcastleKS=0,.BcastleQS=0,.BcastleKS=0,
-				.tomove=0,.Wkingpos=0,.Bkingpos=0};;
+				.tomove=0,.Wkingpos=0,.Bkingpos=0,.halfmoves=0};;
 	posstack[posstackend] = blankpos;
 	}
 }

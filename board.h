@@ -41,4 +41,8 @@ void dspboard(struct position pos) {
 	printf("\n");
 	printf("Black castling KS: %d",pos.BcastleKS);
 	printf("\n");
+	printf("Half moves: %d",pos.halfmoves);
+	printf("\n");
+	printf("Is threefold: %d",isThreefold(pos));
+	printf("\n");
 }
