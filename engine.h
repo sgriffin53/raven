@@ -135,6 +135,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int time
 			continue;
 		}
 		pos->tomove = !pos->tomove;
+		/*
 		if (isThreefold(*pos)) {
 			unmakeMove(pos);
 			return 0;
@@ -143,6 +144,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int time
 			unmakeMove(pos);
 			return 0;
 		}
+		 */
 		int score = -alphaBeta(pos,-beta,-alpha, depthleft - 1,(timeLeft - time_spentms));
 		unmakeMove(pos);
 		if (score >= beta) {
