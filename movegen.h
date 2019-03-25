@@ -142,6 +142,9 @@ int genLegalPawnMoves(struct position *pos, int square, struct move *Pmoves) {
 			newrank = rank - 1;
 			newsquare = fileranktosquareidx(newfile,newrank);
 			cappiece = pos->board[newsquare];
+			if ((newfile < 0) || (newfile > 7) || (newrank < 0) || (newrank > 7)) {
+				outofbounds = 1;
+			}
 			if (! ((cappiece >= 'a') && (cappiece <= 'z')) ) {
 				// piece is not black piece
 				outofbounds = 1;
@@ -170,6 +173,9 @@ int genLegalPawnMoves(struct position *pos, int square, struct move *Pmoves) {
 			newrank = rank - 1;
 			newsquare = fileranktosquareidx(newfile,newrank);
 			cappiece = pos->board[newsquare];
+			if ((newfile < 0) || (newfile > 7) || (newrank < 0) || (newrank > 7)) {
+				outofbounds = 1;
+			}
 			if (! ((cappiece >= 'a') && (cappiece <= 'z')) ) {
 				// piece is not black piece
 				outofbounds = 1;
@@ -198,6 +204,9 @@ int genLegalPawnMoves(struct position *pos, int square, struct move *Pmoves) {
 			newrank = rank - 1;
 			newsquare = fileranktosquareidx(newfile,newrank);
 			cappiece = pos->board[newsquare];
+			if ((newfile < 0) || (newfile > 7) || (newrank < 0) || (newrank > 7)) {
+				outofbounds = 1;
+			}
 			if (cappiece != '0' ) {
 				// promotion square is not empty
 				outofbounds = 1;
@@ -356,6 +365,9 @@ int genLegalPawnMoves(struct position *pos, int square, struct move *Pmoves) {
 			newrank = rank + 1;
 			newsquare = fileranktosquareidx(newfile,newrank);
 			cappiece = pos->board[newsquare];
+			if ((newfile < 0) || (newfile > 7) || (newrank < 0) || (newrank > 7)) {
+				outofbounds = 1;
+			}
 			if (! ((cappiece >= 'A') && (cappiece <= 'Z')) ) {
 				// piece is not white piece
 				outofbounds = 1;
@@ -384,6 +396,9 @@ int genLegalPawnMoves(struct position *pos, int square, struct move *Pmoves) {
 			newrank = rank + 1;
 			newsquare = fileranktosquareidx(newfile,newrank);
 			cappiece = pos->board[newsquare];
+			if ((newfile < 0) || (newfile > 7) || (newrank < 0) || (newrank > 7)) {
+				outofbounds = 1;
+			}
 			if (! ((cappiece >= 'A') && (cappiece <= 'Z')) ) {
 				// piece is not white piece
 				outofbounds = 1;
@@ -412,6 +427,9 @@ int genLegalPawnMoves(struct position *pos, int square, struct move *Pmoves) {
 			newrank = rank + 1;
 			newsquare = fileranktosquareidx(newfile,newrank);
 			cappiece = pos->board[newsquare];
+			if ((newfile < 0) || (newfile > 7) || (newrank < 0) || (newrank > 7)) {
+				outofbounds = 1;
+			}
 			if (cappiece != '0' ) {
 				// promotion square is not empty
 				outofbounds = 1;
@@ -974,21 +992,3 @@ int splitperft(struct position *pos, int depth) {
 	}
 	return nodes;
 }
-/*
-u64 Perft(int depth)
-{
-    MOVE move_list[256];
-    int n_moves, i;
-    u64 nodes = 0;
-
-    if (depth == 0) return 1;
-
-    n_moves = GenerateLegalMoves(move_list);
-    for (i = 0; i < n_moves; i++) {
-        MakeMove(move_list[i]);
-        nodes += Perft(depth - 1);
-        UndoMove(move_list[i]);
-    }
-    return nodes;
-}
-*/
