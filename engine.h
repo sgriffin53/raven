@@ -231,62 +231,44 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 			nps = nodesSearched / time_spent;
 		}
 		lastbestmove = bestmove;
+		/*
+		printf("moves before: ");
+		for (int i =0;i<num_moves;i++) {
+			printf("%s ",movetostr(moves[i]));
+		}
+		printf("\n");
+		*/
+		struct move newmoves[MAX_MOVES];
+		int num_newmoves = 1;
+		newmoves[0] = bestmove;
+		int j = 1;
+		for (int i =0;i < num_moves;i++) {
+			// if bestmove != moves[i]
+			if ( (bestmove.to != moves[i].to) || (bestmove.from != moves[i].from) || (bestmove.prom != moves[i].prom) ) {
+				newmoves[j] = moves[i];
+				j++;
+				num_newmoves++;
+			}
+		}
+		moves[0] = bestmove;
+		num_moves = 1;
+		for (int i=1;i<num_newmoves;i++) {
+			// if bestmove != newmoves[i]
+			if ( (bestmove.to != newmoves[i].to) || (bestmove.from != newmoves[i].from) || (bestmove.prom != newmoves[i].prom)) {
+			moves[num_moves] = newmoves[i];
+			num_moves++;
+			}
+		}
+		/*
+		printf("moves after: ");
+		for (int i =0;i<num_moves;i++) {
+			printf("%s ",movetostr(moves[i]));
+		}
+		printf("\n");
+		*/
+		
 		printf("info depth %d nodes %d time %d nps %d score cp %d pv %s\n",(curdepth),nodesSearched,((int)(time_spent*1000)),nps,bestScore,movetostr(bestmove));
 		fflush(stdout);
 	}
 	return bestmove;
 }
-/*
-int alphaBeta( int alpha, int beta, int depthleft ) {
-   if( depthleft == 0 ) return quiesce( alpha, beta );
-   for ( all moves)  {
-      score = -alphaBeta( -beta, -alpha, depthleft - 1 );
-      if( score >= beta )
-         return beta;   //  fail hard beta-cutoff
-      if( score > alpha )
-         alpha = score; // alpha acts like max in MiniMax
-   }
-   return alpha;
-}
-struct move itersearch(struct position pos, int searchdepth,int movetime) {
-	struct move moves[MAX_MOVES];
-	struct move bestmove;
-	int num_moves = genLegalMoves(&pos,moves);
-	clock_t start = clock();
-	int timeElapsed = 0;
-	for (int i = 0;(i < searchdepth && timeElapsed == 0);i++) {
-		clock_t end = clock();
-		double tot_time_spent = (double)(end - start) / CLOCKS_PER_SEC;
-		int tot_time_spentms = (int)(tot_time_spent * 1000);
-		clock_t begin = clock();
-		struct move lastbestmove = bestmove;
-		bestmove = search(pos, i+1,(movetime - tot_time_spentms));
-		end = clock();
-		double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-		int time_spentms = (int)(time_spent * 1000);
-		if (time_spent < 0.001) time_spent = 0.001;
-		int nps = nodesSearched / time_spent;
-		if (time_spentms >= movetime) {
-			timeElapsed = 1;
-			bestmove = lastbestmove;
-		}
-		printf("info depth %d nodes %d time %d nps %d\n",(i+1),nodesSearched,((int)(time_spent*1000)),nps);
-	}
-	return bestmove;
-}
- */
-/*
-def negaMax(depth):
-    globals.nodesSearched += 1
-    if depth == 0:
-        return evalBoard(globals.board)
-    maxScore = -9999
-    for move in globals.board.legal_moves:
-        move = str(move)
-        globals.board.push_uci(move)
-        score = -negaMax(depth - 1)
-        globals.board.pop()
-        if score > maxScore:
-            maxScore = score
-    return maxScore
-	*/
