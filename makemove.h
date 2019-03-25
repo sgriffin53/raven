@@ -105,9 +105,9 @@ void unmakeMove(struct position *pos) {
 	}
 	else {
 	*pos = posstack[posstackend - 1];
-	struct position blankpos = {.epsquare=0,.board={},.WcastleQS=0,.WcastleKS=0,.BcastleQS=0,.BcastleKS=0,
-				.tomove=0,.Wkingpos=0,.Bkingpos=0,.halfmoves=0};;
-	posstack[posstackend] = blankpos;
+	//struct position blankpos = {.epsquare=0,.board={},.WcastleQS=0,.WcastleKS=0,.BcastleQS=0,.BcastleKS=0,
+	//			.tomove=0,.Wkingpos=0,.Bkingpos=0,.halfmoves=0};;
+	//posstack[posstackend] = blankpos;
 	}
 }
 void makeMovestr(char move[], struct position *pos) {

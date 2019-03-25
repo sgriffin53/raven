@@ -83,11 +83,11 @@ struct position parsefen(char fen[]) {
 	if (splitstr[4][0] == '-') pos.halfmoves = 0;
 	return pos;
 }
-int isThreefold(struct position pos) {
-	if (pos.halfmoves <= 4) return 0;
+int isThreefold(struct position *pos) {
+	if (pos->halfmoves <= 4) return 0;
 	int numrepeats = 0;
-	U64 curposhash = generateHash(&pos);
-	for (int i = (posstackend - 1);i > (posstackend - 1 - pos.halfmoves);i--) {
+	U64 curposhash = generateHash(pos);
+	for (int i = (posstackend - 1);i > (posstackend - 1 - pos->halfmoves);i--) {
 		struct position checkpos = posstack[i];
 		if (generateHash(&checkpos) == curposhash) {
 			numrepeats++;
