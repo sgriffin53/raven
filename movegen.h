@@ -948,6 +948,13 @@ int genLegalMoves(struct position *pos, struct move *moves) {
 }
 U64 perft(struct position *pos, int depth) {
 	if (depth == 0) return 1;
+	U64 hash = generateHash(pos);
+	struct PTTentry PTTdata = getPTTentry(&PTT,hash);
+	int PTTentrynodes;
+	if ((PTTdata.hash == hash) && (PTTdata.depth == depth)) {
+		PTTentrynodes = PTTdata.nodes;
+		return PTTdata.nodes;
+	}
 	U64 nodes = 0;
 	struct move moves[MAX_MOVES];
 	int n_moves = genLegalMoves(pos,moves);
@@ -963,19 +970,26 @@ U64 perft(struct position *pos, int depth) {
 			continue;
 		}
 		pos->tomove = !pos->tomove;
-		nodes += perft(pos,depth - 1);
+		nodes += perft(pos, depth - 1);
 		unmakeMove(pos);
+	}
+	addPTTentry(&PTT,hash,depth,nodes);
+	if ((PTTdata.hash == hash) && (PTTdata.depth == depth)) {
+		if(PTTentrynodes != nodes) {
+			printf("%" PRIu64 "\n",generateHash(pos));
+			dspboard(*pos);
+		}
+		//return PTTdata.nodes;
 	}
 	return nodes;
 }
 int splitperft(struct position *pos, int depth) {
-	int n_moves, i;
-	struct move moves[2048];
+	struct move moves[MAX_MOVES];
 	int nodes = 0;
 	int kingpos;
 	if (depth == 0) return 1;
-	n_moves = genLegalMoves(pos,moves);
-	for (i = 0; i < n_moves;i++) {
+	int n_moves = genLegalMoves(pos,moves);
+	for (int i = 0; i < n_moves;i++) {
 		makeMove(&moves[i], pos);
 		pos->tomove = !pos->tomove;
 		if (pos->tomove == WHITE) kingpos = pos->Wkingpos;

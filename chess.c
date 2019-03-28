@@ -33,9 +33,25 @@ struct position posstack[1024];
 int posstackend = 0;
 int nodesSearched = 0;
 
+int getrank(int square) {
+	return (int)(square / 8);
+}
+int getfile(int square) {
+	return square % 8;
+}
+char* squareidxtostr(int square) {
+	char returnstring[3];
+	char squarefile = (char)(getfile(square) + 97);
+	char squarerank = (char)(7 - getrank(square) + 49);
+	returnstring[0] = squarefile;
+	returnstring[1] = squarerank;
+	returnstring[2] = 0;
+	return strdup(returnstring);
+}
+# include "board.h"
 # include "hash.h"
 # include "functions.h"
-# include "board.h"
+# include "TT.h"
 # include "makemove.h"
 # include "movegen.h"
 # include "PST.h"
@@ -69,7 +85,12 @@ int main() {
 	posstack[0] = pos;
 	posstackend = 1;
 	int keeprunning = 1;
+	//time_t t;
+	//srand((unsigned) time(&t));
 	initZobrist();
+	initPTT(&PTT);
+	//addPTTentry(&PTT,0,pos,1,100);
+	struct PTTentry myentry = getPTTentry(&PTT,0);
 	while (keeprunning) {
 		// read input from stdin
 		fgets(instr, 8192, stdin);
@@ -110,9 +131,10 @@ int main() {
 		if (strcmp(splitstr[0],"hash") == 0) {
 			U64 hash = generateHash(&pos);
 			printf("%" PRIu64 "\n",hash);
+			//printf("%" PRIu64 "\n",rand64());
 		}
 		if (strcmp(splitstr[0],"go") == 0) {
-			int searchdepth = 25;
+			int searchdepth = 100;
 			movetime = 2147483646;
 			if (strcmp(splitstr[1],"depth") == 0) {
 				searchdepth = atoi(splitstr[2]);
