@@ -131,7 +131,7 @@ int main() {
 			struct move moves[MAX_MOVES];
 			int num_moves = genLegalMoves(&pos,moves);
 			int kingpos;
-			num_moves = sortMoves(&pos,moves,num_moves);
+			sortMoves(&pos,moves,num_moves);
 			for (int i = 0;i < num_moves;i++) {
 				makeMove(&moves[i], &pos);
 				pos.tomove = !pos.tomove;
