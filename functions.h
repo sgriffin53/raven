@@ -1,6 +1,18 @@
-#ifndef FUNCTIONS_H
-#define FUNCTIONS_H
+#ifndef FUNC_H
+#define FUNC_H
 
+int isBlackPiece(char piece) {
+	if ((piece >= 'a') && (piece <= 'z')) {
+		return 1;
+	}
+	return 0;
+}
+int isWhitePiece(char piece) {
+	if ((piece >= 'A') && (piece <= 'Z')) {
+		return 1;
+	}
+	return 0;
+}
 int strsquaretoidx(char square[]) {
 	int file = (int)square[0] - 97;
 	int rank = (int)square[1] - 49;
@@ -83,6 +95,36 @@ struct position parsefen(char fen[]) {
 	if (splitstr[4][0] == '-') pos.halfmoves = 0;
 	
 	return pos;
+}
+int sortMoves(const struct position *pos,struct move *moves, const int num_moves) {
+	assert(pos);
+	assert(moves);
+	assert(num_moves >= 0);
+	assert(num_moves <= MAX_MOVES);
+	struct move capmoves[num_moves];
+	struct move noncapmoves[num_moves];
+	int capmovesctr = 0;
+	int noncapmovesctr = 0;
+	for (int i=0;i<num_moves;i++) {
+		if (pos->board[moves[i].to] != '0') {
+			// capture
+			capmoves[capmovesctr] = moves[i];
+			capmovesctr++;
+		}
+		else {
+			// not capture
+			noncapmoves[noncapmovesctr] = moves[i];
+			noncapmovesctr++;
+		}
+	}
+	// rebuild moves array in order of captures first
+	for (int i = 0;i < capmovesctr;i++) {
+		moves[i] = capmoves[i];
+	}
+	for (int i=0;i < noncapmovesctr;i++) {
+		moves[i+capmovesctr] = noncapmoves[i];
+	}
+	return num_moves;
 }
 int isThreefold(struct position *pos) {
 	assert(pos);
@@ -281,8 +323,8 @@ int isCheck(struct position *pos, int kingpos) {
 }
 
 char* movetostr(struct move move) {
-	assert(move.to);
-	assert(move.from);
+	assert(move.to >= 0 && move.to <= 63);
+	assert(move.from >= 0 && move.from <= 63);
 	char returnstring[6];
 	char startsquarefile = (char)(getfile(move.from) + 97);
 	char startsquarerank = (char)(7 - getrank(move.from) + 49);

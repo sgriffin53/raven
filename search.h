@@ -16,7 +16,6 @@ int negaMax(struct position *pos,int depth,int timeLeft) {
 	clock_t begin = clock();
 	int timeElapsed = 0;
 	int numcheckmoves = 0;
-	
 	for (int i = 0;(i < num_moves && timeElapsed == 0);i++) {
 		
 		clock_t end = clock();
@@ -155,15 +154,14 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int time
 	
 	struct move moves[MAX_MOVES];
 	int num_moves = genLegalMoves(pos,moves);
+	//num_moves = sortMoves(pos,moves,num_moves);
 	clock_t begin = clock();
 	int timeElapsed = 0;
 	int numcheckmoves = 0;
-	
 	for (int i = 0;(i < num_moves && timeElapsed == 0);i++) {
 		clock_t end = clock();
 		double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 		int time_spentms = (int)(time_spent * 1000);
-		
 		makeMove(&moves[i],pos);
 		pos->tomove = !pos->tomove;
 		if (pos->tomove == WHITE) kingpos = pos->Wkingpos;
@@ -231,9 +229,8 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 				timeElapsed = 1;
 				break;
 			}
-			
+			assert((moves[i].to >= 0 && moves[i].to <= 63));
 			makeMove(&moves[i],&pos);
-			
 			pos.tomove = !pos.tomove;
 			if (pos.tomove == WHITE) kingpos = pos.Wkingpos;
 			else kingpos = pos.Bkingpos;
@@ -312,7 +309,6 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 		}
 		printf("\n");
 		*/
-		
 		printf("info depth %d nodes %d time %d nps %d score cp %d pv %s\n",(curdepth),nodesSearched,((int)(time_spent*1000)),nps,bestScore,movetostr(bestmove));
 		fflush(stdout);
 	}
