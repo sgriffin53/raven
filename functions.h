@@ -1,6 +1,8 @@
 #ifndef FUNC_H
 #define FUNC_H
 
+#include "hash.h"
+
 int isBlackPiece(char piece) {
 	if ((piece >= 'a') && (piece <= 'z')) {
 		return 1;

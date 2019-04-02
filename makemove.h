@@ -1,6 +1,8 @@
 #ifndef MAKEMOVE_H
 #define MAKEMOVE_H
 
+#include "functions.h"
+
 void makeMove(struct move *move, struct position *pos) {
 	assert(move);
 	assert(pos);

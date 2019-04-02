@@ -1,6 +1,11 @@
 #ifndef SEARCH_H
 #define SEARCH_H
 
+#include "makemove.h"
+#include "movegen.h"
+#include "functions.h"
+#include "eval.h"
+
 int negaMax(struct position *pos,int depth,int timeLeft) {
 	assert(depth >= 0);
 	nodesSearched++;

@@ -1,6 +1,10 @@
 #ifndef PERFT_H
 #define PERFT_H
 
+#include "TT.h"
+#include "movegen.h"
+#include "makemove.h"
+
 U64 perft(struct position *pos, int depth) {
 	assert(pos);
 	assert(depth>=0);
