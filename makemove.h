@@ -1,3 +1,5 @@
+#ifndef MAKEMOVE_H
+#define MAKEMOVE_H
 
 void makeMove(struct move *move, struct position *pos) {
 	assert(move);
@@ -151,3 +153,4 @@ void makeMovestr(char move[], struct position *pos) {
 	
 	makeMove(&moveobj, pos);
 }
+#endif

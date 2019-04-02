@@ -1,3 +1,6 @@
+#ifndef TT_H
+#define TT_H
+
 struct TTentry {
 	U64 hash;
 	struct position pos;
@@ -61,3 +64,4 @@ struct TTentry getTTentry(struct TTtable *table,U64 hash) {
 }
 struct PTTtable PTT;
 struct TTtable TT;
+#endif

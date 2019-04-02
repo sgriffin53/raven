@@ -1,3 +1,7 @@
+#ifndef BOARD_H
+#define BOARD_H
+
+
 void dspboard(struct position pos) {
 	assert(pos.board);
 	char board[65];
@@ -53,3 +57,4 @@ void dspboard(struct position pos) {
 	 */
 	printf("\n");
 }
+#endif

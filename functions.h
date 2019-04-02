@@ -1,4 +1,5 @@
-
+#ifndef FUNCTIONS_H
+#define FUNCTIONS_H
 
 int strsquaretoidx(char square[]) {
 	int file = (int)square[0] - 97;
@@ -116,7 +117,7 @@ int isCheck(struct position *pos, int kingpos) {
 		enemybishop = 'b';
 		enemyqueen = 'q';
 	}
-	if (pos->tomove == BLACK) {
+	else {
 		enemyknight = 'N';
 		enemypawn = 'P';
 		enemyrook = 'R';
@@ -136,7 +137,7 @@ int isCheck(struct position *pos, int kingpos) {
 	if (pos->tomove == WHITE) {
 		memcpy(Pdirs,WPdirs,sizeof(WPdirs));
 	}
-	if (pos->tomove == BLACK) {
+	else {
 		memcpy(Pdirs,BPdirs,sizeof(BPdirs));
 	}
 	
@@ -196,7 +197,7 @@ int isCheck(struct position *pos, int kingpos) {
 					}
 				}
 			}
-			if (pos->tomove == BLACK) {
+			else { // tomove is black
 				if ((pos->board[newsquare] >= 'a') && (pos->board[newsquare] <= 'z')) {
 					// char is lowercase so is black piece
 					// line of sight is blocked by friendly piece so not check
@@ -247,7 +248,7 @@ int isCheck(struct position *pos, int kingpos) {
 					}
 				}
 			}
-			if (pos->tomove == BLACK) {
+			else { //tomove is black
 				if ((pos->board[newsquare] >= 'a') && (pos->board[newsquare] <= 'z')) {
 					// char is lowercase so is black piece
 					// line of sight is blocked by friendly piece so not check
@@ -295,3 +296,4 @@ char* movetostr(struct move move) {
 	returnstring[5] = 0;
 	return strdup(returnstring);
 }
+#endif

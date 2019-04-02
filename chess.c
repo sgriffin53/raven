@@ -24,7 +24,7 @@ typedef unsigned long long U64;
 
 struct position {
 	int epsquare;
-	char board[65];
+	char board[64];
 	int WcastleQS;
 	int WcastleKS; 
 	int BcastleKS;
@@ -72,7 +72,9 @@ char* squareidxtostr(int square) {
 # include "makemove.h"
 # include "movegen.h"
 # include "PST.h"
-# include "engine.h"
+# include "eval.h"
+# include "search.h"
+# include "perft.h"
 
 struct position setstartpos() {
 	struct position pos = {.epsquare=-1,.board={'r','n','b','q','k','b','n','r',
@@ -134,7 +136,7 @@ int main() {
 				makeMove(&moves[i], &pos);
 				pos.tomove = !pos.tomove;
 				if (pos.tomove == WHITE) kingpos = pos.Wkingpos;
-				if (pos.tomove == BLACK) kingpos = pos.Bkingpos;
+				else kingpos = pos.Bkingpos;
 				int incheck = isCheck(&pos,kingpos);
 				if (incheck) {
 					unmakeMove(&pos);
@@ -148,14 +150,14 @@ int main() {
 			printf("\n");
 		}
 		
-		if (strcmp(splitstr[0],"quit") == 0) keeprunning = 0;
+		else if (strcmp(splitstr[0],"quit") == 0) keeprunning = 0;
 		
-		if (strcmp(splitstr[0],"hash") == 0) {
+		else if (strcmp(splitstr[0],"hash") == 0) {
 			U64 hash = generateHash(&pos);
 			printf("%" PRIu64 "\n",hash);
 		}
 		
-		if (strcmp(splitstr[0],"go") == 0) {
+		else if (strcmp(splitstr[0],"go") == 0) {
 			
 			int searchdepth = 100;
 			movetime = 2147483646;
@@ -178,7 +180,7 @@ int main() {
 			if (pos.tomove == WHITE) {
 				if (wtime != -1) movetime = wtime / 25;
 			}
-			if (pos.tomove == BLACK) {
+			else {
 				if (btime != -1) movetime = btime / 25;
 			}
 			
@@ -194,28 +196,28 @@ int main() {
 			fflush(stdout);
 		}
 		
-		if (strcmp(splitstr[0],"isready") == 0) {
+		else if (strcmp(splitstr[0],"isready") == 0) {
 			printf("readyok\n");
 			fflush(stdout);
 		}
 		
-		if (strcmp(splitstr[0],"uci") == 0) {
+		else if (strcmp(splitstr[0],"uci") == 0) {
 			printf("id name Raven 0.30\nid author JimmyRustles\nuciok\n");
 			fflush(stdout);
 		}
 		
-		if (strcmp(splitstr[0],"board") == 0) dspboard(pos);
+		else if (strcmp(splitstr[0],"board") == 0) dspboard(pos);
 		
-		if (strcmp(splitstr[0],"move") == 0) makeMovestr(splitstr[1], &pos);
+		else if (strcmp(splitstr[0],"move") == 0) makeMovestr(splitstr[1], &pos);
 		
-		if (strcmp(splitstr[0],"unmove") == 0) unmakeMove(&pos);
+		else if (strcmp(splitstr[0],"unmove") == 0) unmakeMove(&pos);
 		
-		if (strcmp(splitstr[0],"eval") == 0) {
+		else if (strcmp(splitstr[0],"eval") == 0) {
 			printf("score: %d",evalBoard(&pos));
 			fflush(stdout);
 		}
 		
-		if (strcmp(splitstr[0],"perft") == 0) {
+		else if (strcmp(splitstr[0],"perft") == 0) {
 			int depth;
 			U64 pnodes;
 			U64 nps;
@@ -234,21 +236,21 @@ int main() {
 			fflush(stdout);
 		}
 		
-		if (strcmp(splitstr[0],"PST") == 0) {
+		else if (strcmp(splitstr[0],"PST") == 0) {
 			char piece = splitstr[1][0];
 			printf("%d\n",PSTval(piece, atoi(splitstr[2])));
 		}
 		
-		if (strcmp(splitstr[0],"rank") == 0) printf("%d\n",getrank(atoi(splitstr[1])));
+		else if (strcmp(splitstr[0],"rank") == 0) printf("%d\n",getrank(atoi(splitstr[1])));
 		
-		if (strcmp(splitstr[0],"file") == 0) printf("%d\n",getfile(atoi(splitstr[1])));
+		else if (strcmp(splitstr[0],"file") == 0) printf("%d\n",getfile(atoi(splitstr[1])));
 		
-		if (strcmp(splitstr[0],"sperft") == 0) {
+		else if (strcmp(splitstr[0],"sperft") == 0) {
 			int depth = atoi(splitstr[1]);
 			splitperft(&pos,depth);
 		}
 		
-		if ( (strcmp(splitstr[0],"position") == 0) && (strcmp(splitstr[1],"fen") == 0) ) {
+		else if ( (strcmp(splitstr[0],"position") == 0) && (strcmp(splitstr[1],"fen") == 0) ) {
 			char fen[1024] = "";
 			for (i = 2;i < splitstrend;i++) {
 				strcat(fen,splitstr[i]);
@@ -258,7 +260,7 @@ int main() {
 			posstack[0] = pos;
 		}
 		
-		if ( (strcmp(splitstr[0],"position") == 0) && (strcmp(splitstr[1],"startpos") == 0) ) {
+		else if ( (strcmp(splitstr[0],"position") == 0) && (strcmp(splitstr[1],"startpos") == 0) ) {
 			pos = setstartpos(); // set start position
 			posstack[0] = pos;
 			posstackend = 1;

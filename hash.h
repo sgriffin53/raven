@@ -1,3 +1,5 @@
+#ifndef HASH_H
+#define HASH_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -92,3 +94,4 @@ U64 generateHash(struct position *pos) {
 
 	return zobrist;
 }
+#endif

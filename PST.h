@@ -1,3 +1,6 @@
+#ifndef PST_H
+#define PST_H
+
 int PSTWK[] = {
       -30, -40, -40, -50, -50, -40, -40, -30,
       -30, -40, -40, -50, -50, -40, -40, -30,
@@ -160,3 +163,4 @@ int PSTval(char piece, int square) {
 	}	
 	return 0;
 }
+#endif
