@@ -11,11 +11,14 @@ int pieceval(char inpiece) {
 	if (inpiece == 'R') return 500;
 	if (inpiece == 'Q') return 900;
 	if (inpiece == 'K') return 9999;
+	
 	assert(0);
 	printf("inpiece: %d\n",inpiece);
+	
 	return 0;
 }
 int evalBoard(struct position *pos) {
+	assert(pos);
 	int score = 0;
 	for (int i = 0;i<64;i++) {
 		char piece = pos->board[i];
@@ -35,30 +38,21 @@ int evalBoard(struct position *pos) {
 int negaMax(struct position *pos,int depth,int timeLeft) {
 	assert(depth >= 0);
 	nodesSearched++;
+	
 	if (depth == 0) {
 		return evalBoard(pos);
 	}
+	
 	int kingpos;
 	struct move moves[MAX_MOVES];
 	int maxScore = -9999;
 	int num_moves = genLegalMoves(pos,moves);
 	clock_t begin = clock();
 	int timeElapsed = 0;
-	/*
-	if (num_moves == 0) {
-		if (pos->tomove == WHITE) kingpos = pos->Wkingpos;
-		if (pos->tomove == BLACK) kingpos = pos->Bkingpos;
-		int incheck = isCheck(pos,kingpos);
-		if (incheck) {
-			return -9999;
-		}
-		else {
-			return 0;
-		}
-	}
-	 */
 	int numcheckmoves = 0;
+	
 	for (int i = 0;(i < num_moves && timeElapsed == 0);i++) {
+		
 		clock_t end = clock();
 		double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 		int time_spentms = (int)(time_spent * 1000);
@@ -66,7 +60,9 @@ int negaMax(struct position *pos,int depth,int timeLeft) {
 			timeElapsed = 1;
 			break;
 		}
+		
 		makeMove(&moves[i],pos);
+		
 		pos->tomove = !pos->tomove;
 		if (pos->tomove == WHITE) kingpos = pos->Wkingpos;
 		if (pos->tomove == BLACK) kingpos = pos->Bkingpos;
@@ -77,13 +73,16 @@ int negaMax(struct position *pos,int depth,int timeLeft) {
 			continue;
 		}
 		pos->tomove = !pos->tomove;
+		
 		int score = -negaMax(pos,depth - 1, (timeLeft - time_spentms));
+		
 		unmakeMove(pos);
+		
 		if (score > maxScore) {
 			maxScore = score;
 		}
 	}
-	//printf("%d - %d\n",num_moves,numcheckmoves);
+	
 	if (num_moves == numcheckmoves) {
 		// no legal moves
 		if (pos->tomove == WHITE) kingpos = pos->Wkingpos;
@@ -91,18 +90,22 @@ int negaMax(struct position *pos,int depth,int timeLeft) {
 		int incheck = isCheck(pos,kingpos);
 		if (incheck) {
 			// side to move is in checkmate
-			return -99999;
+			return -MATE_SCORE;
 		}
 		else {
 			// stalemate
 			return 0;
 		}
 	}
+	
 	if (isThreefold(pos)) return 0;
 	if (pos->halfmoves >= 100) return 0;
+	
 	return maxScore;
 }
 int qSearch(struct position *pos, int alpha, int beta, int timeLeft) {
+	assert(pos);
+	assert(alpha >= -99999 && beta <= 99999);
 	int incheck;
 	int score;
 	int kingpos;
@@ -116,6 +119,7 @@ int qSearch(struct position *pos, int alpha, int beta, int timeLeft) {
 	int num_moves = genLegalMoves(pos,moves);
 	clock_t begin = clock();
 	int timeElapsed = 0;
+	
 	for (int i = 0;(i < num_moves && timeElapsed == 0);i++) {
 		clock_t end = clock();
 		double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
@@ -126,7 +130,9 @@ int qSearch(struct position *pos, int alpha, int beta, int timeLeft) {
 		}
 		int iscap = 0;
 		if (pos->board[moves[i].to] != '0') iscap = 1;
+		
 		makeMove(&moves[i],pos);
+
 		// check if move is legal (doesn't put in check)
 		pos->tomove = !pos->tomove;
 		if (pos->tomove == WHITE) kingpos = pos->Wkingpos;
@@ -137,9 +143,11 @@ int qSearch(struct position *pos, int alpha, int beta, int timeLeft) {
 			continue;
 		}
 		pos->tomove = !pos->tomove;
+		
 		if (pos->tomove == WHITE) kingpos = pos->Wkingpos;
 		if (pos->tomove == BLACK) kingpos = pos->Bkingpos;
 		incheck = isCheck(pos,kingpos);
+		
 		if ((incheck) || (iscap)) {
 			//printf("%s\n",movetostr(moves[i]));
 			//printf("%d %d %d\n",-beta,-alpha,(time_spentms - timeLeft));
@@ -157,26 +165,39 @@ int qSearch(struct position *pos, int alpha, int beta, int timeLeft) {
 	return alpha;
 }
 int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int timeLeft) {
+	assert(pos);
+	assert(alpha >= -99999 && beta <= 99999);
 	if (timeLeft <= 0) {
 		return alpha;
 	}
+	
 	nodesSearched++;
+	
 	if (isThreefold(pos)) return 0;
 	if (pos->halfmoves >= 100) return 0;
+	
+	// check extensions
+	int kingpos;
+	if (pos->tomove == WHITE) kingpos = pos->Wkingpos;
+	if (pos->tomove == BLACK) kingpos = pos->Bkingpos;
+	if (isCheck(pos,kingpos)) depthleft++;
+	
 	if (depthleft == 0) {
 		return qSearch(pos,alpha,beta,timeLeft);
 		//return evalBoard(pos);
 	}
-	int kingpos;
+	
 	struct move moves[MAX_MOVES];
 	int num_moves = genLegalMoves(pos,moves);
 	clock_t begin = clock();
 	int timeElapsed = 0;
 	int numcheckmoves = 0;
+	
 	for (int i = 0;(i < num_moves && timeElapsed == 0);i++) {
 		clock_t end = clock();
 		double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 		int time_spentms = (int)(time_spent * 1000);
+		
 		makeMove(&moves[i],pos);
 		pos->tomove = !pos->tomove;
 		if (pos->tomove == WHITE) kingpos = pos->Wkingpos;
@@ -188,18 +209,11 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int time
 			continue;
 		}
 		pos->tomove = !pos->tomove;
-		/*
-		if (isThreefold(*pos)) {
-			unmakeMove(pos);
-			return 0;
-		}
-		if (pos->halfmoves >= 100) {
-			unmakeMove(pos);
-			return 0;
-		}
-		 */
+		
 		int score = -alphaBeta(pos,-beta,-alpha, depthleft - 1,(timeLeft - time_spentms));
+		
 		unmakeMove(pos);
+		
 		if (score >= beta) {
 			return beta;
 		}
@@ -207,7 +221,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int time
 			alpha = score;
 		}
 	}
-	//printf("%d - %d\n",num_moves,numcheckmoves);
+	
 	if (num_moves == numcheckmoves) {
 		// no legal moves
 		if (pos->tomove == WHITE) kingpos = pos->Wkingpos;
@@ -215,28 +229,32 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int time
 		int incheck = isCheck(pos,kingpos);
 		if (incheck) {
 			// side to move is in checkmate
-			return -99999;
+			return -MATE_SCORE;
 		}
 		else {
 			// stalemate
 			return 0;
 		}
 	}
+	
 	return alpha;
 }
 struct move search(struct position pos, int searchdepth,int movetime) {
+	assert(&pos);
+	assert(searchdepth>=0);
+	assert(movetime>0);
 	nodesSearched = 0;
+	
 	struct move moves[MAX_MOVES];
 	int kingpos;
 	clock_t begin = clock();
 	int timeElapsed = 0;
 	double time_spent;
 	struct move bestmove;
-	int curdepth;
 	int nps;
 	int num_moves = genLegalMoves(&pos,moves);
 	struct move lastbestmove = moves[0];
-	for (curdepth = 1; (curdepth < searchdepth+1 && timeElapsed == 0);curdepth++) {
+	for (int curdepth = 1; (curdepth < searchdepth+1 && timeElapsed == 0);curdepth++) {
 		int bestScore = -9999;
 		for (int i = 0;i < num_moves;i++) {
 			clock_t end = clock();
@@ -247,7 +265,9 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 				timeElapsed = 1;
 				break;
 			}
+			
 			makeMove(&moves[i],&pos);
+			
 			pos.tomove = !pos.tomove;
 			if (pos.tomove == WHITE) kingpos = pos.Wkingpos;
 			if (pos.tomove == BLACK) kingpos = pos.Bkingpos;
@@ -257,6 +277,7 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 				continue;
 			}
 			pos.tomove = !pos.tomove;
+			
 			int curscore;
 			//int curscore = -negaMax(&pos,curdepth-1,(movetime - time_spentms));
 			if (isThreefold(&pos)) {
@@ -268,20 +289,24 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 			else {
 				curscore = -alphaBeta(&pos,-99999,99999,curdepth-1,(movetime - time_spentms));
 			}
-			//printf("%d - %s - %d\n",curdepth,movetostr(moves[i]),curscore);
-			if (curscore == 99999) {
+
+			if (curscore == MATE_SCORE) {
 				printf("info depth %d nodes %d time %d nps %d score mate %d pv %s\n",(curdepth),nodesSearched,((int)(time_spent*1000)),nps,curdepth,movetostr(moves[i]));
 				fflush(stdout);
 				unmakeMove(&pos);
 				return moves[i];
 			}
+			
 			if (curscore > bestScore) {
 				bestScore = curscore;
 				bestmove = moves[i];
 			}
+			
 			unmakeMove(&pos);
+			
 			nps = nodesSearched / time_spent;
 		}
+		
 		lastbestmove = bestmove;
 		/*
 		printf("moves before: ");
@@ -313,6 +338,7 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 			num_moves++;
 			}
 		}
+		 */
 		/*
 		printf("moves after: ");
 		for (int i =0;i<num_moves;i++) {
