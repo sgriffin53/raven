@@ -118,7 +118,10 @@ int PSTBP[] = {
 			-50, -50, -50, -80, -80, -50, -50, -50,
 			-900,  -900,  -900, -900,  -900,  -900,  -900,  -900
 		};
+		
 int PSTval(char piece, int square) {
+	assert(piece);
+	assert(square >= 0 && square <= 63);
 	if (piece == 'K') {
 		return PSTWK[square];
 	}

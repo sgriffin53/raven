@@ -1,22 +1,16 @@
 
 
 int strsquaretoidx(char square[]) {
-	int file, rank;
-	file = (int)square[0] - 97;
-	rank = (int)square[1] - 49;
+	int file = (int)square[0] - 97;
+	int rank = (int)square[1] - 49;
 	rank = 7 - rank;
 	return (((rank) << 3) | (file));
-}
-int getrank(int square) {
-	return (int)(square / 8);
-}
-int getfile(int square) {
-	return square % 8;
 }
 int fileranktosquareidx(int file,int rank) {
 	return (rank) * 8 + file;
 }
 struct position parsefen(char fen[]) {
+	assert(fen);
 	char splitstr[100][8192];
 	char * token;
 	// set blank position
@@ -31,14 +25,15 @@ struct position parsefen(char fen[]) {
 				.tomove=1,.Wkingpos=0,.Bkingpos=0};
 	int i = 0;
 	int j = 0;
+	
 	token = strtok(fen," ");
 	while (token != NULL) {
 		strcpy(splitstr[i],token);
 		i++;
 		token = strtok(NULL, " ");
 	}
+	
 	//int splitstrend = i; // position of end of splitstr array
-	j = 0;
 	for (i = 0;i<strlen(splitstr[0]);i++) {
 		char letter = splitstr[0][i];
 		switch (letter) {
@@ -67,23 +62,30 @@ struct position parsefen(char fen[]) {
 		}
 		j++;
 	}
+	
 	if (strcmp(splitstr[1],"w") == 0) pos.tomove = WHITE;
 	if (strcmp(splitstr[1],"b") == 0) pos.tomove = BLACK;
+	
 	for (i = 0;i < strlen(splitstr[2]);i++) {
 		if (splitstr[2][i] == 'K') pos.WcastleKS = 1;
 		else if (splitstr[2][i] == 'Q') pos.WcastleQS = 1;
 		else if (splitstr[2][i] == 'k') pos.BcastleKS = 1;
 		else if (splitstr[2][i] == 'q') pos.BcastleQS = 1;
 	}
+	
 	if (strcmp(splitstr[3],"-") != 0) {
 		//en passant square given
 		pos.epsquare = strsquaretoidx(splitstr[3]);
 	}
+	
 	pos.halfmoves = atoi(splitstr[4]);
 	if (splitstr[4][0] == '-') pos.halfmoves = 0;
+	
 	return pos;
 }
 int isThreefold(struct position *pos) {
+	assert(pos);
+	assert(pos->halfmoves >= 0);
 	if (pos->halfmoves <= 4) return 0;
 	int numrepeats = 0;
 	U64 curposhash = generateHash(pos);
@@ -99,13 +101,14 @@ int isThreefold(struct position *pos) {
 	return 0;
 }
 int isCheck(struct position *pos, int kingpos) {
-	int kingdisty;
-	int kingdistx;
+	assert(pos);
+	assert(kingpos >= 0 && kingpos <= 63);
 	int file, rank;
 	int newsquare;
 	int outofbounds;
 	char enemyknight, enemypawn, enemyrook, enemybishop, enemyqueen;
 	int i;
+	
 	if (pos->tomove == WHITE) {
 		enemyknight = 'n';
 		enemypawn = 'p';
@@ -120,6 +123,7 @@ int isCheck(struct position *pos, int kingpos) {
 		enemybishop = 'B';
 		enemyqueen = 'Q';
 	}
+	
 	int Ndirs[8][2] = {{-2,-1},{-1,-2},{+1,-2},{+2,-1},{+2,+1},{+1,+2},{-1,+2},{-2,+1}};
 	int Bdirs[4][2] = {{-1,-1},{-1,+1},{+1,-1},{+1,+1}};
 	int Rdirs[4][2] = {{0,1},{0,-1},{-1,0},{1,0}};
@@ -135,6 +139,7 @@ int isCheck(struct position *pos, int kingpos) {
 	if (pos->tomove == BLACK) {
 		memcpy(Pdirs,BPdirs,sizeof(BPdirs));
 	}
+	
 	//int Kdirs[8][2] = {{-1,-1},{-1,+1},{+1,-1},{+1,+1},{0,1},{0,-1},{-1,0},{1,0}};
 	// check for knight attacks
 	for (i = 0;i < 8;i++) {
@@ -148,6 +153,7 @@ int isCheck(struct position *pos, int kingpos) {
 			return 1;
 		}
 	}
+	
 	// check for pawn attacks
 	for (i = 0;i < 2;i++) {
 		file = getfile(kingpos) + Pdirs[i][0];
@@ -160,6 +166,7 @@ int isCheck(struct position *pos, int kingpos) {
 			return 1;
 		}
 	}
+	
 	// check for bishop and queen attacks on diagonals
 	for (i = 0;i < 4;i++) {
 		outofbounds = 0;
@@ -210,6 +217,7 @@ int isCheck(struct position *pos, int kingpos) {
 			}
 		}
 	}
+	
 	// check for rook and queen attacks along laterals
 	for (i = 0;i < 4;i++) {
 		outofbounds = 0;
@@ -260,9 +268,10 @@ int isCheck(struct position *pos, int kingpos) {
 			}
 		}
 	}
+	
 	// check for king checks
-	kingdisty = abs(getrank(pos->Bkingpos) - getrank(pos->Wkingpos));
-	kingdistx = abs(getfile(pos->Wkingpos) - getfile(pos->Bkingpos));
+	int kingdisty = abs(getrank(pos->Bkingpos) - getrank(pos->Wkingpos));
+	int kingdistx = abs(getfile(pos->Wkingpos) - getfile(pos->Bkingpos));
 	if ((kingdisty <= 1) && (kingdistx <= 1)) {
 		// kings are next to each other so it's check
 		return 1;
@@ -271,6 +280,8 @@ int isCheck(struct position *pos, int kingpos) {
 }
 
 char* movetostr(struct move move) {
+	assert(move.to);
+	assert(move.from);
 	char returnstring[6];
 	char startsquarefile = (char)(getfile(move.from) + 97);
 	char startsquarerank = (char)(7 - getrank(move.from) + 49);
