@@ -59,7 +59,7 @@ extern int count_nps(long nodes, long long time);
 
 // order.c
 
-int mvvlva(int victim, int attacker);
+//int mvvlva(int victim, int attacker);
 int compareMoves(const void *m1, const void *m2);
 int moveScore(Board *board, Move move);
 
