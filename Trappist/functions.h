@@ -75,7 +75,7 @@ extern void initTTable(TTable *table);
 extern void clearTTable(TTable *table);
 extern int probeTT(Board *board, Move *move);
 extern void storeTT(Board *board, Move move);
-extern U64 generateHash(struct position *pos);
+extern U64 generateHash(const struct position *pos);
 
 // uci.c
 
