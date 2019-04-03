@@ -6,6 +6,8 @@
 #include "Trappist\definitions.h"
 #include "Trappist\functions.h"
 
+#include "board.h"
+
 U64 pieceHash[13][64];
 U64 turnHash;
 U64 castleHash[4];
@@ -61,17 +63,21 @@ int pieceintval(char inpiece) {
 	if (inpiece == 'R') return 9;
 	if (inpiece == 'Q') return 10;
 	if (inpiece == 'K') return 11;
-	//printf("%c\n",inpiece);
+	//printf("-- %c\n",inpiece);
 	assert(0);
 	return 0;
 }
 
-U64 generateHash(struct position *pos) {
+U64 generateHash(const struct position *pos) {
 	assert(pos);
 	U64 zobrist = 0;
 	
 	for(int square = 0; square < 64; square++) {
 		if(pos->board[square] != '0') {
+			char squarepiece = pos->board[square];
+			//printf("piece: %c %d\n",squarepiece,(int)squarepiece);
+			if ((int)squarepiece == -16) dspboard(*pos);
+			assert((int)squarepiece != -16);
 			int piece = pieceintval(pos->board[square]);
 			zobrist ^= pieceHash[piece][square];
 			//printf("piece hash: %s %c %" PRIu64 "\n",squareidxtostr(square),pos->board[square],pieceHash[piece][square]);

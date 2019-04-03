@@ -181,13 +181,13 @@ int sortMovesOld(const struct position *pos,struct move *moves, const int num_mo
 	}
 	return num_moves;
 }
-int isThreefold(struct position *pos) {
+int isThreefold(const struct position *pos) {
 	assert(pos);
 	assert(pos->halfmoves >= 0);
 	if (pos->halfmoves <= 4) return 0;
 	int numrepeats = 0;
 	U64 curposhash = generateHash(pos);
-	for (int i = (posstackend - 1);i > (posstackend - 1 - pos->halfmoves);i--) {
+	for (int i = (posstackend - 1);(i > (posstackend - 1 - pos->halfmoves)) && i >= 0;i--) {
 		struct position checkpos = posstack[i];
 		if (generateHash(&checkpos) == curposhash) {
 			numrepeats++;
