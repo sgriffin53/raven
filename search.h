@@ -159,7 +159,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int time
 	
 	struct move moves[MAX_MOVES];
 	int num_moves = genLegalMoves(pos,moves);
-	//sortMoves(pos,moves,num_moves);
+	sortMoves(pos,moves,num_moves);
 	clock_t begin = clock();
 	int timeElapsed = 0;
 	int numcheckmoves = 0;
