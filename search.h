@@ -98,8 +98,8 @@ int qSearch(struct position *pos, int alpha, int beta, int timeLeft) {
 			timeElapsed = 1;
 			break;
 		}
-		int iscap = 0;
-		if (pos->board[moves[i].to] != '0') iscap = 1;
+
+		if (pos->board[moves[i].to] == '0') continue;
 		
 		makeMove(&moves[i],pos);
 
@@ -113,24 +113,16 @@ int qSearch(struct position *pos, int alpha, int beta, int timeLeft) {
 			continue;
 		}
 		pos->tomove = !pos->tomove;
+
+		// score node
+		score = -qSearch(pos,-beta,-alpha, (time_spentms - timeLeft));
 		
-		if (pos->tomove == WHITE) kingpos = pos->Wkingpos;
-		else kingpos = pos->Bkingpos;
-		incheck = isCheck(pos,kingpos);
+		nodesSearched++;
 		
-		if ((incheck) || (iscap)) {
-			//printf("%s\n",movetostr(moves[i]));
-			//printf("%d %d %d\n",-beta,-alpha,(time_spentms - timeLeft));
-			score = -qSearch(pos,-beta,-alpha, (time_spentms - timeLeft));
-			unmakeMove(pos);
-			nodesSearched++;
-			if (score >= beta) return beta;
-			if (score > alpha) alpha = score;
-		}
-		else {
-			unmakeMove(pos);
-			continue;
-		}
+		unmakeMove(pos);
+		
+		if (score >= beta) return beta;
+		if (score > alpha) alpha = score;
 	}
 	return alpha;
 }

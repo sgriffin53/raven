@@ -12,25 +12,24 @@ U64 pieceHash[13][64];
 U64 turnHash;
 U64 castleHash[4];
 
-U64 rand64() {
-	U64 r = 0;
-	for (int i=0; i<64; i++) {
-		r = r*2 + rand()%2;
-	}
-	return r;
-}
+#define RAND_64 ((uint64_t)rand() | \
+                 (uint64_t)rand() << 15 | \
+                 (uint64_t)rand() << 30 | \
+                 (uint64_t)rand() << 45 | \
+                 ((uint64_t)rand() & 0xf) << 60 )
+	
 void initZobrist() {
 
 	for(int i = 0; i < 13; i++) {
 		for(int j = 0; j < 64; j++) {
-			pieceHash[i][j] = rand64();
+			pieceHash[i][j] = RAND_64;
 		}
 	}
 	
-	turnHash = rand64();
+	turnHash = RAND_64;
 
 	for(int i = 0; i < 4; i++) {
-		castleHash[i] = rand64();
+		castleHash[i] = RAND_64;
 	}
 }
 /*
