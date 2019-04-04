@@ -11,7 +11,7 @@ int negaMax(struct position *pos,int depth,int timeLeft) {
 	nodesSearched++;
 	
 	if (depth == 0) {
-		return evalBoard(pos);
+		return taperedEval(pos);
 	}
 	
 	int kingpos;
@@ -80,7 +80,7 @@ int qSearch(struct position *pos, int alpha, int beta, int timeLeft) {
 	int score;
 	int kingpos;
 	struct move moves[MAX_MOVES];
-	int standpat = evalBoard(pos);
+	int standpat = taperedEval(pos);
 	if (standpat >= beta) {
 		nodesSearched++;
 		return beta;

@@ -213,7 +213,7 @@ int main() {
 		else if (strcmp(splitstr[0],"unmove") == 0) unmakeMove(&pos);
 		
 		else if (strcmp(splitstr[0],"eval") == 0) {
-			printf("score: %d",evalBoard(&pos));
+			printf("score: %d",taperedEval(&pos));
 			fflush(stdout);
 		}
 		
@@ -238,7 +238,7 @@ int main() {
 		
 		else if (strcmp(splitstr[0],"PST") == 0) {
 			char piece = splitstr[1][0];
-			printf("%d\n",PSTval(piece, atoi(splitstr[2])));
+			printf("%d\n",PSTval(piece, atoi(splitstr[2]),'O'));
 		}
 		
 		else if (strcmp(splitstr[0],"rank") == 0) printf("%d\n",getrank(atoi(splitstr[1])));
