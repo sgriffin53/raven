@@ -20,7 +20,7 @@ int genLegalPawnMoves(struct position *pos, int square, struct move *Pmoves) {
 	
 	int file = getfile(square);
 	int rank = getrank(square);
-	int startsquare = fileranktosquareidx(file,rank);
+	int startsquare = square;
 	
 	if ((pos->tomove == WHITE)) {
 		// one square forward
@@ -590,9 +590,6 @@ int genLegalBishopMoves(struct position *pos, int square, struct move *Bmoves) {
 	assert(pos);
 	assert(square >= 0 && square <= 63);
 	assert(Bmoves);
-	int newfile, newrank;
-	int outofbounds;
-	int newsquare;
 	int bmovesend = 0;
 	int file = getfile(square);
 	int rank = getrank(square);
@@ -601,14 +598,13 @@ int genLegalBishopMoves(struct position *pos, int square, struct move *Bmoves) {
 	
 	// gen bishop moves
 	for (int i = 0;i < 4;i++) {
-		outofbounds = 0;
-		newfile = file;
-		newrank = rank;
+		int newfile = file;
+		int newrank = rank;
 		
 		while (1) {
 			newfile = newfile + Bdirs[i][0];
 			newrank = newrank + Bdirs[i][1];
-			newsquare = fileranktosquareidx(newfile,newrank);
+			int newsquare = fileranktosquareidx(newfile,newrank);
 			if ((piece == 'b') && (pos->tomove == WHITE)) {
 				break;
 			}
@@ -674,36 +670,28 @@ int genLegalRookMoves(struct position *pos, int square, struct move *Rmoves) {
 	assert(pos);
 	assert(square >= 0 && square <= 63);
 	assert(Rmoves);
-	int newfile, newrank;
-	int outofbounds;
-	int newsquare;
 	int rmovesend = 0;
-	int i;
 	int file = getfile(square);
 	int rank = getrank(square);
 	int startsquare = fileranktosquareidx(file,rank);
 	char piece = pos->board[startsquare];
-	for (i = 0;i < 4;i++) {
-		outofbounds = 0;
+	for (int i = 0;i < 4;i++) {
 		file = getfile(square);
 		rank = getrank(square);
-		newfile = file;
-		newrank = rank;
+		int newfile = file;
+		int newrank = rank;
 		
-		while (outofbounds == 0) {
+		while (1) {
 			newfile = newfile + Rdirs[i][0];
 			newrank = newrank + Rdirs[i][1];
-			newsquare = fileranktosquareidx(newfile,newrank);
+			int newsquare = fileranktosquareidx(newfile,newrank);
 			if ((piece == 'r') && (pos->tomove == WHITE)) {
-				outofbounds = 1;
 				break;
 			}
 			if ((piece == 'R') && (pos->tomove == BLACK)) {
-				outofbounds = 1;
 				break;
 			}
 			if ((newfile < 0) || (newfile > 7) || (newrank < 0) || (newrank > 7)) {
-				outofbounds = 1;
 				break;
 			}
 			
@@ -711,7 +699,6 @@ int genLegalRookMoves(struct position *pos, int square, struct move *Rmoves) {
 				if (isWhitePiece(pos->board[newsquare])) {
 					// char is uppercase so is white piece
 					// line of sight is blocked by friendly piece so not check
-					outofbounds = 1;
 					break;
 				}
 				if (isBlackPiece(pos->board[newsquare])) {
@@ -722,7 +709,6 @@ int genLegalRookMoves(struct position *pos, int square, struct move *Rmoves) {
 					Rmoves[rmovesend].prom = 0;
 					Rmoves[rmovesend].cappiece = pos->board[newsquare];
 					rmovesend += 1;
-					outofbounds = 1;
 					break;
 				}
 				Rmoves[rmovesend].from = startsquare;
@@ -736,7 +722,6 @@ int genLegalRookMoves(struct position *pos, int square, struct move *Rmoves) {
 				if (isBlackPiece(pos->board[newsquare])) {
 					// char is lowercase so is black piece
 					// line of sight is blocked by friendly piece so not check
-					outofbounds = 1;
 					break;
 				}
 				if (isWhitePiece(pos->board[newsquare])) {
@@ -747,7 +732,6 @@ int genLegalRookMoves(struct position *pos, int square, struct move *Rmoves) {
 					Rmoves[rmovesend].prom = 0;
 					Rmoves[rmovesend].cappiece = pos->board[newsquare];
 					rmovesend += 1;
-					outofbounds = 1;
 					break;
 				}
 				Rmoves[rmovesend].from = startsquare;
@@ -765,9 +749,6 @@ int genLegalQueenMoves(struct position *pos, int square, struct move *Qmoves) {
 	assert(pos);
 	assert(square >= 0 && square <= 63);
 	assert(Qmoves);
-	int newfile, newrank;
-	int outofbounds;
-	int newsquare;
 	int qmovesend = 0;
 	int file = getfile(square);
 	int rank = getrank(square);
@@ -775,26 +756,20 @@ int genLegalQueenMoves(struct position *pos, int square, struct move *Qmoves) {
 	char piece = pos->board[startsquare];
 	
 	for (int i = 0;i < 8;i++) {
-		outofbounds = 0;
-		file = getfile(square);
-		rank = getrank(square);
-		newfile = file;
-		newrank = rank;
+		int newfile = file;
+		int newrank = rank;
 		
-		while (outofbounds == 0) {
+		while (1) {
 			newfile = newfile + Qdirs[i][0];
 			newrank = newrank + Qdirs[i][1];
-			newsquare = fileranktosquareidx(newfile,newrank);
+			int newsquare = fileranktosquareidx(newfile,newrank);
 			if ((piece == 'q') && (pos->tomove == WHITE)) {
-				outofbounds = 1;
 				break;
 			}
 			if ((piece == 'Q') && (pos->tomove == BLACK)) {
-				outofbounds = 1;
 				break;
 			}
 			if ((newfile < 0) || (newfile > 7) || (newrank < 0) || (newrank > 7)) {
-				outofbounds = 1;
 				break;
 			}
 			
@@ -802,7 +777,6 @@ int genLegalQueenMoves(struct position *pos, int square, struct move *Qmoves) {
 				if (isWhitePiece(pos->board[newsquare])) {
 					// char is uppercase so is white piece
 					// line of sight is blocked by friendly piece so not check
-					outofbounds = 1;
 					break;
 				}
 				if (isBlackPiece(pos->board[newsquare])) {
@@ -813,7 +787,6 @@ int genLegalQueenMoves(struct position *pos, int square, struct move *Qmoves) {
 					Qmoves[qmovesend].prom = 0;
 					Qmoves[qmovesend].cappiece = pos->board[newsquare];
 					qmovesend += 1;
-					outofbounds = 1;
 					break;
 				}
 				Qmoves[qmovesend].from = startsquare;
@@ -827,7 +800,6 @@ int genLegalQueenMoves(struct position *pos, int square, struct move *Qmoves) {
 				if (isBlackPiece(pos->board[newsquare])) {
 					// char is lowercase so is black piece
 					// line of sight is blocked by friendly piece so not check
-					outofbounds = 1;
 					break;
 				}
 				if (isWhitePiece(pos->board[newsquare])) {
@@ -838,7 +810,6 @@ int genLegalQueenMoves(struct position *pos, int square, struct move *Qmoves) {
 					Qmoves[qmovesend].prom = 0;
 					Qmoves[qmovesend].cappiece = pos->board[newsquare];
 					qmovesend += 1;
-					outofbounds = 1;
 					break;
 				}
 				Qmoves[qmovesend].from = startsquare;
@@ -856,136 +827,93 @@ int genLegalKingMoves(struct position *pos, int square, struct move *Kmoves) {
 	assert(pos);
 	assert(square >= 0 && square <= 63);
 	assert(Kmoves);
-	int newfile, newrank;
-	int outofbounds;
-	int newsquare;
 	int kmovesend = 0;
 	int file = getfile(square);
 	int rank = getrank(square);
 	int startsquare = fileranktosquareidx(file,rank);
 	char piece = pos->board[startsquare];
-	
+	int newsquare;
 	if ((pos->tomove == WHITE) && (piece == 'K')) {
 		for (int i = 0;i < 8;i++) {
-			outofbounds = 0;
-			newfile = file + Kdirs[i][0];
-			newrank = rank + Kdirs[i][1];
+			int newfile = file + Kdirs[i][0];
+			int newrank = rank + Kdirs[i][1];
 			newsquare = fileranktosquareidx(newfile,newrank);
 			char cappiece = pos->board[newsquare];
 			if ((newfile < 0) || (newfile > 7) || (newrank < 0) || (newrank > 7)) {
 				continue;
-				outofbounds = 1;
 			}
 			if (isWhitePiece(cappiece)) {
 				// piece is white piece
 				continue;
-				outofbounds = 1;
 			}
 			
-			if (outofbounds == 0) {
-				Kmoves[kmovesend].from = startsquare;
-				Kmoves[kmovesend].to = newsquare;
-				Kmoves[kmovesend].prom = 0;
-				Kmoves[kmovesend].cappiece = pos->board[newsquare];
-				kmovesend += 1;
-			}
+			Kmoves[kmovesend].from = startsquare;
+			Kmoves[kmovesend].to = newsquare;
+			Kmoves[kmovesend].prom = 0;
+			Kmoves[kmovesend].cappiece = pos->board[newsquare];
+			kmovesend += 1;
 			
 		}
 		// White castling QS
-		while (1) {
-			if ((pos->board[B1] != '0') || (pos->board[C1] != '0') || (pos->board[D1] != '0')) {
-				break;
-			}
 			//if (isCheck(pos,57) == 1) outofbounds = 1;
-			if (isCheck(pos,C1) == 1) break;
-			if (isCheck(pos,D1) == 1) break;
-			if (isCheck(pos,E1) == 1) break;
-			if (pos->WcastleQS == 0) break;
+		if ( (pos->board[B1] == '0') && (pos->board[C1] == '0') && (pos->board[D1] == '0') &&
+				(isCheck(pos,C1) == 0) && (isCheck(pos,D1) == 0) && (isCheck(pos,E1) == 0) &&  (pos->WcastleQS == 1) ) {
 			
 			Kmoves[kmovesend].from = E1;
 			Kmoves[kmovesend].to = C1;
 			Kmoves[kmovesend].prom = 0;
 			Kmoves[kmovesend].cappiece = pos->board[newsquare];
 			kmovesend += 1;
-			break;
 		}
 	
 		// White castling KS
-		while (1) {
-		if ((pos->board[F1] != '0') || (pos->board[G1] != '0')) {
-			break;
-		}
-		if (isCheck(pos,F1) == 1) break;
-		if (isCheck(pos,G1) == 1) break;
-		if (isCheck(pos,E1) == 1) break;
-		if (pos->WcastleKS == 0) break;
+		if ( (pos->board[F1] == '0') && (pos->board[G1] == '0') &&
+				(isCheck(pos,F1) == 0) && (isCheck(pos,G1) == 0) && (isCheck(pos,E1) == 0) &&  (pos->WcastleKS == 1) ) {
 			Kmoves[kmovesend].from = E1;
 			Kmoves[kmovesend].to = G1;
 			Kmoves[kmovesend].prom = 0;
 			Kmoves[kmovesend].cappiece = pos->board[newsquare];
 			kmovesend += 1;
-			break;
 		}
 	}
 	
 	if ((pos->tomove == BLACK) && (piece == 'k')) {
 		for (int i = 0;i < 8;i++) {
-			outofbounds = 0;
-			newfile = file + Kdirs[i][0];
-			newrank = rank + Kdirs[i][1];
+			int newfile = file + Kdirs[i][0];
+			int newrank = rank + Kdirs[i][1];
 			newsquare = fileranktosquareidx(newfile,newrank);
 			char cappiece = pos->board[newsquare];
 			if ((newfile < 0) || (newfile > 7) || (newrank < 0) || (newrank > 7)) {
 				continue;
-				outofbounds = 1;
 			}
 			if (isBlackPiece(cappiece)) {
 				// piece is black piece
 				continue;
-				outofbounds = 1;
 			}
-			
-			if (outofbounds == 0) {
-				Kmoves[kmovesend].from = startsquare;
-				Kmoves[kmovesend].to = newsquare;
-				Kmoves[kmovesend].prom = 0;
-				Kmoves[kmovesend].cappiece = pos->board[newsquare];
-				kmovesend += 1;
-			}
+			Kmoves[kmovesend].from = startsquare;
+			Kmoves[kmovesend].to = newsquare;
+			Kmoves[kmovesend].prom = 0;
+			Kmoves[kmovesend].cappiece = pos->board[newsquare];
+			kmovesend += 1;
 			
 		}
 		// Black castling QS
-		while (1) {
-			if ((pos->board[B8] != '0') || (pos->board[C8] != '0') || (pos->board[D8] != '0')) {
-				break;
-			}
-			//if (isCheck(pos,1) == 1) outofbounds = 1;
-			if (isCheck(pos,C8) == 1) break;
-			if (isCheck(pos,D8) == 1) break;
-			if (isCheck(pos,E8) == 1) break;
-			if (pos->BcastleQS == 0) break;
+		if ( (pos->board[B1] == '0') && (pos->board[C8] == '0') && (pos->board[D8] == 0) &&
+				(isCheck(pos,C8) == 0) && (isCheck(pos,D8) == 0) && (isCheck(pos,E8) == 0) &&  (pos->BcastleQS == 1) ) {
 			Kmoves[kmovesend].from = E8;
 			Kmoves[kmovesend].to = C8;
 			Kmoves[kmovesend].prom = 0;
 			Kmoves[kmovesend].cappiece = pos->board[newsquare];
 			kmovesend += 1;
-			break;
 		}
 		// Black castling KS
-		while (1) {
-		if ((pos->board[F8] != '0') || (pos->board[G8] != '0')) {
-			break;
-		}
-		if (isCheck(pos,E8) == 1) break;
-		if (isCheck(pos,F8) == 1) break;
-		if (isCheck(pos,G8) == 1) break;
-		if (pos->BcastleKS == 0) break;
+		if ( (pos->board[F8] == '0') && (pos->board[G8] == '0') &&
+				(isCheck(pos,E8) == 0) && (isCheck(pos,F8) == 0) && (isCheck(pos,G8) == 0) &&  (pos->BcastleKS == 1) ) {
 			Kmoves[kmovesend].from = E8;
 			Kmoves[kmovesend].to = G8;
 			Kmoves[kmovesend].prom = 0;
 			Kmoves[kmovesend].cappiece = pos->board[newsquare];
 			kmovesend += 1;
-			break;
 		}
 	}
 	return kmovesend;

@@ -41,6 +41,7 @@ int taperedEval(struct position *pos) {
 	int queenPhase = 4;
 	int openingEval = 0;
 	int endgameEval = 0;
+	int rank, file, newrank, newfile;
 	for (int i = 0;i<64;i++) {
 		char piece = pos->board[i];
 		if (piece != '0') {
