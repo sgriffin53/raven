@@ -41,6 +41,7 @@ int genLegalPawnMoves(struct position *pos, int square, struct move *Pmoves) {
 			Pmoves[pmovesend].from = startsquare;
 			Pmoves[pmovesend].to = newsquare;
 			Pmoves[pmovesend].prom = 0;
+			Pmoves[pmovesend].cappiece = pos->board[newsquare];
 			pmovesend += 1;
 			break;
 		}
@@ -70,6 +71,7 @@ int genLegalPawnMoves(struct position *pos, int square, struct move *Pmoves) {
 				Pmoves[pmovesend].from = startsquare;
 				Pmoves[pmovesend].to = newsquare;
 				Pmoves[pmovesend].prom = 0;
+				Pmoves[pmovesend].cappiece = pos->board[newsquare];
 				pmovesend += 1;
 				break;
 			}
@@ -95,6 +97,7 @@ int genLegalPawnMoves(struct position *pos, int square, struct move *Pmoves) {
 			Pmoves[pmovesend].from = startsquare;
 			Pmoves[pmovesend].to = newsquare;
 			Pmoves[pmovesend].prom = 0;
+			Pmoves[pmovesend].cappiece = pos->board[newsquare];
 			pmovesend += 1;
 			break;
 		}
@@ -117,6 +120,7 @@ int genLegalPawnMoves(struct position *pos, int square, struct move *Pmoves) {
 			Pmoves[pmovesend].from = startsquare;
 			Pmoves[pmovesend].to = newsquare;
 			Pmoves[pmovesend].prom = 0;
+			Pmoves[pmovesend].cappiece = pos->board[newsquare];
 			pmovesend += 1;
 			break;
 		}
@@ -133,6 +137,7 @@ int genLegalPawnMoves(struct position *pos, int square, struct move *Pmoves) {
 				Pmoves[pmovesend].from = startsquare;
 				Pmoves[pmovesend].to = newsquare;
 				Pmoves[pmovesend].prom = 0;
+				Pmoves[pmovesend].cappiece = pos->board[newsquare];
 				pmovesend += 1;
 			}
 			break;
@@ -149,6 +154,7 @@ int genLegalPawnMoves(struct position *pos, int square, struct move *Pmoves) {
 				Pmoves[pmovesend].from = startsquare;
 				Pmoves[pmovesend].to = newsquare;
 				Pmoves[pmovesend].prom = 0;
+				Pmoves[pmovesend].cappiece = pos->board[newsquare];
 				pmovesend += 1;
 			}
 			break;
@@ -172,18 +178,22 @@ int genLegalPawnMoves(struct position *pos, int square, struct move *Pmoves) {
 				Pmoves[pmovesend].from = startsquare;
 				Pmoves[pmovesend].to = newsquare;
 				Pmoves[pmovesend].prom = 'b';
+				Pmoves[pmovesend].cappiece = pos->board[newsquare];
 				pmovesend += 1;
 				Pmoves[pmovesend].from = startsquare;
 				Pmoves[pmovesend].to = newsquare;
 				Pmoves[pmovesend].prom = 'n';
+				Pmoves[pmovesend].cappiece = pos->board[newsquare];
 				pmovesend += 1;
 				Pmoves[pmovesend].from = startsquare;
 				Pmoves[pmovesend].to = newsquare;
 				Pmoves[pmovesend].prom = 'r';
+				Pmoves[pmovesend].cappiece = pos->board[newsquare];
 				pmovesend += 1;
 				Pmoves[pmovesend].from = startsquare;
 				Pmoves[pmovesend].to = newsquare;
 				Pmoves[pmovesend].prom = 'q';
+				Pmoves[pmovesend].cappiece = pos->board[newsquare];
 				pmovesend += 1;
 				break;
 			}
@@ -204,18 +214,22 @@ int genLegalPawnMoves(struct position *pos, int square, struct move *Pmoves) {
 				Pmoves[pmovesend].from = startsquare;
 				Pmoves[pmovesend].to = newsquare;
 				Pmoves[pmovesend].prom = 'b';
+				Pmoves[pmovesend].cappiece = pos->board[newsquare];
 				pmovesend += 1;
 				Pmoves[pmovesend].from = startsquare;
 				Pmoves[pmovesend].to = newsquare;
 				Pmoves[pmovesend].prom = 'n';
+				Pmoves[pmovesend].cappiece = pos->board[newsquare];
 				pmovesend += 1;
 				Pmoves[pmovesend].from = startsquare;
 				Pmoves[pmovesend].to = newsquare;
 				Pmoves[pmovesend].prom = 'r';
+				Pmoves[pmovesend].cappiece = pos->board[newsquare];
 				pmovesend += 1;
 				Pmoves[pmovesend].from = startsquare;
 				Pmoves[pmovesend].to = newsquare;
 				Pmoves[pmovesend].prom = 'q';
+				Pmoves[pmovesend].cappiece = pos->board[newsquare];
 				pmovesend += 1;
 				break;
 			}
@@ -236,18 +250,22 @@ int genLegalPawnMoves(struct position *pos, int square, struct move *Pmoves) {
 				Pmoves[pmovesend].from = startsquare;
 				Pmoves[pmovesend].to = newsquare;
 				Pmoves[pmovesend].prom = 'b';
+				Pmoves[pmovesend].cappiece = pos->board[newsquare];
 				pmovesend += 1;
 				Pmoves[pmovesend].from = startsquare;
 				Pmoves[pmovesend].to = newsquare;
 				Pmoves[pmovesend].prom = 'n';
+				Pmoves[pmovesend].cappiece = pos->board[newsquare];
 				pmovesend += 1;
 				Pmoves[pmovesend].from = startsquare;
 				Pmoves[pmovesend].to = newsquare;
 				Pmoves[pmovesend].prom = 'r';
+				Pmoves[pmovesend].cappiece = pos->board[newsquare];
 				pmovesend += 1;
 				Pmoves[pmovesend].from = startsquare;
 				Pmoves[pmovesend].to = newsquare;
 				Pmoves[pmovesend].prom = 'q';
+				Pmoves[pmovesend].cappiece = pos->board[newsquare];
 				pmovesend += 1;
 				break;
 			}
@@ -273,6 +291,7 @@ int genLegalPawnMoves(struct position *pos, int square, struct move *Pmoves) {
 			Pmoves[pmovesend].from = startsquare;
 			Pmoves[pmovesend].to = newsquare;
 			Pmoves[pmovesend].prom = 0;
+			Pmoves[pmovesend].cappiece = pos->board[newsquare];
 			pmovesend += 1;
 			break;
 		}
@@ -304,6 +323,7 @@ int genLegalPawnMoves(struct position *pos, int square, struct move *Pmoves) {
 				Pmoves[pmovesend].from = startsquare;
 				Pmoves[pmovesend].to = newsquare;
 				Pmoves[pmovesend].prom = 0;
+				Pmoves[pmovesend].cappiece = pos->board[newsquare];
 				pmovesend += 1;
 				break;
 			}
@@ -329,6 +349,7 @@ int genLegalPawnMoves(struct position *pos, int square, struct move *Pmoves) {
 			Pmoves[pmovesend].from = startsquare;
 			Pmoves[pmovesend].to = newsquare;
 			Pmoves[pmovesend].prom = 0;
+			Pmoves[pmovesend].cappiece = pos->board[newsquare];
 			pmovesend += 1;
 			break;
 		}
@@ -352,6 +373,7 @@ int genLegalPawnMoves(struct position *pos, int square, struct move *Pmoves) {
 			Pmoves[pmovesend].from = startsquare;
 			Pmoves[pmovesend].to = newsquare;
 			Pmoves[pmovesend].prom = 0;
+			Pmoves[pmovesend].cappiece = pos->board[newsquare];
 			pmovesend += 1;
 			break;
 		}
@@ -369,6 +391,7 @@ int genLegalPawnMoves(struct position *pos, int square, struct move *Pmoves) {
 				Pmoves[pmovesend].from = startsquare;
 				Pmoves[pmovesend].to = newsquare;
 				Pmoves[pmovesend].prom = 0;
+				Pmoves[pmovesend].cappiece = pos->board[newsquare];
 				pmovesend += 1;
 			}
 			break;
@@ -386,6 +409,7 @@ int genLegalPawnMoves(struct position *pos, int square, struct move *Pmoves) {
 				Pmoves[pmovesend].from = startsquare;
 				Pmoves[pmovesend].to = newsquare;
 				Pmoves[pmovesend].prom = 0;
+				Pmoves[pmovesend].cappiece = pos->board[newsquare];
 				pmovesend += 1;
 			}
 			break;
@@ -409,18 +433,22 @@ int genLegalPawnMoves(struct position *pos, int square, struct move *Pmoves) {
 				Pmoves[pmovesend].from = startsquare;
 				Pmoves[pmovesend].to = newsquare;
 				Pmoves[pmovesend].prom = 'b';
+				Pmoves[pmovesend].cappiece = pos->board[newsquare];
 				pmovesend += 1;
 				Pmoves[pmovesend].from = startsquare;
 				Pmoves[pmovesend].to = newsquare;
 				Pmoves[pmovesend].prom = 'n';
+				Pmoves[pmovesend].cappiece = pos->board[newsquare];
 				pmovesend += 1;
 				Pmoves[pmovesend].from = startsquare;
 				Pmoves[pmovesend].to = newsquare;
 				Pmoves[pmovesend].prom = 'r';
+				Pmoves[pmovesend].cappiece = pos->board[newsquare];
 				pmovesend += 1;
 				Pmoves[pmovesend].from = startsquare;
 				Pmoves[pmovesend].to = newsquare;
 				Pmoves[pmovesend].prom = 'q';
+				Pmoves[pmovesend].cappiece = pos->board[newsquare];
 				pmovesend += 1;
 				break;
 			}
@@ -441,18 +469,22 @@ int genLegalPawnMoves(struct position *pos, int square, struct move *Pmoves) {
 				Pmoves[pmovesend].from = startsquare;
 				Pmoves[pmovesend].to = newsquare;
 				Pmoves[pmovesend].prom = 'b';
+				Pmoves[pmovesend].cappiece = pos->board[newsquare];
 				pmovesend += 1;
 				Pmoves[pmovesend].from = startsquare;
 				Pmoves[pmovesend].to = newsquare;
 				Pmoves[pmovesend].prom = 'n';
+				Pmoves[pmovesend].cappiece = pos->board[newsquare];
 				pmovesend += 1;
 				Pmoves[pmovesend].from = startsquare;
 				Pmoves[pmovesend].to = newsquare;
 				Pmoves[pmovesend].prom = 'r';
+				Pmoves[pmovesend].cappiece = pos->board[newsquare];
 				pmovesend += 1;
 				Pmoves[pmovesend].from = startsquare;
 				Pmoves[pmovesend].to = newsquare;
 				Pmoves[pmovesend].prom = 'q';
+				Pmoves[pmovesend].cappiece = pos->board[newsquare];
 				pmovesend += 1;
 				break;
 			}
@@ -474,18 +506,22 @@ int genLegalPawnMoves(struct position *pos, int square, struct move *Pmoves) {
 				Pmoves[pmovesend].from = startsquare;
 				Pmoves[pmovesend].to = newsquare;
 				Pmoves[pmovesend].prom = 'b';
+				Pmoves[pmovesend].cappiece = pos->board[newsquare];
 				pmovesend += 1;
 				Pmoves[pmovesend].from = startsquare;
 				Pmoves[pmovesend].to = newsquare;
 				Pmoves[pmovesend].prom = 'n';
+				Pmoves[pmovesend].cappiece = pos->board[newsquare];
 				pmovesend += 1;
 				Pmoves[pmovesend].from = startsquare;
 				Pmoves[pmovesend].to = newsquare;
 				Pmoves[pmovesend].prom = 'r';
+				Pmoves[pmovesend].cappiece = pos->board[newsquare];
 				pmovesend += 1;
 				Pmoves[pmovesend].from = startsquare;
 				Pmoves[pmovesend].to = newsquare;
 				Pmoves[pmovesend].prom = 'q';
+				Pmoves[pmovesend].cappiece = pos->board[newsquare];
 				pmovesend += 1;
 				break;
 			}
@@ -498,20 +534,18 @@ int genLegalKnightMoves(struct position *pos, int square, struct move *Nmoves) {
 	assert(pos);
 	assert(square >= 0 && square <= 63);
 	assert(Nmoves);
-	int newfile, newrank;
 	int newsquare;
 	char cappiece;
 	int nmovesend = 0;
-	int i;
 	int file = getfile(square);
 	int rank = getrank(square);
 	int startsquare = fileranktosquareidx(file,rank);
 	char piece = pos->board[startsquare];
 	
 	if ((pos->tomove == WHITE) && (piece == 'N')) {
-		for (i = 0;i < 8;i++) {
-			newfile = file + Ndirs[i][0];
-			newrank = rank + Ndirs[i][1];
+		for (int i = 0;i < 8;i++) {
+			int newfile = file + Ndirs[i][0];
+			int newrank = rank + Ndirs[i][1];
 			newsquare = fileranktosquareidx(newfile,newrank);
 			cappiece = pos->board[newsquare];
 			if ((newfile < 0) || (newfile > 7) || (newrank < 0) || (newrank > 7)) {
@@ -524,14 +558,15 @@ int genLegalKnightMoves(struct position *pos, int square, struct move *Nmoves) {
 			Nmoves[nmovesend].from = startsquare;
 			Nmoves[nmovesend].to = newsquare;
 			Nmoves[nmovesend].prom = 0;
+			Nmoves[nmovesend].cappiece = pos->board[newsquare];
 			nmovesend += 1;
 		}
 	}
 	
 	if ((pos->tomove == BLACK) && (piece == 'n')) {
-		for (i = 0;i < 8;i++) {
-			newfile = file + Ndirs[i][0];
-			newrank = rank + Ndirs[i][1];
+		for (int i = 0;i < 8;i++) {
+			int newfile = file + Ndirs[i][0];
+			int newrank = rank + Ndirs[i][1];
 			newsquare = fileranktosquareidx(newfile,newrank);
 			cappiece = pos->board[newsquare];
 			if ((newfile < 0) || (newfile > 7) || (newrank < 0) || (newrank > 7)) {
@@ -544,6 +579,7 @@ int genLegalKnightMoves(struct position *pos, int square, struct move *Nmoves) {
 			Nmoves[nmovesend].from = startsquare;
 			Nmoves[nmovesend].to = newsquare;
 			Nmoves[nmovesend].prom = 0;
+			Nmoves[nmovesend].cappiece = pos->board[newsquare];
 			nmovesend += 1;
 		}
 	}
@@ -558,32 +594,28 @@ int genLegalBishopMoves(struct position *pos, int square, struct move *Bmoves) {
 	int outofbounds;
 	int newsquare;
 	int bmovesend = 0;
-	int i;
 	int file = getfile(square);
 	int rank = getrank(square);
 	int startsquare = fileranktosquareidx(file,rank);
 	char piece = pos->board[startsquare];
 	
 	// gen bishop moves
-	for (i = 0;i < 4;i++) {
+	for (int i = 0;i < 4;i++) {
 		outofbounds = 0;
 		newfile = file;
 		newrank = rank;
 		
-		while (outofbounds == 0) {
+		while (1) {
 			newfile = newfile + Bdirs[i][0];
 			newrank = newrank + Bdirs[i][1];
 			newsquare = fileranktosquareidx(newfile,newrank);
 			if ((piece == 'b') && (pos->tomove == WHITE)) {
-				outofbounds = 1;
 				break;
 			}
 			if ((piece == 'B') && (pos->tomove == BLACK)) {
-				outofbounds = 1;
 				break;
 			}
 			if ((newfile < 0) || (newfile > 7) || (newrank < 0) || (newrank > 7)) {
-				outofbounds = 1;
 				break;
 			}
 			
@@ -591,7 +623,6 @@ int genLegalBishopMoves(struct position *pos, int square, struct move *Bmoves) {
 				if (isWhitePiece(pos->board[newsquare])) {
 					// char is uppercase so is white piece
 					// line of sight is blocked by friendly piece so not check
-					outofbounds = 1;
 					break;
 				}
 				if (isBlackPiece(pos->board[newsquare])) {
@@ -600,13 +631,14 @@ int genLegalBishopMoves(struct position *pos, int square, struct move *Bmoves) {
 					Bmoves[bmovesend].from = startsquare;
 					Bmoves[bmovesend].to = newsquare;
 					Bmoves[bmovesend].prom = 0;
+					Bmoves[bmovesend].cappiece = pos->board[newsquare];
 					bmovesend += 1;
-					outofbounds = 1;
 					break;
 				}
 				Bmoves[bmovesend].from = startsquare;
 				Bmoves[bmovesend].to = newsquare;
 				Bmoves[bmovesend].prom = 0;
+				Bmoves[bmovesend].cappiece = pos->board[newsquare];
 				bmovesend += 1;
 			}
 			
@@ -614,7 +646,6 @@ int genLegalBishopMoves(struct position *pos, int square, struct move *Bmoves) {
 				if (isBlackPiece(pos->board[newsquare])) {
 					// char is lowercase so is black piece
 					// line of sight is blocked by friendly piece so not check
-					outofbounds = 1;
 					break;
 				}
 				if (isWhitePiece(pos->board[newsquare])) {
@@ -623,13 +654,14 @@ int genLegalBishopMoves(struct position *pos, int square, struct move *Bmoves) {
 					Bmoves[bmovesend].from = startsquare;
 					Bmoves[bmovesend].to = newsquare;
 					Bmoves[bmovesend].prom = 0;
+					Bmoves[bmovesend].cappiece = pos->board[newsquare];
 					bmovesend += 1;
-					outofbounds = 1;
 					break;
 				}
 				Bmoves[bmovesend].from = startsquare;
 				Bmoves[bmovesend].to = newsquare;
 				Bmoves[bmovesend].prom = 0;
+				Bmoves[bmovesend].cappiece = pos->board[newsquare];
 				bmovesend += 1;
 			}
 			
@@ -688,6 +720,7 @@ int genLegalRookMoves(struct position *pos, int square, struct move *Rmoves) {
 					Rmoves[rmovesend].from = startsquare;
 					Rmoves[rmovesend].to = newsquare;
 					Rmoves[rmovesend].prom = 0;
+					Rmoves[rmovesend].cappiece = pos->board[newsquare];
 					rmovesend += 1;
 					outofbounds = 1;
 					break;
@@ -695,6 +728,7 @@ int genLegalRookMoves(struct position *pos, int square, struct move *Rmoves) {
 				Rmoves[rmovesend].from = startsquare;
 				Rmoves[rmovesend].to = newsquare;
 				Rmoves[rmovesend].prom = 0;
+				Rmoves[rmovesend].cappiece = pos->board[newsquare];
 				rmovesend += 1;
 			}
 			
@@ -711,6 +745,7 @@ int genLegalRookMoves(struct position *pos, int square, struct move *Rmoves) {
 					Rmoves[rmovesend].from = startsquare;
 					Rmoves[rmovesend].to = newsquare;
 					Rmoves[rmovesend].prom = 0;
+					Rmoves[rmovesend].cappiece = pos->board[newsquare];
 					rmovesend += 1;
 					outofbounds = 1;
 					break;
@@ -718,6 +753,7 @@ int genLegalRookMoves(struct position *pos, int square, struct move *Rmoves) {
 				Rmoves[rmovesend].from = startsquare;
 				Rmoves[rmovesend].to = newsquare;
 				Rmoves[rmovesend].prom = 0;
+				Rmoves[rmovesend].cappiece = pos->board[newsquare];
 				rmovesend += 1;
 			}
 		}
@@ -733,13 +769,12 @@ int genLegalQueenMoves(struct position *pos, int square, struct move *Qmoves) {
 	int outofbounds;
 	int newsquare;
 	int qmovesend = 0;
-	int i;
 	int file = getfile(square);
 	int rank = getrank(square);
 	int startsquare = fileranktosquareidx(file,rank);
 	char piece = pos->board[startsquare];
 	
-	for (i = 0;i < 8;i++) {
+	for (int i = 0;i < 8;i++) {
 		outofbounds = 0;
 		file = getfile(square);
 		rank = getrank(square);
@@ -776,6 +811,7 @@ int genLegalQueenMoves(struct position *pos, int square, struct move *Qmoves) {
 					Qmoves[qmovesend].from = startsquare;
 					Qmoves[qmovesend].to = newsquare;
 					Qmoves[qmovesend].prom = 0;
+					Qmoves[qmovesend].cappiece = pos->board[newsquare];
 					qmovesend += 1;
 					outofbounds = 1;
 					break;
@@ -783,6 +819,7 @@ int genLegalQueenMoves(struct position *pos, int square, struct move *Qmoves) {
 				Qmoves[qmovesend].from = startsquare;
 				Qmoves[qmovesend].to = newsquare;
 				Qmoves[qmovesend].prom = 0;
+				Qmoves[qmovesend].cappiece = pos->board[newsquare];
 				qmovesend += 1;
 			}
 			
@@ -799,6 +836,7 @@ int genLegalQueenMoves(struct position *pos, int square, struct move *Qmoves) {
 					Qmoves[qmovesend].from = startsquare;
 					Qmoves[qmovesend].to = newsquare;
 					Qmoves[qmovesend].prom = 0;
+					Qmoves[qmovesend].cappiece = pos->board[newsquare];
 					qmovesend += 1;
 					outofbounds = 1;
 					break;
@@ -806,6 +844,7 @@ int genLegalQueenMoves(struct position *pos, int square, struct move *Qmoves) {
 				Qmoves[qmovesend].from = startsquare;
 				Qmoves[qmovesend].to = newsquare;
 				Qmoves[qmovesend].prom = 0;
+				Qmoves[qmovesend].cappiece = pos->board[newsquare];
 				qmovesend += 1;
 			}
 			
@@ -821,14 +860,13 @@ int genLegalKingMoves(struct position *pos, int square, struct move *Kmoves) {
 	int outofbounds;
 	int newsquare;
 	int kmovesend = 0;
-	int i;
 	int file = getfile(square);
 	int rank = getrank(square);
 	int startsquare = fileranktosquareidx(file,rank);
 	char piece = pos->board[startsquare];
 	
 	if ((pos->tomove == WHITE) && (piece == 'K')) {
-		for (i = 0;i < 8;i++) {
+		for (int i = 0;i < 8;i++) {
 			outofbounds = 0;
 			newfile = file + Kdirs[i][0];
 			newrank = rank + Kdirs[i][1];
@@ -848,47 +886,50 @@ int genLegalKingMoves(struct position *pos, int square, struct move *Kmoves) {
 				Kmoves[kmovesend].from = startsquare;
 				Kmoves[kmovesend].to = newsquare;
 				Kmoves[kmovesend].prom = 0;
+				Kmoves[kmovesend].cappiece = pos->board[newsquare];
 				kmovesend += 1;
 			}
 			
 		}
 		// White castling QS
-		outofbounds = 0;
-		if ((pos->board[B1] != '0') || (pos->board[C1] != '0') || (pos->board[D1] != '0')) {
-			outofbounds = 1;
-		}
-		//if (isCheck(pos,57) == 1) outofbounds = 1;
-		if (isCheck(pos,C1) == 1) outofbounds = 1;
-		if (isCheck(pos,D1) == 1) outofbounds = 1;
-		if (isCheck(pos,E1) == 1) outofbounds = 1;
-		if (pos->WcastleQS == 0) outofbounds = 1;
-		
-		if (outofbounds == 0) {
+		while (1) {
+			if ((pos->board[B1] != '0') || (pos->board[C1] != '0') || (pos->board[D1] != '0')) {
+				break;
+			}
+			//if (isCheck(pos,57) == 1) outofbounds = 1;
+			if (isCheck(pos,C1) == 1) break;
+			if (isCheck(pos,D1) == 1) break;
+			if (isCheck(pos,E1) == 1) break;
+			if (pos->WcastleQS == 0) break;
+			
 			Kmoves[kmovesend].from = E1;
 			Kmoves[kmovesend].to = C1;
 			Kmoves[kmovesend].prom = 0;
+			Kmoves[kmovesend].cappiece = pos->board[newsquare];
 			kmovesend += 1;
+			break;
 		}
-		
+	
 		// White castling KS
-		outofbounds = 0;
+		while (1) {
 		if ((pos->board[F1] != '0') || (pos->board[G1] != '0')) {
-			outofbounds = 1;
+			break;
 		}
-		if (isCheck(pos,F1) == 1) outofbounds = 1;
-		if (isCheck(pos,G1) == 1) outofbounds = 1;
-		if (isCheck(pos,E1) == 1) outofbounds = 1;
-		if (pos->WcastleKS == 0) outofbounds = 1;
-		if (outofbounds == 0) {
+		if (isCheck(pos,F1) == 1) break;
+		if (isCheck(pos,G1) == 1) break;
+		if (isCheck(pos,E1) == 1) break;
+		if (pos->WcastleKS == 0) break;
 			Kmoves[kmovesend].from = E1;
 			Kmoves[kmovesend].to = G1;
 			Kmoves[kmovesend].prom = 0;
+			Kmoves[kmovesend].cappiece = pos->board[newsquare];
 			kmovesend += 1;
+			break;
 		}
 	}
 	
 	if ((pos->tomove == BLACK) && (piece == 'k')) {
-		for (i = 0;i < 8;i++) {
+		for (int i = 0;i < 8;i++) {
 			outofbounds = 0;
 			newfile = file + Kdirs[i][0];
 			newrank = rank + Kdirs[i][1];
@@ -908,40 +949,43 @@ int genLegalKingMoves(struct position *pos, int square, struct move *Kmoves) {
 				Kmoves[kmovesend].from = startsquare;
 				Kmoves[kmovesend].to = newsquare;
 				Kmoves[kmovesend].prom = 0;
+				Kmoves[kmovesend].cappiece = pos->board[newsquare];
 				kmovesend += 1;
 			}
 			
 		}
 		// Black castling QS
-		outofbounds = 0;
-		if ((pos->board[B8] != '0') || (pos->board[C8] != '0') || (pos->board[D8] != '0')) {
-			outofbounds = 1;
-		}
-		//if (isCheck(pos,1) == 1) outofbounds = 1;
-		if (isCheck(pos,C8) == 1) outofbounds = 1;
-		if (isCheck(pos,D8) == 1) outofbounds = 1;
-		if (isCheck(pos,E8) == 1) outofbounds = 1;
-		if (pos->BcastleQS == 0) outofbounds = 1;
-		if (outofbounds == 0) {
+		while (1) {
+			if ((pos->board[B8] != '0') || (pos->board[C8] != '0') || (pos->board[D8] != '0')) {
+				break;
+			}
+			//if (isCheck(pos,1) == 1) outofbounds = 1;
+			if (isCheck(pos,C8) == 1) break;
+			if (isCheck(pos,D8) == 1) break;
+			if (isCheck(pos,E8) == 1) break;
+			if (pos->BcastleQS == 0) break;
 			Kmoves[kmovesend].from = E8;
 			Kmoves[kmovesend].to = C8;
 			Kmoves[kmovesend].prom = 0;
+			Kmoves[kmovesend].cappiece = pos->board[newsquare];
 			kmovesend += 1;
+			break;
 		}
 		// Black castling KS
-		outofbounds = 0;
+		while (1) {
 		if ((pos->board[F8] != '0') || (pos->board[G8] != '0')) {
-			outofbounds = 1;
+			break;
 		}
-		if (isCheck(pos,E8) == 1) outofbounds = 1;
-		if (isCheck(pos,F8) == 1) outofbounds = 1;
-		if (isCheck(pos,G8) == 1) outofbounds = 1;
-		if (pos->BcastleKS == 0) outofbounds = 1;
-		if (outofbounds == 0) {
+		if (isCheck(pos,E8) == 1) break;
+		if (isCheck(pos,F8) == 1) break;
+		if (isCheck(pos,G8) == 1) break;
+		if (pos->BcastleKS == 0) break;
 			Kmoves[kmovesend].from = E8;
 			Kmoves[kmovesend].to = G8;
 			Kmoves[kmovesend].prom = 0;
+			Kmoves[kmovesend].cappiece = pos->board[newsquare];
 			kmovesend += 1;
+			break;
 		}
 	}
 	return kmovesend;

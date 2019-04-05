@@ -23,6 +23,7 @@ int pieceval(char inpiece) {
 	return 0;
 }
 int taperedEval(struct position *pos) {
+	assert(pos);
 	int num_BP = 0;
 	int num_BN = 0;
 	int num_BB = 0;
@@ -47,6 +48,8 @@ int taperedEval(struct position *pos) {
 			if (isBlackPiece(piece)) {
 				pval = -pval;
 			}
+			//int file = getfile(i);
+			//int rank = getrank(i);
 			openingEval += PSTval(piece,i,'O');
 			endgameEval += PSTval(piece,i,'E');
 			endgameEval += pval;
@@ -64,6 +67,14 @@ int taperedEval(struct position *pos) {
 				case 'Q': num_WQ += 1; break;
 			}
 		}
+	}
+	if (num_BB >= 2) {
+		openingEval -= 30;
+		endgameEval -= 30;
+	}
+	if (num_WB >= 2) {
+		openingEval += 30;
+		endgameEval += 30;
 	}
 	int totalPhase = pawnPhase * 16 + knightPhase * 4 + bishopPhase*4 + rookPhase*4 + queenPhase*2;
 	int phase = totalPhase;

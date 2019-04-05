@@ -16,14 +16,13 @@ void makeMove(struct move *move, struct position *pos) {
 	int newBcastleQS = pos->BcastleQS;
 	int newBcastleKS = pos->BcastleKS;
 	int torank = getrank(move->to);
-	char cappiece = pos->board[move->to];
 	
 	pos->board[move->to] = piece;
 	pos->board[move->from] = '0';
 	
 	pos->halfmoves = pos->halfmoves + 1;
 	
-	if (cappiece != '0') {
+	if (move->cappiece != '0') {
 		pos->halfmoves = 0;
 	}
 	

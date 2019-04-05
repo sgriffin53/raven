@@ -38,6 +38,7 @@ struct move {
 	int from;
 	int to;
 	char prom;
+	char cappiece;
 };
 
 struct position posstack[1024];
@@ -213,7 +214,7 @@ int main() {
 		else if (strcmp(splitstr[0],"unmove") == 0) unmakeMove(&pos);
 		
 		else if (strcmp(splitstr[0],"eval") == 0) {
-			printf("score: %d",taperedEval(&pos));
+			//printf("score: %d",taperedEval(&pos));
 			fflush(stdout);
 		}
 		

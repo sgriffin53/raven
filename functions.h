@@ -121,7 +121,7 @@ int sortMoves(const struct position *pos, struct move *moves, const int num_move
 
 	// Score
 	for (int i = 0; i < num_moves; ++i) {
-		char cappiece = pos->board[moves[i].to];
+		char cappiece = moves[i].cappiece;
 		char piece = pos->board[moves[i].from];
 		if (cappiece != '0') {
 			scores[i] = mvvlva(piece, cappiece);

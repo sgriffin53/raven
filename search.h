@@ -11,7 +11,7 @@ int negaMax(struct position *pos,int depth,int timeLeft) {
 	nodesSearched++;
 	
 	if (depth == 0) {
-		return taperedEval(pos);
+		//return taperedEval(pos);
 	}
 	
 	int kingpos;
@@ -86,8 +86,8 @@ int qSearch(struct position *pos, int alpha, int beta, int timeLeft) {
 		return beta;
 	}
 	if (alpha < standpat) alpha = standpat;
-	int num_moves = genLegalMoves(pos,moves);
 	clock_t begin = clock();
+	int num_moves = genLegalMoves(pos,moves);
 	int timeElapsed = 0;
 	
 	for (int i = 0;(i < num_moves && timeElapsed == 0);i++) {
@@ -99,7 +99,7 @@ int qSearch(struct position *pos, int alpha, int beta, int timeLeft) {
 			break;
 		}
 
-		if (pos->board[moves[i].to] == '0') continue;
+		if (moves[i].cappiece == '0') continue;
 		
 		makeMove(&moves[i],pos);
 
