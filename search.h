@@ -216,7 +216,7 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 	int num_moves = genLegalMoves(&pos,moves);
 	struct move lastbestmove = moves[0];
 	for (int curdepth = 1; (curdepth < searchdepth+1 && timeElapsed == 0);curdepth++) {
-		int bestScore = -9999;
+		int bestScore = -MATE_SCORE;
 		for (int i = 0;i < num_moves;i++) {
 			clock_t end = clock();
 			time_spent = (double)(end - begin) / CLOCKS_PER_SEC;

@@ -52,6 +52,24 @@ int taperedEval(struct position *pos) {
 			endgameEval += PSTval(piece,i,'E');
 			endgameEval += pval;
 			openingEval += pval;
+			if ((piece == 'R') || (piece == 'Q')) {
+				int enemykingpos = pos->Bkingpos;
+				int kingdistx = abs(getfile(i) - getfile(enemykingpos));
+				int kingdisty = abs(getrank(i) - getrank(enemykingpos));
+				if ((kingdistx <= 2) && (kingdisty <= 2)) {
+					openingEval += 30;
+					endgameEval += 30;
+				}
+			}
+			if ((piece == 'r') || (piece == 'q')) {
+				int enemykingpos = pos->Wkingpos;
+				int kingdistx = abs(getfile(i) - getfile(enemykingpos));
+				int kingdisty = abs(getrank(i) - getrank(enemykingpos));
+				if ((kingdistx <= 2) && (kingdisty <= 2)) {
+					openingEval -= 30;
+					endgameEval -= 30;
+				}
+			}
 			switch (piece) {
 				case 'p': num_BP += 1; break;
 				case 'n': num_BN += 1; break;
