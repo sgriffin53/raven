@@ -195,7 +195,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		else kingpos = pos->Bkingpos;
 		incheck = isCheck(pos,kingpos);
 		//if ((movenum > 3) && (depthleft >= 4) && (moves[i].cappiece == '0') && (moves[i].prom == 0) && (!incheck)) { // +25 elo over version without
-		if (moves[i].cappiece == '0') { // + 95 elo over version without LMR
+		if ((moves[i].cappiece == '0') && (depthleft >= 2) && (moves[i].prom == 0)) { // + 95 elo over version without LMR
 			// try to reduce non-capture moves
 			score = -alphaBeta(pos,-beta,-alpha, depthleft - 1 - 1,0,(timeLeft - time_spentms));
 			if (score > alpha) {
