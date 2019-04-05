@@ -222,7 +222,7 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 			time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 			int time_spentms = (int)(time_spent * 1000);
 			if (time_spentms >= movetime) {
-				bestmove = lastbestmove;
+				//bestmove = lastbestmove;
 				timeElapsed = 1;
 				break;
 			}
@@ -275,7 +275,6 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 		}
 		printf("\n");
 		*/
-		/*
 		// moves bestmove to start of moves array
 		struct move newmoves[MAX_MOVES];
 		int num_newmoves = 1;
@@ -298,7 +297,6 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 			num_moves++;
 			}
 		}
-		 */
 		/*
 		printf("moves after: ");
 		for (int i =0;i<num_moves;i++) {

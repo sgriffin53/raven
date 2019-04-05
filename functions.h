@@ -113,7 +113,7 @@ int capval(char piece) {
 }
 int mvvlva(char piece, char cappiece) { return 10 * capval(cappiece) - capval(piece); }
 
-int sortMoves(const struct position *pos, struct move *moves, const int num_moves) {
+void sortMoves(const struct position *pos, struct move *moves, const int num_moves) {
 	assert(moves);
 	assert(pos);
 	assert(num_moves < MAX_MOVES);
