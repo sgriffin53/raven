@@ -17,6 +17,23 @@ int isWhitePiece(char piece) {
 	}
 	return 0;
 }
+
+char* movetostr(struct move move) {
+	assert(move.to >= 0 && move.to <= 63);
+	assert(move.from >= 0 && move.from <= 63);
+	char returnstring[6];
+	char startsquarefile = (char)(getfile(move.from) + 97);
+	char startsquarerank = (char)(7 - getrank(move.from) + 49);
+	char endsquarefile = (char)(getfile(move.to) + 97);
+	char endsquarerank = (char)(7 - getrank(move.to) + 49);
+	returnstring[0] = startsquarefile;
+	returnstring[1] = startsquarerank;
+	returnstring[2] = endsquarefile;
+	returnstring[3] = endsquarerank;
+	returnstring[4] = move.prom;
+	returnstring[5] = 0;
+	return strdup(returnstring);
+}
 int strsquaretoidx(char square[]) {
 	int file = (int)square[0] - 97;
 	int rank = (int)square[1] - 49;
@@ -124,6 +141,8 @@ void sortMoves(const struct position *pos, struct move *moves, const int num_mov
 		char cappiece = moves[i].cappiece;
 		char piece = pos->board[moves[i].from];
 		if (cappiece != '0') {
+			//if (piece == '0') dspboard(*pos);
+			//printf("%s %c %c\n",movetostr(moves[i]),piece,cappiece);
 			scores[i] = mvvlva(piece, cappiece);
 		} else {
 			scores[i] = 0;
@@ -375,22 +394,5 @@ int isCheck(struct position *pos, int kingpos) {
 		return 1;
 	}
 	return 0;
-}
-
-char* movetostr(struct move move) {
-	assert(move.to >= 0 && move.to <= 63);
-	assert(move.from >= 0 && move.from <= 63);
-	char returnstring[6];
-	char startsquarefile = (char)(getfile(move.from) + 97);
-	char startsquarerank = (char)(7 - getrank(move.from) + 49);
-	char endsquarefile = (char)(getfile(move.to) + 97);
-	char endsquarerank = (char)(7 - getrank(move.to) + 49);
-	returnstring[0] = startsquarefile;
-	returnstring[1] = startsquarerank;
-	returnstring[2] = endsquarefile;
-	returnstring[3] = endsquarerank;
-	returnstring[4] = move.prom;
-	returnstring[5] = 0;
-	return strdup(returnstring);
 }
 #endif

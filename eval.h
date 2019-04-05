@@ -52,6 +52,7 @@ int taperedEval(struct position *pos) {
 			endgameEval += PSTval(piece,i,'E');
 			endgameEval += pval;
 			openingEval += pval;
+			// bonus for R and Q being 2 squares or less away from enemy king
 			if ((piece == 'R') || (piece == 'Q')) {
 				int enemykingpos = pos->Bkingpos;
 				int kingdistx = abs(getfile(i) - getfile(enemykingpos));
@@ -112,6 +113,28 @@ int taperedEval(struct position *pos) {
 	//printf("%d %d %d\n",openingEval,endgameEval,eval);
 	if (pos->tomove == BLACK) return -eval;
 	return eval;
+}
+int isEndgame(struct position *pos) {
+	int numpieces = 1;
+	for (int i=0;i<64;i++) {
+		char piece = pos->board[i];
+		if (piece != '0') {
+			if (pos->tomove == WHITE) {
+				if ((piece == 'N') || (piece == 'B') || (piece == 'R') || (piece == 'Q')) {
+					numpieces++;
+					if (numpieces > 3) return 0;
+				}
+			}
+			else {
+				if ((piece == 'n') || (piece == 'b') || (piece == 'r') || (piece == 'q')) {
+					numpieces++;
+					if (numpieces > 3) return 0;
+				}
+			}
+		}
+	}
+	if (numpieces <= 3) return 1;
+	return 0;
 }
 int evalBoard(struct position *pos) {
 	assert(pos);

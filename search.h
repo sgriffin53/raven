@@ -126,7 +126,7 @@ int qSearch(struct position *pos, int alpha, int beta, int timeLeft) {
 	}
 	return alpha;
 }
-int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int timeLeft) {
+int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int nullmove, int timeLeft) {
 	assert(pos);
 	assert(alpha >= -99999 && beta <= 99999);
 	if (timeLeft <= 0) {
@@ -142,13 +142,30 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int time
 	int kingpos;
 	if (pos->tomove == WHITE) kingpos = pos->Wkingpos;
 	else kingpos = pos->Bkingpos;
-	if (isCheck(pos,kingpos)) depthleft++;
+	int incheck = isCheck(pos,kingpos);
+	if (incheck) depthleft++;
 	
-	if (depthleft == 0) {
+	if (depthleft <= 0) {
 		return qSearch(pos,alpha,beta,timeLeft);
 		//return evalBoard(pos);
 	}
+/*
+	// null move pruning - doesn't work
 	
+	if ((!incheck) && (!nullmove) && (depthleft > 2) && (!isEndgame(pos))) {
+		int oldhalfmoves = pos->halfmoves;
+		pos->halfmoves = 0;
+		pos->tomove = !pos->tomove; // Making a null-move
+		posstackend++;
+		posstack[posstackend] = *pos;
+		int score = -alphaBeta(pos, -beta, -beta+1, depthleft - 1 - 2,1,timeLeft);
+		pos->tomove = !pos->tomove; // Unmaking the null-move
+		posstackend--;
+		pos->halfmoves = oldhalfmoves;
+
+		if(score >= beta) return score; // Cutoff
+	}
+*/	
 	struct move moves[MAX_MOVES];
 	int num_moves = genLegalMoves(pos,moves);
 	sortMoves(pos,moves,num_moves);
@@ -171,8 +188,24 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int time
 		}
 		pos->tomove = !pos->tomove;
 		
-		int score = -alphaBeta(pos,-beta,-alpha, depthleft - 1,(timeLeft - time_spentms));
-		
+		//late move reduction
+		int score;
+		int movenum = (i - numcheckmoves);
+		if (pos->tomove == WHITE) kingpos = pos->Wkingpos;
+		else kingpos = pos->Bkingpos;
+		incheck = isCheck(pos,kingpos);
+		//if ((movenum > 3) && (depthleft >= 4) && (moves[i].cappiece == '0') && (moves[i].prom == 0) && (!incheck)) { // +25 elo over version without
+		if (moves[i].cappiece == '0') { // + 95 elo over version without LMR
+			// try to reduce non-capture moves
+			score = -alphaBeta(pos,-beta,-alpha, depthleft - 1 - 1,0,(timeLeft - time_spentms));
+			if (score > alpha) {
+				//re search
+				score = -alphaBeta(pos,-beta,-alpha, depthleft - 1,0,(timeLeft - time_spentms));
+			}
+		}
+		else {
+			score = -alphaBeta(pos,-beta,-alpha, depthleft - 1,0,(timeLeft - time_spentms));
+		}
 		unmakeMove(pos);
 		
 		if (score >= beta) {
@@ -247,7 +280,7 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 				curscore = 0;
 			}
 			else {
-				curscore = -alphaBeta(&pos,-99999,99999,curdepth-1,(movetime - time_spentms));
+				curscore = -alphaBeta(&pos,-99999,99999,curdepth-1,0,(movetime - time_spentms));
 			}
 
 			if (curscore == MATE_SCORE) {

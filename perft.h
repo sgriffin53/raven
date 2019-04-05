@@ -11,13 +11,13 @@ U64 perft(struct position *pos, int depth) {
 	
 	if (depth == 0) return 1;
 	
-	U64 hash = generateHash(pos);
+	//U64 hash = generateHash(pos);
 	
-	struct PTTentry PTTdata = getPTTentry(&PTT,hash);
+//	struct PTTentry PTTdata = getPTTentry(&PTT,hash);
 	
-	if ((PTTdata.hash == hash) && (PTTdata.depth == depth)) {
-		return PTTdata.nodes;
-	}
+//	if ((PTTdata.hash == hash) && (PTTdata.depth == depth)) {
+//		return PTTdata.nodes;
+//	}
 	
 	U64 nodes = 0;
 	struct move moves[MAX_MOVES];
@@ -41,7 +41,7 @@ U64 perft(struct position *pos, int depth) {
 		unmakeMove(pos);
 	}
 	
-	addPTTentry(&PTT,hash,depth,nodes);
+//	addPTTentry(&PTT,hash,depth,nodes);
 
 	return nodes;
 }
