@@ -80,11 +80,22 @@ int qSearch(struct position *pos, int alpha, int beta, int timeLeft) {
 	int score;
 	int kingpos;
 	struct move moves[MAX_MOVES];
-	int standpat = taperedEval(pos);
+	//int ispawnless = isPawnless(pos);
+	int standpat;
+	standpat = taperedEval(pos);
 	if (standpat >= beta) {
 		nodesSearched++;
 		return beta;
 	}
+	
+	// delta pruning
+	
+	int BIG_DELTA = 900;
+	if (standpat < alpha - BIG_DELTA) {
+		nodesSearched++;
+		return alpha;
+	}	
+	
 	if (alpha < standpat) alpha = standpat;
 	clock_t begin = clock();
 	int num_moves = genLegalMoves(pos,moves);
@@ -165,7 +176,20 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 
 		if(score >= beta) return score; // Cutoff
 	}
-*/	
+	*/
+	
+	// another attempt at null move pruning, doesn't work
+	/*
+	if ((depthleft > 2) && (!incheck) && (!nullmove) && (!isEndgame(pos)) && (taperedEval(pos) > beta)) {
+		pos->tomove = !pos->tomove;
+		int R = 2;
+		if (depthleft > 6) R = 3;
+		int score = -alphaBeta(pos,-beta,-beta + 1, depthleft - 1 - R,1,(timeLeft));
+		pos->tomove = !pos->tomove;
+		if (score >= beta) return score;
+	}
+	 */
+	
 	struct move moves[MAX_MOVES];
 	int num_moves = genLegalMoves(pos,moves);
 	sortMoves(pos,moves,num_moves);
@@ -187,7 +211,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			continue;
 		}
 		pos->tomove = !pos->tomove;
-		
+
 		//late move reduction
 		int score;
 		int movenum = (i - numcheckmoves);
@@ -195,7 +219,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		else kingpos = pos->Bkingpos;
 		incheck = isCheck(pos,kingpos);
 		//if ((movenum > 3) && (depthleft >= 4) && (moves[i].cappiece == '0') && (moves[i].prom == 0) && (!incheck)) { // +25 elo over version without
-		if ((moves[i].cappiece == '0') && (depthleft >= 2) && (moves[i].prom == 0)) { // + 95 elo over version without LMR
+		if ((moves[i].cappiece == '0') && (depthleft >= 2) && (moves[i].prom == 0)) { // + 200 elo over version without LMR
 			// try to reduce non-capture moves
 			score = -alphaBeta(pos,-beta,-alpha, depthleft - 1 - 1,0,(timeLeft - time_spentms));
 			if (score > alpha) {
@@ -247,18 +271,16 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 	struct move bestmove;
 	int nps;
 	int num_moves = genLegalMoves(&pos,moves);
+	if (num_moves == 1) return moves[0];
 	struct move lastbestmove = moves[0];
+	int numcheckmoves = 0;
+	int legalmoveidx = 0;
 	for (int curdepth = 1; (curdepth < searchdepth+1 && timeElapsed == 0);curdepth++) {
 		int bestScore = -MATE_SCORE;
 		for (int i = 0;i < num_moves;i++) {
 			clock_t end = clock();
 			time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 			int time_spentms = (int)(time_spent * 1000);
-			if (time_spentms >= movetime) {
-				//bestmove = lastbestmove;
-				timeElapsed = 1;
-				break;
-			}
 			assert((moves[i].to >= 0 && moves[i].to <= 63));
 			makeMove(&moves[i],&pos);
 			pos.tomove = !pos.tomove;
@@ -266,10 +288,22 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 			else kingpos = pos.Bkingpos;
 			int incheck = isCheck(&pos,kingpos);
 			if (incheck) {
+				numcheckmoves++;
 				unmakeMove(&pos);
 				continue;
 			}
+			//set legalmoveidx to index of known legal move
+			//to use in case there's only one legal move
+			legalmoveidx = i;
 			pos.tomove = !pos.tomove;
+			//time check has to be after legality check otherwise it might return an illegal move if it runs out of time
+			//before searching a legal move
+			if (time_spentms >= movetime) {
+				//bestmove = lastbestmove;
+				unmakeMove(&pos);
+				timeElapsed = 1;
+				break;
+			}
 			
 			int curscore;
 			//int curscore = -negaMax(&pos,curdepth-1,(movetime - time_spentms));
@@ -284,8 +318,9 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 			}
 
 			if (curscore == MATE_SCORE) {
+				end = clock();
+				time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 				printf("info depth %d nodes %d time %d nps %d score mate %d pv %s\n",(curdepth),nodesSearched,((int)(time_spent*1000)),nps,curdepth,movetostr(moves[i]));
-				fflush(stdout);
 				unmakeMove(&pos);
 				return moves[i];
 			}
@@ -340,6 +375,7 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 		printf("info depth %d nodes %d time %d nps %d score cp %d pv %s\n",(curdepth),nodesSearched,((int)(time_spent*1000)),nps,bestScore,movetostr(bestmove));
 		fflush(stdout);
 	}
+	if ((num_moves - numcheckmoves) == 1) return moves[legalmoveidx];
 	return bestmove;
 }
 #endif
