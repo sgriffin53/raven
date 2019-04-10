@@ -1,6 +1,6 @@
 #ifndef BOARD_H
 #define BOARD_H
-
+#include "functions.h"
 
 void dspboard(struct position pos) {
 	assert(pos.board);
@@ -31,7 +31,6 @@ void dspboard(struct position pos) {
 	if (pos.tomove == 0) printf("Black");
 	else printf("White");
 	printf("\n");
-	/*
 	int kingpos;
 	if (pos.tomove == WHITE) kingpos = pos.Wkingpos;
 	if (pos.tomove == BLACK) kingpos = pos.Bkingpos;
@@ -54,7 +53,6 @@ void dspboard(struct position pos) {
 	printf("Half moves: %d",pos.halfmoves);
 	printf("\n");
 	printf("Is threefold: %d",isThreefold(&pos));
-	 */
 	printf("\n");
 }
 #endif

@@ -11,6 +11,15 @@
 # define MAX_MOVES 2048
 # define MATE_SCORE 99999
 
+int Qdirs[8][2] = {{-1,-1},{-1,+1},{+1,-1},{+1,+1},{0,1},{0,-1},{-1,0},{1,0}};
+int Kdirs[8][2] = {{-1,-1},{-1,+1},{+1,-1},{+1,+1},{0,1},{0,-1},{-1,0},{1,0}};
+int Ndirs[8][2] = {{-2,-1},{-1,-2},{+1,-2},{+2,-1},{+2,+1},{+1,+2},{-1,+2},{-2,+1}};
+int Bdirs[4][2] = {{-1,-1},{-1,+1},{+1,-1},{+1,+1}};
+int Rdirs[4][2] = {{0,1},{0,-1},{-1,0},{1,0}};
+int WPdirs[2][2] = {{-1,-1},{+1,-1}};
+int BPdirs[2][2] = {{-1,+1},{+1,+1}};
+
+
 enum SQUARE{A8,B8,C8,D8,E8,F8,G8,H8,
 			A7,B7,C7,D7,E7,F7,G7,H7,
 			A6,B6,C6,D6,E6,F6,G6,H6,
@@ -44,27 +53,6 @@ struct move {
 struct position posstack[1024];
 int posstackend = 0;
 int nodesSearched = 0;
-
-int getrank(int square) {
-	assert(square >= 0 && square <= 63);
-	return (int)(square / 8);
-}
-
-int getfile(int square) {
-	assert(square >= 0 && square <= 63);
-	return square % 8;
-}
-
-char* squareidxtostr(int square) {
-	assert(square >= 0 && square <= 63);
-	char returnstring[3];
-	char squarefile = (char)(getfile(square) + 97);
-	char squarerank = (char)(7 - getrank(square) + 49);
-	returnstring[0] = squarefile;
-	returnstring[1] = squarerank;
-	returnstring[2] = 0;
-	return strdup(returnstring);
-}
 
 # include "board.h"
 # include "hash.h"
@@ -110,6 +98,7 @@ int main() {
 	
 	initPTT(&PTT);
 	initTT(&TT);
+	initETT(&ETT);
 	
 	while (keeprunning) {
 		// read input from stdin
@@ -132,7 +121,7 @@ int main() {
 			struct move moves[MAX_MOVES];
 			int num_moves = genLegalMoves(&pos,moves);
 			int kingpos;
-			sortMoves(&pos,moves,num_moves);
+			//sortMoves(&pos,moves,num_moves);
 			for (int i = 0;i < num_moves;i++) {
 				makeMove(&moves[i], &pos);
 				pos.tomove = !pos.tomove;
@@ -277,6 +266,6 @@ int main() {
 	}		
 	free(TT.entries);
 	free(PTT.entries);
-	
+	free(ETT.entries);
 	return 0;
 }

@@ -2,6 +2,7 @@
 #define EVAL_H
 
 #include "PST.h"
+#include "functions.h"
 
 int pieceval(char inpiece) {
 	if (inpiece == 'p') return 100;
@@ -22,6 +23,18 @@ int pieceval(char inpiece) {
 	
 	return 0;
 }
+
+int isPawnless(struct position *pos) {
+	for (int i=0;i<64;i++) {
+		char piece = pos->board[i];
+		if (piece != '0') {
+			if ((piece == 'P') || (piece == 'p')) {
+				return 0;
+			}
+		}
+	}
+	return 1;
+}
 int taperedEval(struct position *pos) {
 	assert(pos);
 	int num_BP = 0;
@@ -41,6 +54,7 @@ int taperedEval(struct position *pos) {
 	int queenPhase = 4;
 	int openingEval = 0;
 	int endgameEval = 0;
+	int material = 0;
 	for (int i = 0;i<64;i++) {
 		char piece = pos->board[i];
 		if (piece != '0') {
@@ -52,6 +66,7 @@ int taperedEval(struct position *pos) {
 			endgameEval += PSTval(piece,i,'E');
 			endgameEval += pval;
 			openingEval += pval;
+			material += pval;
 			// bonus for R and Q being 2 squares or less away from enemy king
 			if ((piece == 'R') || (piece == 'Q')) {
 				int enemykingpos = pos->Bkingpos;
@@ -111,7 +126,7 @@ int taperedEval(struct position *pos) {
 	
 	int eval = ((openingEval * (256 - phase)) + (endgameEval * phase)) / 256;
 	//printf("%d %d %d\n",openingEval,endgameEval,eval);
-	if (pos->tomove == BLACK) return -eval;
+	if (pos->tomove == BLACK) eval = -eval;
 	return eval;
 }
 int isEndgame(struct position *pos) {

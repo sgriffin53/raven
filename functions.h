@@ -5,6 +5,10 @@
 
 #include "hash.h"
 
+int max(int a, int b) {
+	if (a > b) return a;
+	return b;
+}
 int isBlackPiece(char piece) {
 	if ((piece >= 'a') && (piece <= 'z')) {
 		return 1;
@@ -16,6 +20,28 @@ int isWhitePiece(char piece) {
 		return 1;
 	}
 	return 0;
+}
+
+int getrank(int square) {
+	if (!(square >= 0 && square <= 63))  printf("%d\n",square);
+	assert(square >= 0 && square <= 63);
+	return (int)(square / 8);
+}
+
+int getfile(int square) {
+	assert(square >= 0 && square <= 63);
+	return square % 8;
+}
+
+char* squareidxtostr(int square) {
+	assert(square >= 0 && square <= 63);
+	char returnstring[3];
+	char squarefile = (char)(getfile(square) + 97);
+	char squarerank = (char)(7 - getrank(square) + 49);
+	returnstring[0] = squarefile;
+	returnstring[1] = squarerank;
+	returnstring[2] = 0;
+	return strdup(returnstring);
 }
 
 char* movetostr(struct move move) {
@@ -206,7 +232,7 @@ int isThreefold(const struct position *pos) {
 	if (pos->halfmoves <= 4) return 0;
 	int numrepeats = 0;
 	U64 curposhash = generateHash(pos);
-	for (int i = (posstackend - 1);(i > (posstackend - 1 - pos->halfmoves)) && i >= 0;i--) {
+	for (int i = (posstackend - 1);(i > (posstackend - 1 - pos->halfmoves - 1)) && i >= 0;i--) {
 		struct position checkpos = posstack[i];
 		if (generateHash(&checkpos) == curposhash) {
 			numrepeats++;
@@ -241,14 +267,10 @@ int isCheck(struct position *pos, int kingpos) {
 		enemyqueen = 'Q';
 	}
 	
-	int Ndirs[8][2] = {{-2,-1},{-1,-2},{+1,-2},{+2,-1},{+2,+1},{+1,+2},{-1,+2},{-2,+1}};
-	int Bdirs[4][2] = {{-1,-1},{-1,+1},{+1,-1},{+1,+1}};
-	int Rdirs[4][2] = {{0,1},{0,-1},{-1,0},{1,0}};
-	int WPdirs[2][2] = {{-1,-1},{+1,-1}};
-	int BPdirs[2][2] = {{-1,+1},{+1,+1}};
 	//int WPdirs[2][2] = {{-1,+1},{+1,+1}};
 	//int BPdirs[2][2] = {{-1,-1},{+1,-1}};
-	
+	int startfile = getfile(kingpos);
+	int startrank = getrank(kingpos);
 	int Pdirs[2][2];
 	if (pos->tomove == WHITE) {
 		memcpy(Pdirs,WPdirs,sizeof(WPdirs));
@@ -260,8 +282,8 @@ int isCheck(struct position *pos, int kingpos) {
 	//int Kdirs[8][2] = {{-1,-1},{-1,+1},{+1,-1},{+1,+1},{0,1},{0,-1},{-1,0},{1,0}};
 	// check for knight attacks
 	for (i = 0;i < 8;i++) {
-		file = getfile(kingpos) + Ndirs[i][0];
-		rank = getrank(kingpos) + Ndirs[i][1];
+		file = startfile + Ndirs[i][0];
+		rank = startrank + Ndirs[i][1];
 		newsquare = fileranktosquareidx(file,rank);
 		if ((file < 0) || (file > 7) || (rank < 0) || (rank > 7)) {
 			continue;
@@ -273,8 +295,8 @@ int isCheck(struct position *pos, int kingpos) {
 	
 	// check for pawn attacks
 	for (i = 0;i < 2;i++) {
-		file = getfile(kingpos) + Pdirs[i][0];
-		rank = getrank(kingpos) + Pdirs[i][1];
+		file = startfile + Pdirs[i][0];
+		rank = startrank + Pdirs[i][1];
 		newsquare = fileranktosquareidx(file,rank);
 		if ((file < 0) || (file > 7) || (rank < 0) || (rank > 7)) {
 			continue;
@@ -286,45 +308,39 @@ int isCheck(struct position *pos, int kingpos) {
 	
 	// check for bishop and queen attacks on diagonals
 	for (i = 0;i < 4;i++) {
-		outofbounds = 0;
-		file = getfile(kingpos);
-		rank = getrank(kingpos);
-		while (outofbounds == 0) {
+		file = startfile;
+		rank = startrank;
+		while (1) {
 			file = file + Bdirs[i][0];
 			rank = rank + Bdirs[i][1];
 			newsquare = fileranktosquareidx(file,rank);
 			if ((file < 0) || (file > 7) || (rank < 0) || (rank > 7)) {
-				outofbounds = 1;
 				break;
 			}
 			if (pos->tomove == WHITE) {
-				if ((pos->board[newsquare] >= 'A') && (pos->board[newsquare] <= 'Z')) {
+				if (isWhitePiece(pos->board[newsquare])) {
 					// char is uppercase so is white piece
 					// line of sight is blocked by friendly piece so not check
-					outofbounds = 1;
 					break;
 				}
-				if ((pos->board[newsquare] >= 'a') && (pos->board[newsquare] <= 'z')) {
+				if (isBlackPiece(pos->board[newsquare])) {
 					// char is lowercase so is black piece
 					if ((pos->board[newsquare] != enemybishop) && (pos->board[newsquare] != enemyqueen)) {
 						// line of sight is blocked by enemy piece
-						outofbounds = 1;
 						break;
 					}
 				}
 			}
 			else { // tomove is black
-				if ((pos->board[newsquare] >= 'a') && (pos->board[newsquare] <= 'z')) {
+				if (isBlackPiece(pos->board[newsquare])) {
 					// char is lowercase so is black piece
 					// line of sight is blocked by friendly piece so not check
-					outofbounds = 1;
 					break;
 				}
-				if ((pos->board[newsquare] >= 'A') && (pos->board[newsquare] <= 'Z')) {
+				if (isWhitePiece(pos->board[newsquare])) {
 					// char is uppercase so white piece
 					if ((pos->board[newsquare] != enemybishop) && (pos->board[newsquare] != enemyqueen)) {
 						//line of sight is blocked by enemy piece
-						outofbounds = 1;
 						break;
 					}
 				}
@@ -337,45 +353,39 @@ int isCheck(struct position *pos, int kingpos) {
 	
 	// check for rook and queen attacks along laterals
 	for (i = 0;i < 4;i++) {
-		outofbounds = 0;
-		file = getfile(kingpos);
-		rank = getrank(kingpos);
-		while (outofbounds == 0) {
+		file = startfile;
+		rank = startrank;
+		while (1) {
 			file = file + Rdirs[i][0];
 			rank = rank + Rdirs[i][1];
 			newsquare = fileranktosquareidx(file,rank);
 			if ((file < 0) || (file > 7) || (rank < 0) || (rank > 7)) {
-				outofbounds = 1;
 				break;
 			}
 			if (pos->tomove == WHITE) {
-				if ((pos->board[newsquare] >= 'A') && (pos->board[newsquare] <= 'Z')) {
+				if (isWhitePiece(pos->board[newsquare])) {
 					// char is uppercase so is white piece
 					// line of sight is blocked by friendly piece so not check
-					outofbounds = 1;
 					break;
 				}
-				if ((pos->board[newsquare] >= 'a') && (pos->board[newsquare] <= 'z')) {
+				if (isBlackPiece(pos->board[newsquare])) {
 					//char is lowercase so black piece
 					if ((pos->board[newsquare] != enemyrook) && (pos->board[newsquare] != enemyqueen)) {
 						//line of sight is blocked by enemy piece
-						outofbounds = 1;
 						break;
 					}
 				}
 			}
 			else { //tomove is black
-				if ((pos->board[newsquare] >= 'a') && (pos->board[newsquare] <= 'z')) {
+				if (isBlackPiece(pos->board[newsquare])) {
 					// char is lowercase so is black piece
 					// line of sight is blocked by friendly piece so not check
-					outofbounds = 1;
 					break;
 				}
-				if ((pos->board[newsquare] >= 'A') && (pos->board[newsquare] <= 'Z')) {
+				if (isWhitePiece(pos->board[newsquare])) {
 					//char is uppercase so white piece
 					if ((pos->board[newsquare] != enemyrook) && (pos->board[newsquare] != enemyqueen)) {
 						//line of sight is blocked by enemy piece
-						outofbounds = 1;
 						break;
 					}
 				}
