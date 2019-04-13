@@ -65,7 +65,6 @@ int moveScore(Board *board, Move move);
 
 // attacks.c
 
-extern int isAttacked(Board *board, int square, int turn);
 
 // hash.c
 
