@@ -243,166 +243,198 @@ int isThreefold(const struct position *pos) {
 	}
 	return 0;
 }
-int isCheck(struct position *pos, int kingpos) {
+int isAttacked(struct position *pos, int square, int colour) {
+	// colour is colour of attacking side
+	
 	assert(pos);
-	assert(kingpos >= 0 && kingpos <= 63);
-	int file, rank;
-	int newsquare;
-	int outofbounds;
-	char enemyknight, enemypawn, enemyrook, enemybishop, enemyqueen;
-	int i;
+	assert(square >= 0 && square <= 63);
 	
-	if (pos->tomove == WHITE) {
-		enemyknight = 'n';
-		enemypawn = 'p';
-		enemyrook = 'r';
-		enemybishop = 'b';
-		enemyqueen = 'q';
-	}
-	else {
-		enemyknight = 'N';
-		enemypawn = 'P';
-		enemyrook = 'R';
-		enemybishop = 'B';
-		enemyqueen = 'Q';
-	}
+	const int x = getfile(square);
+	const int y = getrank(square);
 	
-	//int WPdirs[2][2] = {{-1,+1},{+1,+1}};
-	//int BPdirs[2][2] = {{-1,-1},{+1,-1}};
-	int startfile = getfile(kingpos);
-	int startrank = getrank(kingpos);
-	int Pdirs[2][2];
-	if (pos->tomove == WHITE) {
-		memcpy(Pdirs,WPdirs,sizeof(WPdirs));
-	}
-	else {
-		memcpy(Pdirs,BPdirs,sizeof(BPdirs));
-	}
-	
-	//int Kdirs[8][2] = {{-1,-1},{-1,+1},{+1,-1},{+1,+1},{0,1},{0,-1},{-1,0},{1,0}};
-	// check for knight attacks
-	for (i = 0;i < 8;i++) {
-		file = startfile + Ndirs[i][0];
-		rank = startrank + Ndirs[i][1];
-		newsquare = fileranktosquareidx(file,rank);
-		if ((file < 0) || (file > 7) || (rank < 0) || (rank > 7)) {
-			continue;
-		}
-		if (pos->board[newsquare] == enemyknight) {
-			return 1;
-		}
-	}
-	
-	// check for pawn attacks
-	for (i = 0;i < 2;i++) {
-		file = startfile + Pdirs[i][0];
-		rank = startrank + Pdirs[i][1];
-		newsquare = fileranktosquareidx(file,rank);
-		if ((file < 0) || (file > 7) || (rank < 0) || (rank > 7)) {
-			continue;
-		}
-		if (pos->board[newsquare] == enemypawn) {
-			return 1;
-		}
-	}
-	
-	// check for bishop and queen attacks on diagonals
-	for (i = 0;i < 4;i++) {
-		file = startfile;
-		rank = startrank;
-		while (1) {
-			file = file + Bdirs[i][0];
-			rank = rank + Bdirs[i][1];
-			newsquare = fileranktosquareidx(file,rank);
-			if ((file < 0) || (file > 7) || (rank < 0) || (rank > 7)) {
-				break;
+	if (colour == WHITE) {
+		// white pawn attacks
+		for (int i = 0;i < 2;i++) {
+			const int nx = x + BPdirs[i][0];
+			const int ny = y + BPdirs[i][1];
+			const int idx = fileranktosquareidx(nx,ny);
+			const char piece = pos->board[idx];
+			
+			if (nx < 0 || nx > 7 || ny < 0 || ny > 7) {
+				continue;
 			}
-			if (pos->tomove == WHITE) {
-				if (isWhitePiece(pos->board[newsquare])) {
-					// char is uppercase so is white piece
-					// line of sight is blocked by friendly piece so not check
+			if (piece == 'P') {
+				return 1;
+			}
+		}
+		
+		// white knight attacks
+		for (int i = 0;i < 8;i++) {
+			const int nx = x + Ndirs[i][0];
+			const int ny = y + Ndirs[i][1];
+			const int idx = fileranktosquareidx(nx,ny);
+			const char piece = pos->board[idx];
+			
+			if (nx < 0 || nx > 7 || ny < 0 || ny > 7) {
+				continue;
+			}
+			if (piece == 'N') {
+				return 1;
+			}
+		}
+		
+		//white bishop and queen attacks
+		for (int i = 0;i < 4;i++) {
+			for (int j = 1;j<=7;j++) {
+				const int nx = x + j * Bdirs[i][0];
+				const int ny = y + j * Bdirs[i][1];
+				const int idx = fileranktosquareidx(nx,ny);
+				const char piece = pos->board[idx];
+				
+				if (nx < 0 || nx > 7 || ny < 0 || ny > 7) {
+					continue;
+				}
+				
+				if (piece == 'B' || piece == 'Q') {
+					return 1;
+				}
+				else if (piece != '0') {
 					break;
 				}
-				if (isBlackPiece(pos->board[newsquare])) {
-					// char is lowercase so is black piece
-					if ((pos->board[newsquare] != enemybishop) && (pos->board[newsquare] != enemyqueen)) {
-						// line of sight is blocked by enemy piece
-						break;
-					}
-				}
 			}
-			else { // tomove is black
-				if (isBlackPiece(pos->board[newsquare])) {
-					// char is lowercase so is black piece
-					// line of sight is blocked by friendly piece so not check
+		}
+		
+		//white rook and queen attacks
+		for (int i = 0;i < 4;i++) {
+			for (int j = 1;j<=7;j++) {
+				const int nx = x + j * Rdirs[i][0];
+				const int ny = y + j * Rdirs[i][1];
+				const int idx = fileranktosquareidx(nx,ny);
+				const char piece = pos->board[idx];
+				
+				if (nx < 0 || nx > 7 || ny < 0 || ny > 7) {
+					continue;
+				}
+				
+				if (piece == 'R' || piece == 'Q') {
+					return 1;
+				}
+				else if (piece != '0') {
 					break;
 				}
-				if (isWhitePiece(pos->board[newsquare])) {
-					// char is uppercase so white piece
-					if ((pos->board[newsquare] != enemybishop) && (pos->board[newsquare] != enemyqueen)) {
-						//line of sight is blocked by enemy piece
-						break;
-					}
-				}
 			}
-			if ((pos->board[newsquare] == enemybishop) || (pos->board[newsquare] == enemyqueen)) {
+		}
+		
+		//white king attacks
+		for (int i = 0;i < 8;i++) {
+			const int nx = x + Kdirs[i][0];
+			const int ny = y + Kdirs[i][1];
+			const int idx = fileranktosquareidx(nx,ny);
+			const char piece = pos->board[idx];
+			
+			if (nx < 0 || nx > 7 || ny < 0 || ny > 7) {
+				continue;
+			}
+			if (piece == 'K') {
 				return 1;
 			}
 		}
 	}
-	
-	// check for rook and queen attacks along laterals
-	for (i = 0;i < 4;i++) {
-		file = startfile;
-		rank = startrank;
-		while (1) {
-			file = file + Rdirs[i][0];
-			rank = rank + Rdirs[i][1];
-			newsquare = fileranktosquareidx(file,rank);
-			if ((file < 0) || (file > 7) || (rank < 0) || (rank > 7)) {
-				break;
+
+	else if (colour == BLACK) {
+		// black pawn attacks
+		for (int i = 0;i < 2;i++) {
+			const int nx = x + WPdirs[i][0];
+			const int ny = y + WPdirs[i][1];
+			const int idx = fileranktosquareidx(nx,ny);
+			const char piece = pos->board[idx];
+			
+			if (nx < 0 || nx > 7 || ny < 0 || ny > 7) {
+				continue;
 			}
-			if (pos->tomove == WHITE) {
-				if (isWhitePiece(pos->board[newsquare])) {
-					// char is uppercase so is white piece
-					// line of sight is blocked by friendly piece so not check
-					break;
-				}
-				if (isBlackPiece(pos->board[newsquare])) {
-					//char is lowercase so black piece
-					if ((pos->board[newsquare] != enemyrook) && (pos->board[newsquare] != enemyqueen)) {
-						//line of sight is blocked by enemy piece
-						break;
-					}
-				}
-			}
-			else { //tomove is black
-				if (isBlackPiece(pos->board[newsquare])) {
-					// char is lowercase so is black piece
-					// line of sight is blocked by friendly piece so not check
-					break;
-				}
-				if (isWhitePiece(pos->board[newsquare])) {
-					//char is uppercase so white piece
-					if ((pos->board[newsquare] != enemyrook) && (pos->board[newsquare] != enemyqueen)) {
-						//line of sight is blocked by enemy piece
-						break;
-					}
-				}
-			}
-			if ((pos->board[newsquare] == enemyrook) || (pos->board[newsquare] == enemyqueen)) {
+			if (piece == 'p') {
 				return 1;
 			}
 		}
-	}
-	
-	// check for king checks
-	int kingdisty = abs(getrank(pos->Bkingpos) - getrank(pos->Wkingpos));
-	int kingdistx = abs(getfile(pos->Wkingpos) - getfile(pos->Bkingpos));
-	if ((kingdisty <= 1) && (kingdistx <= 1)) {
-		// kings are next to each other so it's check
-		return 1;
+		
+		// black knight attacks
+		for (int i = 0;i < 8;i++) {
+			const int nx = x + Ndirs[i][0];
+			const int ny = y + Ndirs[i][1];
+			const int idx = fileranktosquareidx(nx,ny);
+			const char piece = pos->board[idx];
+			
+			if (nx < 0 || nx > 7 || ny < 0 || ny > 7) {
+				continue;
+			}
+			if (piece == 'n') {
+				return 1;
+			}
+		}
+		
+		//black bishop and queen attacks
+		for (int i = 0;i < 4;i++) {
+			for (int j = 1;j<=7;j++) {
+				const int nx = x + j * Bdirs[i][0];
+				const int ny = y + j * Bdirs[i][1];
+				const int idx = fileranktosquareidx(nx,ny);
+				const char piece = pos->board[idx];
+				
+				if (nx < 0 || nx > 7 || ny < 0 || ny > 7) {
+					continue;
+				}
+				
+				if (piece == 'b' || piece == 'q') {
+					return 1;
+				}
+				else if (piece != '0') {
+					break;
+				}
+			}
+		}
+		
+		//black rook and queen attacks
+		for (int i = 0;i < 4;i++) {
+			for (int j = 1;j<=7;j++) {
+				const int nx = x + j * Rdirs[i][0];
+				const int ny = y + j * Rdirs[i][1];
+				const int idx = fileranktosquareidx(nx,ny);
+				const char piece = pos->board[idx];
+				
+				if (nx < 0 || nx > 7 || ny < 0 || ny > 7) {
+					continue;
+				}
+				
+				if (piece == 'r' || piece == 'q') {
+					return 1;
+				}
+				else if (piece != '0') {
+					break;
+				}
+			}
+		}
+		
+		//black king attacks
+		for (int i = 0;i < 8;i++) {
+			const int nx = x + Kdirs[i][0];
+			const int ny = y + Kdirs[i][1];
+			const int idx = fileranktosquareidx(nx,ny);
+			const char piece = pos->board[idx];
+			
+			if (nx < 0 || nx > 7 || ny < 0 || ny > 7) {
+				continue;
+			}
+			if (piece == 'k') {
+				return 1;
+			}
+		}
 	}
 	return 0;
+}
+int isCheck(struct position *pos) {
+	int kingpos;
+	if (pos->tomove == WHITE) kingpos = pos->Wkingpos;
+	else kingpos = pos->Bkingpos;
+	return isAttacked(pos,kingpos,!pos->tomove);
 }
 #endif

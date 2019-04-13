@@ -125,9 +125,7 @@ int main() {
 			for (int i = 0;i < num_moves;i++) {
 				makeMove(&moves[i], &pos);
 				pos.tomove = !pos.tomove;
-				if (pos.tomove == WHITE) kingpos = pos.Wkingpos;
-				else kingpos = pos.Bkingpos;
-				int incheck = isCheck(&pos,kingpos);
+				int incheck = isCheck(&pos);
 				if (incheck) {
 					unmakeMove(&pos);
 					continue;
@@ -242,11 +240,21 @@ int main() {
 		
 		else if ( (strcmp(splitstr[0],"position") == 0) && (strcmp(splitstr[1],"fen") == 0) ) {
 			char fen[1024] = "";
+			int readingfen = 1;
 			for (i = 2;i < splitstrend;i++) {
-				strcat(fen,splitstr[i]);
-				if (i != (splitstrend - 1)) strcat(fen," ");
+				if (!readingfen) {
+					makeMovestr(splitstr[i],&pos);
+				}
+				if (strcmp(splitstr[i],"moves") == 0) {
+					pos = parsefen(fen);
+					readingfen = 0;
+				}
+				if (readingfen) {
+					strcat(fen,splitstr[i]);
+					if (i != (splitstrend - 1)) strcat(fen," ");
+				}
 			}
-			pos = parsefen(fen);
+			if (readingfen) pos = parsefen(fen);
 			posstack[0] = pos;
 		}
 		

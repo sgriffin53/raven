@@ -27,9 +27,7 @@ U64 perft(struct position *pos, int depth) {
 	for (int i = 0; i < n_moves;i++) {
 		makeMove(&moves[i], pos);
 		pos->tomove = !pos->tomove;
-		if (pos->tomove == WHITE) kingpos = pos->Wkingpos;
-		if (pos->tomove == BLACK) kingpos = pos->Bkingpos;
-		int incheck = isCheck(pos,kingpos);
+		int incheck = isCheck(pos);
 		if (incheck) {
 			unmakeMove(pos);
 			continue;
@@ -57,9 +55,7 @@ int splitperft(struct position *pos, int depth) {
 	for (int i = 0; i < n_moves;i++) {
 		makeMove(&moves[i], pos);
 		pos->tomove = !pos->tomove;
-		if (pos->tomove == WHITE) kingpos = pos->Wkingpos;
-		if (pos->tomove == BLACK) kingpos = pos->Bkingpos;
-		int incheck = isCheck(pos,kingpos);
+		int incheck = isCheck(pos);
 		if (incheck) {
 			unmakeMove(pos);
 			continue;

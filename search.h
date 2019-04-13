@@ -34,9 +34,7 @@ int negaMax(struct position *pos,int depth,int timeLeft) {
 		makeMove(&moves[i],pos);
 		
 		pos->tomove = !pos->tomove;
-		if (pos->tomove == WHITE) kingpos = pos->Wkingpos;
-		else kingpos = pos->Bkingpos;
-		int incheck = isCheck(pos,kingpos);
+		int incheck = isCheck(pos);
 		if (incheck) {
 			unmakeMove(pos);
 			numcheckmoves++;
@@ -55,9 +53,7 @@ int negaMax(struct position *pos,int depth,int timeLeft) {
 	
 	if (num_moves == numcheckmoves) {
 		// no legal moves
-		if (pos->tomove == WHITE) kingpos = pos->Wkingpos;
-		else kingpos = pos->Bkingpos;
-		int incheck = isCheck(pos,kingpos);
+		int incheck = isCheck(pos);
 		if (incheck) {
 			// side to move is in checkmate
 			return -MATE_SCORE;
@@ -116,9 +112,7 @@ int qSearch(struct position *pos, int alpha, int beta, int timeLeft) {
 
 		// check if move is legal (doesn't put in check)
 		pos->tomove = !pos->tomove;
-		if (pos->tomove == WHITE) kingpos = pos->Wkingpos;
-		else kingpos = pos->Bkingpos;
-		incheck = isCheck(pos,kingpos);
+		incheck = isCheck(pos);
 		if (incheck) {
 			unmakeMove(pos);
 			continue;
@@ -150,10 +144,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	if (pos->halfmoves >= 100) return 0;
 	
 	// check extensions
-	int kingpos;
-	if (pos->tomove == WHITE) kingpos = pos->Wkingpos;
-	else kingpos = pos->Bkingpos;
-	int incheck = isCheck(pos,kingpos);
+	int incheck = isCheck(pos);
 	if (incheck) depthleft++;
 	
 	if (depthleft <= 0) {
@@ -202,9 +193,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		int time_spentms = (int)(time_spent * 1000);
 		makeMove(&moves[i],pos);
 		pos->tomove = !pos->tomove;
-		if (pos->tomove == WHITE) kingpos = pos->Wkingpos;
-		else kingpos = pos->Bkingpos;
-		int incheck = isCheck(pos,kingpos);
+		int incheck = isCheck(pos);
 		if (incheck) {
 			unmakeMove(pos);
 			numcheckmoves++;
@@ -215,9 +204,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		//late move reduction
 		int score;
 		int movenum = (i - numcheckmoves);
-		if (pos->tomove == WHITE) kingpos = pos->Wkingpos;
-		else kingpos = pos->Bkingpos;
-		incheck = isCheck(pos,kingpos);
+		incheck = isCheck(pos);
 		//if ((movenum > 3) && (depthleft >= 4) && (moves[i].cappiece == '0') && (moves[i].prom == 0) && (!incheck)) { // +25 elo over version without
 		if ((moves[i].cappiece == '0') && (depthleft >= 2) && (moves[i].prom == 0)) { // + 200 elo over version without LMR
 			// try to reduce non-capture moves
@@ -242,9 +229,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	
 	if (num_moves == numcheckmoves) {
 		// no legal moves
-		if (pos->tomove == WHITE) kingpos = pos->Wkingpos;
-		else kingpos = pos->Bkingpos;
-		int incheck = isCheck(pos,kingpos);
+		int incheck = isCheck(pos);
 		if (incheck) {
 			// side to move is in checkmate
 			return -MATE_SCORE;
@@ -284,9 +269,7 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 			assert((moves[i].to >= 0 && moves[i].to <= 63));
 			makeMove(&moves[i],&pos);
 			pos.tomove = !pos.tomove;
-			if (pos.tomove == WHITE) kingpos = pos.Wkingpos;
-			else kingpos = pos.Bkingpos;
-			int incheck = isCheck(&pos,kingpos);
+			int incheck = isCheck(&pos);
 			if (incheck) {
 				numcheckmoves++;
 				unmakeMove(&pos);
@@ -316,16 +299,16 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 			else {
 				curscore = -alphaBeta(&pos,-99999,99999,curdepth-1,0,(movetime - time_spentms));
 			}
-
 			if (curscore == MATE_SCORE) {
 				end = clock();
 				time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+				nps = nodesSearched / time_spent;
 				printf("info depth %d nodes %d time %d nps %d score mate %d pv %s\n",(curdepth),nodesSearched,((int)(time_spent*1000)),nps,curdepth,movetostr(moves[i]));
 				unmakeMove(&pos);
 				return moves[i];
 			}
 			
-			if (curscore > bestScore) {
+			if (curscore >= bestScore) {
 				bestScore = curscore;
 				bestmove = moves[i];
 			}
@@ -373,7 +356,6 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 		printf("\n");
 		*/
 		printf("info depth %d nodes %d time %d nps %d score cp %d pv %s\n",(curdepth),nodesSearched,((int)(time_spent*1000)),nps,bestScore,movetostr(bestmove));
-		fflush(stdout);
 	}
 	if ((num_moves - numcheckmoves) == 1) return moves[legalmoveidx];
 	return bestmove;
