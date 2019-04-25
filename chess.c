@@ -148,7 +148,8 @@ int main() {
 		else if (strcmp(splitstr[0],"go") == 0) {
 			
 			int searchdepth = 100;
-			movetime = 2147483646;
+			//movetime = 2147483646;
+			movetime = INT_MAX / 100;
 			
 			if (strcmp(splitstr[1],"depth") == 0) {
 				searchdepth = atoi(splitstr[2]);
