@@ -12,11 +12,11 @@ U64 pieceHash[13][64];
 U64 turnHash;
 U64 castleHash[4];
 
-#define RAND_64 ((uint64_t)rand() | \
-                 (uint64_t)rand() << 15 | \
-                 (uint64_t)rand() << 30 | \
-                 (uint64_t)rand() << 45 | \
-                 ((uint64_t)rand() & 0xf) << 60 )
+#define RAND_64 ((uint64_t)(rand() & 0x7FFF) ^ \
+                 ((uint64_t)(rand() & 0x7FFF) << 15) ^ \
+                 ((uint64_t)(rand() & 0x7FFF) << 30) ^ \
+                 ((uint64_t)(rand() & 0x7FFF) << 45) ^ \
+                 ((uint64_t)(rand() & 0xF) << 60))
 
 void initZobrist() {
 
