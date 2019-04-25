@@ -7,11 +7,11 @@ int genPawnMoves_B(struct position *pos, int square, struct move *moves) {
 	assert(pos);
 	assert(square >= 0 && square <= 63);
 	assert(moves);
-	
+
 	int num_moves = 0;
 	const int x = getfile(square);
 	const int y = getrank(square);
-	
+
 	// Singles
 	if (pos->board[fileranktosquareidx(x, y + 1)] == '0') {
 		const int nx = x;
@@ -19,26 +19,26 @@ int genPawnMoves_B(struct position *pos, int square, struct move *moves) {
 		int newsquare = fileranktosquareidx(nx,ny);
 		if (ny == 7) {
 			// promotion
-			
+
 			// add moves
 			moves[num_moves].from = square;
 			moves[num_moves].to = newsquare;
 			moves[num_moves].prom = 'q';
 			moves[num_moves].cappiece = pos->board[newsquare];
 			num_moves += 1;
-			
+
 			moves[num_moves].from = square;
 			moves[num_moves].to = newsquare;
 			moves[num_moves].prom = 'r';
 			moves[num_moves].cappiece = pos->board[newsquare];
 			num_moves += 1;
-			
+
 			moves[num_moves].from = square;
 			moves[num_moves].to = newsquare;
 			moves[num_moves].prom = 'b';
 			moves[num_moves].cappiece = pos->board[newsquare];
 			num_moves += 1;
-			
+
 			moves[num_moves].from = square;
 			moves[num_moves].to = newsquare;
 			moves[num_moves].prom = 'n';
@@ -58,7 +58,7 @@ int genPawnMoves_B(struct position *pos, int square, struct move *moves) {
 	if (A7 <= square && square <= H7 &&
 		pos->board[fileranktosquareidx(x, y + 1)] == '0' &&
 		pos->board[fileranktosquareidx(x, y + 2)] == '0') {
-		
+
 		// Add move
 		moves[num_moves].from = square;
 		moves[num_moves].to = fileranktosquareidx(x, y + 2);
@@ -72,7 +72,7 @@ int genPawnMoves_B(struct position *pos, int square, struct move *moves) {
 		const int ny = y + BPdirs[i][1];
 		const int newsquare = fileranktosquareidx(nx, ny);
 		const char cappiece = pos->board[newsquare];
-		
+
 		// Borders
 		if (nx < 0 || nx > 7) {
 			continue;
@@ -84,26 +84,26 @@ int genPawnMoves_B(struct position *pos, int square, struct move *moves) {
 		if (isWhitePiece(cappiece)) {
 			if (ny == 7) {
 				// promotion capture
-				
+
 				// add moves
 				moves[num_moves].from = square;
 				moves[num_moves].to = newsquare;
 				moves[num_moves].prom = 'q';
 				moves[num_moves].cappiece = cappiece;
 				num_moves += 1;
-				
+
 				moves[num_moves].from = square;
 				moves[num_moves].to = newsquare;
 				moves[num_moves].prom = 'r';
 				moves[num_moves].cappiece = cappiece;
 				num_moves += 1;
-				
+
 				moves[num_moves].from = square;
 				moves[num_moves].to = newsquare;
 				moves[num_moves].prom = 'b';
 				moves[num_moves].cappiece = cappiece;
 				num_moves += 1;
-				
+
 				moves[num_moves].from = square;
 				moves[num_moves].to = newsquare;
 				moves[num_moves].prom = 'n';
@@ -134,7 +134,7 @@ int genKnightMoves_B(struct position *pos, int square, struct move *moves) {
 		const int ny = y + Ndirs[i][1];;
 		const int newsquare = fileranktosquareidx(nx, ny);
 		const char cappiece = pos->board[newsquare];
-		
+
 		// Borders
 		if (nx < 0 || nx > 7 || ny < 0 || ny > 7) {
 			continue;
@@ -143,14 +143,14 @@ int genKnightMoves_B(struct position *pos, int square, struct move *moves) {
 		if (isBlackPiece(cappiece)) {
 			continue;
 		}
-		
+
 		//add move
 		moves[num_moves].from = square;
 		moves[num_moves].to = newsquare;
 		moves[num_moves].prom = 0;
 		moves[num_moves].cappiece = cappiece;
 		num_moves += 1;
-		
+
 	}
 	return num_moves;
 }
@@ -168,11 +168,11 @@ int genBishopMoves_B(struct position *pos, int square, struct move *moves) {
 			const int newsquare = fileranktosquareidx(nx, ny);
 			const char cappiece = pos->board[newsquare];
 			// Borders
-			
+
 			if (nx < 0 || nx > 7 || ny < 0 || ny > 7) {
 				break;
 			}
-			
+
 			if (isBlackPiece(cappiece)) {
 				break;
 			}
@@ -211,11 +211,11 @@ int genRookMoves_B(struct position *pos, int square, struct move *moves) {
 			int ny = y + j * Rdirs[i][1];
 			const int newsquare = fileranktosquareidx(nx, ny);
 			const char cappiece = pos->board[newsquare];
-			
+
 			if (nx < 0 || nx > 7 || ny < 0 || ny > 7) {
 				break;
 			}
-			
+
 			if (isBlackPiece(cappiece)) {
 				break;
 			}
@@ -254,11 +254,11 @@ int genQueenMoves_B(struct position *pos, int square, struct move *moves) {
 			int ny = y + j * Qdirs[i][1];
 			const int newsquare = fileranktosquareidx(nx, ny);
 			const char cappiece = pos->board[newsquare];
-			
+
 			if (nx < 0 || nx > 7 || ny < 0 || ny > 7) {
 				break;
 			}
-			
+
 			if (isBlackPiece(cappiece)) {
 				break;
 			}
@@ -296,7 +296,7 @@ int genKingMoves_B(struct position *pos, int square, struct move *moves) {
 		const int ny = y + Kdirs[i][1];;
 		const int newsquare = fileranktosquareidx(nx, ny);
 		const char cappiece = pos->board[newsquare];
-		
+
 		// Borders
 		if (nx < 0 || nx > 7 || ny < 0 || ny > 7) {
 			continue;
@@ -362,7 +362,7 @@ int genMoves_B(struct position *pos, struct move *moves) {
 		const int y = getrank(pos->epsquare);
 
 		for (int i = 0;i < 2;i++) {
-			
+
 			const int nx = x + BPdirs[i][0];
 			const int ny = y - BPdirs[i][1];
 			const int idx = fileranktosquareidx(nx, ny);

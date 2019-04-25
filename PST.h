@@ -29,7 +29,7 @@ int PSTWQ_EG[] = {
 9, 14, 17, 19, 19, 17, 14, 9,
 -8, -3, 1, 3, 3, 1, -3, -8,
 -31, -26, -22, -21, -21, -22, -26, -31,
--61, -55, -52, -50, -50, -52, -55, -61	
+-61, -55, -52, -50, -50, -52, -55, -61
 };
 int PSTBQ_EG[] = {
 61,55,52,50,50,52,55,61,
@@ -39,7 +39,7 @@ int PSTBQ_EG[] = {
 -19,-24,-28,-30,-30,-28,-24,-19,
 -23,-28,-32,-34,-34,-32,-28,-23,
 -21,-26,-30,-31,-31,-30,-26,-21,
--12,-17,-21,-23,-23,-21,-17,-12	
+-12,-17,-21,-23,-23,-21,-17,-12
 };
 int PSTWK_MG[] = {
 -9, -9, -9, -9, -9, -9, -9, -9,
@@ -69,7 +69,7 @@ int PSTWK_EG[] = {
 11, 15, 17, 18, 18, 17, 15, 11,
 -2, 2, 4, 5, 5, 4, 2, -2,
 -17, -13, -11, -10, -10, -11, -13, -17,
--34, -30, -28, -27, -27, -28, -30, -34	
+-34, -30, -28, -27, -27, -28, -30, -34
 };
 int PSTBK_EG[] = {
 34,30,28,27,27,28,30,34,
@@ -260,44 +260,44 @@ int PSTval(char piece, int square, char gamestage) {
 		if (piece == 'b') return PSTBB_EG[square];
 		if (piece == 'R') return PSTWR_EG[square];
 		if (piece == 'r') return PSTBR_EG[square];
-		
+
 	}
 	if (piece == 'K') {
 		return PSTWK_MG[square];
 	}
 	if (piece == 'k') {
 		return PSTBK_MG[square];
-	}	
+	}
 	if (piece == 'B') {
 		return PSTWB_MG[square];
-	}	
+	}
 	if (piece == 'b') {
 		return PSTBB_MG[square];
-	}	
+	}
 	if (piece == 'N') {
 		return PSTWN_MG[square];
-	}	
+	}
 	if (piece == 'n') {
 		return PSTBN_MG[square];
-	}	
+	}
 	if (piece == 'R') {
 		return PSTWR_MG[square];
-	}	
+	}
 	if (piece == 'r') {
 		return PSTBR_MG[square];
-	}	
+	}
 	if (piece == 'Q') {
 		return PSTWQ_MG[square];
-	}	
+	}
 	if (piece == 'q') {
 		return PSTBQ_MG[square];
-	}	
+	}
 	if (piece == 'P') {
 		return PSTWP_MG[square];
-	}	
+	}
 	if (piece == 'p') {
 		return PSTBP_MG[square];
-	}	
+	}
 	return 0;
 }
 #endif

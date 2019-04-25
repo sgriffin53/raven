@@ -35,7 +35,7 @@ struct position {
 	int epsquare;
 	char board[64];
 	int WcastleQS;
-	int WcastleKS; 
+	int WcastleKS;
 	int BcastleKS;
 	int BcastleQS;
 	int tomove;
@@ -82,7 +82,7 @@ int main() {
 	setbuf(stdin, NULL);
 	setvbuf(stdout, NULL, _IONBF, 0);
 	setvbuf(stdin, NULL, _IONBF, 0);
-	
+
 	char instr[8192];
 	char splitstr[1000][200];
 	char * token;
@@ -93,13 +93,13 @@ int main() {
 	struct position pos = setstartpos(); // set start position
 	posstack[0] = pos;
 	posstackend = 1;
-	
+
 	initZobrist();
-	
+
 	initPTT(&PTT);
 	initTT(&TT);
 	initETT(&ETT);
-	
+
 	while (keeprunning) {
 		// read input from stdin
 		fgets(instr, 8192, stdin);
@@ -107,7 +107,7 @@ int main() {
 		instr[strcspn(instr, "\n")] = 0;
 		//split instr into tokens into splitstr by space
 		token = strtok(instr," ");
-		
+
 		int i = 0;
 		while (token != NULL) {
 			strcpy(splitstr[i],token);
@@ -115,9 +115,9 @@ int main() {
 			token = strtok(NULL, " ");
 		}
 		splitstrend = i; // position of end of splitstr array
-		
+
 		if (strcmp(splitstr[0],"legalmoves") == 0) {
-			
+
 			struct move moves[MAX_MOVES];
 			int num_moves = genLegalMoves(&pos,moves);
 			int kingpos;
@@ -137,20 +137,20 @@ int main() {
 			}
 			printf("\n");
 		}
-		
+
 		else if (strcmp(splitstr[0],"quit") == 0) keeprunning = 0;
-		
+
 		else if (strcmp(splitstr[0],"hash") == 0) {
 			U64 hash = generateHash(&pos);
 			printf("%" PRIu64 "\n",hash);
 		}
-		
+
 		else if (strcmp(splitstr[0],"go") == 0) {
-			
+
 			int searchdepth = 100;
 			//movetime = 2147483646;
 			movetime = INT_MAX / 100;
-			
+
 			if (strcmp(splitstr[1],"depth") == 0) {
 				searchdepth = atoi(splitstr[2]);
 			}
@@ -165,47 +165,47 @@ int main() {
 					btime = atoi(splitstr[i+1]);
 				}
 			}
-			
+
 			if (pos.tomove == WHITE) {
 				if (wtime != -1) movetime = wtime / 25;
 			}
 			else {
 				if (btime != -1) movetime = btime / 25;
 			}
-			
+
 			if (strcmp(splitstr[1],"movetime") == 0) {
 				movetime = atoi(splitstr[2]);
 			}
-			
+
 			nodesSearched = 0;
-			
+
 			struct move bestmove = search(pos,searchdepth,movetime);
-			
+
 			printf("bestmove %s\n",movetostr(bestmove));
 			fflush(stdout);
 		}
-		
+
 		else if (strcmp(splitstr[0],"isready") == 0) {
 			printf("readyok\n");
 			fflush(stdout);
 		}
-		
+
 		else if (strcmp(splitstr[0],"uci") == 0) {
 			printf("id name Raven 0.30\nid author JimmyRustles\nuciok\n");
 			fflush(stdout);
 		}
-		
+
 		else if (strcmp(splitstr[0],"board") == 0) dspboard(pos);
-		
+
 		else if (strcmp(splitstr[0],"move") == 0) makeMovestr(splitstr[1], &pos);
-		
+
 		else if (strcmp(splitstr[0],"unmove") == 0) unmakeMove(&pos);
-		
+
 		else if (strcmp(splitstr[0],"eval") == 0) {
 			//printf("score: %d",taperedEval(&pos));
 			fflush(stdout);
 		}
-		
+
 		else if (strcmp(splitstr[0],"perft") == 0) {
 			int depth;
 			U64 pnodes;
@@ -220,25 +220,25 @@ int main() {
 				printf("info depth %d nodes %" PRIu64 " time %f nps %" PRIu64 "\n",i,pnodes,time_spent,nps);
 				fflush(stdout);
 			}
-			
+
 			printf("nodes %" PRIu64 "\n", pnodes);
 			fflush(stdout);
 		}
-		
+
 		else if (strcmp(splitstr[0],"PST") == 0) {
 			char piece = splitstr[1][0];
 			printf("%d\n",PSTval(piece, atoi(splitstr[2]),'O'));
 		}
-		
+
 		else if (strcmp(splitstr[0],"rank") == 0) printf("%d\n",getrank(atoi(splitstr[1])));
-		
+
 		else if (strcmp(splitstr[0],"file") == 0) printf("%d\n",getfile(atoi(splitstr[1])));
-		
+
 		else if (strcmp(splitstr[0],"sperft") == 0) {
 			int depth = atoi(splitstr[1]);
 			splitperft(&pos,depth);
 		}
-		
+
 		else if ( (strcmp(splitstr[0],"position") == 0) && (strcmp(splitstr[1],"fen") == 0) ) {
 			char fen[1024] = "";
 			int readingfen = 1;
@@ -258,7 +258,7 @@ int main() {
 			if (readingfen) pos = parsefen(fen);
 			posstack[0] = pos;
 		}
-		
+
 		else if ( (strcmp(splitstr[0],"position") == 0) && (strcmp(splitstr[1],"startpos") == 0) ) {
 			pos = setstartpos(); // set start position
 			posstack[0] = pos;
@@ -271,8 +271,8 @@ int main() {
 				}
 			}
 		}
-		
-	}		
+
+	}
 	free(TT.entries);
 	free(PTT.entries);
 	free(ETT.entries);

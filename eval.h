@@ -17,10 +17,10 @@ int pieceval(char inpiece) {
 	if (inpiece == 'R') return 500;
 	if (inpiece == 'Q') return 900;
 	if (inpiece == 'K') return 9999;
-	
+
 	assert(0);
 	printf("inpiece: %d\n",inpiece);
-	
+
 	return 0;
 }
 
@@ -110,7 +110,7 @@ int taperedEval(struct position *pos) {
 	}
 	int totalPhase = pawnPhase * 16 + knightPhase * 4 + bishopPhase*4 + rookPhase*4 + queenPhase*2;
 	int phase = totalPhase;
-	
+
 	phase -= num_WP * pawnPhase;
 	phase -= num_WN * knightPhase;
 	phase -= num_WB * bishopPhase;
@@ -121,9 +121,9 @@ int taperedEval(struct position *pos) {
 	phase -= num_BB * bishopPhase;
 	phase -= num_BR * rookPhase;
 	phase -= num_BQ * queenPhase;
-	
+
 	phase = (phase * 256 + (totalPhase / 2)) / totalPhase;
-	
+
 	int eval = ((openingEval * (256 - phase)) + (endgameEval * phase)) / 256;
 	//printf("%d %d %d\n",openingEval,endgameEval,eval);
 	if (pos->tomove == BLACK) eval = -eval;

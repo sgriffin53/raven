@@ -6,11 +6,11 @@ void dspboard(struct position pos) {
 	assert(pos.board);
 	char board[65];
 	strcpy(board,pos.board);
-	
+
 	printf("\n");
 	printf("  +---+---+---+---+---+---+---+---+\n");
 	printf("8 |");
-	
+
 	for (int i = 0;i<64;i++) {
 		if ( ((i%8) == 0) && (i != 0) ) {
 			printf("\n");
@@ -18,15 +18,15 @@ void dspboard(struct position pos) {
 			printf("%d",(8 - i/8));
 			printf(" |");
 		}
-		
+
 		char piece = board[i];
 		if (piece == '0') piece = ' ';
 		printf(" %c |", piece);
 	}
-	
+
 	printf("\n  +---+---+---+---+---+---+---+---+");
 	printf("\n    A   B   C   D   E   F   G   H  \n");
-	
+
 	printf("Side to move: ");
 	if (pos.tomove == 0) printf("Black");
 	else printf("White");

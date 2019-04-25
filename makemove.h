@@ -6,7 +6,7 @@
 void makeMove(struct move *move, struct position *pos) {
 	assert(move);
 	assert(pos);
-	
+
 	char piece = pos->board[move->from];
 	int newepsquare = -1; // init to -1, will be changed to en passant square if there is one
 	int newWkingpos = pos->Wkingpos;
@@ -19,64 +19,64 @@ void makeMove(struct move *move, struct position *pos) {
 	int cappiece = pos->board[move->to];
 	pos->board[move->to] = piece;
 	pos->board[move->from] = '0';
-	
+
 	pos->halfmoves = pos->halfmoves + 1;
-	
+
 	if (cappiece != '0') {
 		pos->halfmoves = 0;
 	}
-	
+
 	if (piece == 'P') { // white pawn
 		if (torank == 0) { // promotion
 			pos->board[move->to] = toupper(move->prom);
 		}
-		
+
 		if (move->to == pos->epsquare) { // white en passant move
 			pos->board[(pos->epsquare + 8)] = '0'; // remove captured piece
 		}
-		
+
 		if ((move->from - move->to) == 16) { // pawn moved 2 spaces forward
 			newepsquare = move->to + 8; // set ep square
 		}
-		
+
 		pos->halfmoves = 0;
 	}
-	
+
 	if (piece == 'p') { // black pawn
 		if (torank == 7) { // promotion
 			pos->board[move->to] = move->prom;
 		}
-		
+
 		if (move->to == pos->epsquare) { // black en passant move
 			pos->board[(pos->epsquare - 8)] = '0'; // remove captured piece
 		}
-		
+
 		if ((move->to - move->from) == 16) { // pawn moved 2 spaces forward
 			newepsquare = move->to - 8; // set ep square
 		}
-		
+
 		pos->halfmoves = 0;
 	}
-	
+
 	if (piece == 'K') { // white king
 		newWcastleQS = 0;
 		newWcastleKS = 0;
 		newWkingpos = move->to;
-		
+
 		if ((move->from == E1) && (move->to == G1)) { // white kingside castling
 			pos->board[E1] = '0';
 			pos->board[G1] = 'K';
 			pos->board[F1] = 'R';
 			pos->board[H1] = '0';
 		}
-		
+
 		if ((move->from == E1) && (move->to == C1)) { // white queenside castling
 			pos->board[E1] = '0';
 			pos->board[C1] = 'K';
 			pos->board[D1] = 'R';
 			pos->board[A1] = '0';
 		}
-		
+
 	}
 	if (piece == 'k') { // black king
 		newBcastleQS = 0;
@@ -107,7 +107,7 @@ void makeMove(struct move *move, struct position *pos) {
 	if (pos->board[63] != 'R') { // white h1 rook moved or captured
 		newWcastleKS = 0;
 	}
-	
+
 	pos->tomove = !pos->tomove;
 	pos->epsquare = newepsquare;
 	pos->Bkingpos = newBkingpos;
@@ -116,7 +116,7 @@ void makeMove(struct move *move, struct position *pos) {
 	pos->WcastleKS = newWcastleKS;
 	pos->BcastleQS = newBcastleQS;
 	pos->BcastleKS = newBcastleKS;
-	
+
 	posstack[posstackend] = *pos;
 	posstackend++;
 }
@@ -137,7 +137,7 @@ void makeMovestr(char move[], struct position *pos) {
 	char startsquare[3];
 	char endsquare[3];
 	char prompiece[2];
-	
+
 	startsquare[0] = move[0];
 	startsquare[1] = move[1];
 	startsquare[2] = 0;
@@ -146,12 +146,12 @@ void makeMovestr(char move[], struct position *pos) {
 	endsquare[2] = 0;
 	prompiece[0] = move[4];
 	prompiece[1] = 0;
-	
+
 	int startsquareidx = strsquaretoidx(startsquare);
 	int endsquareidx = strsquaretoidx(endsquare);
-	
+
 	struct move moveobj = {.from=startsquareidx,.to=endsquareidx,.prom=prompiece[0]};
-	
+
 	makeMove(&moveobj, pos);
 }
 #endif

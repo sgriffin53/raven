@@ -85,14 +85,14 @@ struct position parsefen(char fen[]) {
 				.tomove=1,.Wkingpos=0,.Bkingpos=0};
 	int i = 0;
 	int j = 0;
-	
+
 	token = strtok(fen," ");
 	while (token != NULL) {
 		strcpy(splitstr[i],token);
 		i++;
 		token = strtok(NULL, " ");
 	}
-	
+
 	//int splitstrend = i; // position of end of splitstr array
 	for (i = 0;i<strlen(splitstr[0]);i++) {
 		char letter = splitstr[0][i];
@@ -118,29 +118,29 @@ struct position parsefen(char fen[]) {
 			case '6' : j+=5; break;
 			case '7' : j+=6; break;
 			case '8' : j+=7; break;
-		
+
 		}
 		j++;
 	}
-	
+
 	if (strcmp(splitstr[1],"w") == 0) pos.tomove = WHITE;
 	if (strcmp(splitstr[1],"b") == 0) pos.tomove = BLACK;
-	
+
 	for (i = 0;i < strlen(splitstr[2]);i++) {
 		if (splitstr[2][i] == 'K') pos.WcastleKS = 1;
 		else if (splitstr[2][i] == 'Q') pos.WcastleQS = 1;
 		else if (splitstr[2][i] == 'k') pos.BcastleKS = 1;
 		else if (splitstr[2][i] == 'q') pos.BcastleQS = 1;
 	}
-	
+
 	if (strcmp(splitstr[3],"-") != 0) {
 		//en passant square given
 		pos.epsquare = strsquaretoidx(splitstr[3]);
 	}
-	
+
 	pos.halfmoves = atoi(splitstr[4]);
 	if (splitstr[4][0] == '-') pos.halfmoves = 0;
-	
+
 	return pos;
 }
 int capval(char piece) {
@@ -245,13 +245,13 @@ int isThreefold(const struct position *pos) {
 }
 int isAttacked(struct position *pos, int square, int colour) {
 	// colour is colour of attacking side
-	
+
 	assert(pos);
 	assert(square >= 0 && square <= 63);
-	
+
 	const int x = getfile(square);
 	const int y = getrank(square);
-	
+
 	if (colour == WHITE) {
 		// white pawn attacks
 		for (int i = 0;i < 2;i++) {
@@ -259,7 +259,7 @@ int isAttacked(struct position *pos, int square, int colour) {
 			const int ny = y + BPdirs[i][1];
 			const int idx = fileranktosquareidx(nx,ny);
 			const char piece = pos->board[idx];
-			
+
 			if (nx < 0 || nx > 7 || ny < 0 || ny > 7) {
 				continue;
 			}
@@ -267,14 +267,14 @@ int isAttacked(struct position *pos, int square, int colour) {
 				return 1;
 			}
 		}
-		
+
 		// white knight attacks
 		for (int i = 0;i < 8;i++) {
 			const int nx = x + Ndirs[i][0];
 			const int ny = y + Ndirs[i][1];
 			const int idx = fileranktosquareidx(nx,ny);
 			const char piece = pos->board[idx];
-			
+
 			if (nx < 0 || nx > 7 || ny < 0 || ny > 7) {
 				continue;
 			}
@@ -282,7 +282,7 @@ int isAttacked(struct position *pos, int square, int colour) {
 				return 1;
 			}
 		}
-		
+
 		//white bishop and queen attacks
 		for (int i = 0;i < 4;i++) {
 			for (int j = 1;j<=7;j++) {
@@ -290,11 +290,11 @@ int isAttacked(struct position *pos, int square, int colour) {
 				const int ny = y + j * Bdirs[i][1];
 				const int idx = fileranktosquareidx(nx,ny);
 				const char piece = pos->board[idx];
-				
+
 				if (nx < 0 || nx > 7 || ny < 0 || ny > 7) {
 					continue;
 				}
-				
+
 				if (piece == 'B' || piece == 'Q') {
 					return 1;
 				}
@@ -303,7 +303,7 @@ int isAttacked(struct position *pos, int square, int colour) {
 				}
 			}
 		}
-		
+
 		//white rook and queen attacks
 		for (int i = 0;i < 4;i++) {
 			for (int j = 1;j<=7;j++) {
@@ -311,11 +311,11 @@ int isAttacked(struct position *pos, int square, int colour) {
 				const int ny = y + j * Rdirs[i][1];
 				const int idx = fileranktosquareidx(nx,ny);
 				const char piece = pos->board[idx];
-				
+
 				if (nx < 0 || nx > 7 || ny < 0 || ny > 7) {
 					continue;
 				}
-				
+
 				if (piece == 'R' || piece == 'Q') {
 					return 1;
 				}
@@ -324,14 +324,14 @@ int isAttacked(struct position *pos, int square, int colour) {
 				}
 			}
 		}
-		
+
 		//white king attacks
 		for (int i = 0;i < 8;i++) {
 			const int nx = x + Kdirs[i][0];
 			const int ny = y + Kdirs[i][1];
 			const int idx = fileranktosquareidx(nx,ny);
 			const char piece = pos->board[idx];
-			
+
 			if (nx < 0 || nx > 7 || ny < 0 || ny > 7) {
 				continue;
 			}
@@ -348,7 +348,7 @@ int isAttacked(struct position *pos, int square, int colour) {
 			const int ny = y + WPdirs[i][1];
 			const int idx = fileranktosquareidx(nx,ny);
 			const char piece = pos->board[idx];
-			
+
 			if (nx < 0 || nx > 7 || ny < 0 || ny > 7) {
 				continue;
 			}
@@ -356,14 +356,14 @@ int isAttacked(struct position *pos, int square, int colour) {
 				return 1;
 			}
 		}
-		
+
 		// black knight attacks
 		for (int i = 0;i < 8;i++) {
 			const int nx = x + Ndirs[i][0];
 			const int ny = y + Ndirs[i][1];
 			const int idx = fileranktosquareidx(nx,ny);
 			const char piece = pos->board[idx];
-			
+
 			if (nx < 0 || nx > 7 || ny < 0 || ny > 7) {
 				continue;
 			}
@@ -371,7 +371,7 @@ int isAttacked(struct position *pos, int square, int colour) {
 				return 1;
 			}
 		}
-		
+
 		//black bishop and queen attacks
 		for (int i = 0;i < 4;i++) {
 			for (int j = 1;j<=7;j++) {
@@ -379,11 +379,11 @@ int isAttacked(struct position *pos, int square, int colour) {
 				const int ny = y + j * Bdirs[i][1];
 				const int idx = fileranktosquareidx(nx,ny);
 				const char piece = pos->board[idx];
-				
+
 				if (nx < 0 || nx > 7 || ny < 0 || ny > 7) {
 					continue;
 				}
-				
+
 				if (piece == 'b' || piece == 'q') {
 					return 1;
 				}
@@ -392,7 +392,7 @@ int isAttacked(struct position *pos, int square, int colour) {
 				}
 			}
 		}
-		
+
 		//black rook and queen attacks
 		for (int i = 0;i < 4;i++) {
 			for (int j = 1;j<=7;j++) {
@@ -400,11 +400,11 @@ int isAttacked(struct position *pos, int square, int colour) {
 				const int ny = y + j * Rdirs[i][1];
 				const int idx = fileranktosquareidx(nx,ny);
 				const char piece = pos->board[idx];
-				
+
 				if (nx < 0 || nx > 7 || ny < 0 || ny > 7) {
 					continue;
 				}
-				
+
 				if (piece == 'r' || piece == 'q') {
 					return 1;
 				}
@@ -413,14 +413,14 @@ int isAttacked(struct position *pos, int square, int colour) {
 				}
 			}
 		}
-		
+
 		//black king attacks
 		for (int i = 0;i < 8;i++) {
 			const int nx = x + Kdirs[i][0];
 			const int ny = y + Kdirs[i][1];
 			const int idx = fileranktosquareidx(nx,ny);
 			const char piece = pos->board[idx];
-			
+
 			if (nx < 0 || nx > 7 || ny < 0 || ny > 7) {
 				continue;
 			}

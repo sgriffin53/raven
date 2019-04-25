@@ -17,7 +17,7 @@ U64 castleHash[4];
                  (uint64_t)rand() << 30 | \
                  (uint64_t)rand() << 45 | \
                  ((uint64_t)rand() & 0xf) << 60 )
-	
+
 void initZobrist() {
 
 	for(int i = 0; i < 13; i++) {
@@ -25,7 +25,7 @@ void initZobrist() {
 			pieceHash[i][j] = RAND_64;
 		}
 	}
-	
+
 	turnHash = RAND_64;
 
 	for(int i = 0; i < 4; i++) {
@@ -70,7 +70,7 @@ int pieceintval(char inpiece) {
 U64 generateHash(const struct position *pos) {
 	assert(pos);
 	U64 zobrist = 0;
-	
+
 	for(int square = 0; square < 64; square++) {
 		if(pos->board[square] != '0') {
 			char squarepiece = pos->board[square];
@@ -93,7 +93,7 @@ U64 generateHash(const struct position *pos) {
 	if (pos->WcastleQS) zobrist ^= castleHash[1];
 	if (pos->BcastleKS) zobrist ^= castleHash[2];
 	if (pos->BcastleQS) zobrist ^= castleHash[3];
-	
+
 
 	return zobrist;
 }
