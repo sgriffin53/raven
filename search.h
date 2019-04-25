@@ -254,7 +254,7 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 	int timeElapsed = 0;
 	double time_spent;
 	struct move bestmove;
-	clock_t endtime = clock() + movetime;
+	clock_t endtime = clock() + (movetime / 1000.0 * CLOCKS_PER_SEC);
 	int nps;
 	int num_moves = genLegalMoves(&pos,moves);
 	if (num_moves == 1) return moves[0];
