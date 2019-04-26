@@ -54,16 +54,16 @@ struct position posstack[1024];
 int posstackend = 0;
 int nodesSearched = 0;
 
-# include "board.h"
-# include "hash.h"
-# include "functions.h"
-# include "TT.h"
-# include "makemove.h"
-# include "movegen.h"
-# include "PST.h"
-# include "eval.h"
-# include "search.h"
-# include "perft.h"
+#include "board.h"
+#include "hash.h"
+#include "functions.h"
+#include "TT.h"
+#include "makemove.h"
+#include "movegen.h"
+#include "PST.h"
+#include "eval.h"
+#include "search.h"
+#include "perft.h"
 
 struct position setstartpos() {
 	struct position pos = {.epsquare=-1,.board={'r','n','b','q','k','b','n','r',
