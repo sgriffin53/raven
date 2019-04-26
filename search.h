@@ -79,15 +79,14 @@ int qSearch(struct position *pos, int alpha, int beta, clock_t endtime) {
 		return 0;
 	}
 	//int ispawnless = isPawnless(pos);
-	int standpat = taperedEval(pos);
+	const int standpat = taperedEval(pos);
 	if (standpat >= beta) {
 		nodesSearched++;
 		return beta;
 	}
 
 	// delta pruning
-
-	int BIG_DELTA = 900;
+	const int BIG_DELTA = 900;
 	if (standpat < alpha - BIG_DELTA) {
 		nodesSearched++;
 		return alpha;
@@ -96,7 +95,7 @@ int qSearch(struct position *pos, int alpha, int beta, clock_t endtime) {
 	if (alpha < standpat) alpha = standpat;
 
 	struct move moves[MAX_MOVES];
-	int num_moves = genLegalMoves(pos,moves);
+	const int num_moves = genLegalMoves(pos,moves);
 
 	for (int i = 0;(i < num_moves);i++) {
 		//clock_t end = clock();
@@ -109,7 +108,7 @@ int qSearch(struct position *pos, int alpha, int beta, clock_t endtime) {
 
 		// check if move is legal (doesn't put in check)
 		pos->tomove = !pos->tomove;
-		int incheck = isCheck(pos);
+		const int incheck = isCheck(pos);
 		if (incheck) {
 			unmakeMove(pos);
 			continue;
@@ -117,7 +116,7 @@ int qSearch(struct position *pos, int alpha, int beta, clock_t endtime) {
 		pos->tomove = !pos->tomove;
 
 		// score node
-		int score = -qSearch(pos,-beta,-alpha, endtime);
+		const int score = -qSearch(pos,-beta,-alpha, endtime);
 
 		nodesSearched++;
 
@@ -143,7 +142,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	if (pos->halfmoves >= 100) return 0;
 
 	// check extensions
-	int incheck = isCheck(pos);
+	const int incheck = isCheck(pos);
 	if (incheck) depthleft++;
 
 	if (depthleft <= 0) {
@@ -181,7 +180,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	 */
 
 	struct move moves[MAX_MOVES];
-	int num_moves = genLegalMoves(pos,moves);
+	const int num_moves = genLegalMoves(pos,moves);
 	sortMoves(pos,moves,num_moves);
 	int legalmoves = 0;
 	for (int i = 0;(i < num_moves);i++) {

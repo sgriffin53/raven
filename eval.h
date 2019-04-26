@@ -4,7 +4,7 @@
 #include "PST.h"
 #include "functions.h"
 
-int pieceval(char inpiece) {
+int pieceval(const char inpiece) {
 	if (inpiece == 'p') return 100;
 	if (inpiece == 'n') return 300;
 	if (inpiece == 'b') return 300;
@@ -24,7 +24,7 @@ int pieceval(char inpiece) {
 	return 0;
 }
 
-int isPawnless(struct position *pos) {
+int isPawnless(const struct position *pos) {
 	for (int i=0;i<64;i++) {
 		char piece = pos->board[i];
 		if (piece != '0') {
@@ -35,7 +35,7 @@ int isPawnless(struct position *pos) {
 	}
 	return 1;
 }
-int taperedEval(struct position *pos) {
+int taperedEval(const struct position *pos) {
 	assert(pos);
 	int num_BP = 0;
 	int num_BN = 0;
@@ -129,7 +129,7 @@ int taperedEval(struct position *pos) {
 	if (pos->tomove == BLACK) eval = -eval;
 	return eval;
 }
-int isEndgame(struct position *pos) {
+int isEndgame(const struct position *pos) {
 	int numpieces = 1;
 	for (int i=0;i<64;i++) {
 		char piece = pos->board[i];
@@ -151,7 +151,7 @@ int isEndgame(struct position *pos) {
 	if (numpieces <= 3) return 1;
 	return 0;
 }
-int evalBoard(struct position *pos) {
+int evalBoard(const struct position *pos) {
 	assert(pos);
 	int score = 0;
 	for (int i = 0;i<64;i++) {

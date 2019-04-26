@@ -5,7 +5,7 @@
 #include "movegen_black.h"
 #include "movegen_white.h"
 
-int genLegalMoves(struct position *pos, struct move *moves) {
+int genLegalMoves(const struct position *pos, struct move *moves) {
 	assert(pos);
 	assert(moves);
 	int num_moves = 0;

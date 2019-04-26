@@ -3,7 +3,7 @@
 
 #include "functions.h"
 
-int genPawnMoves_B(struct position *pos, int square, struct move *moves) {
+int genPawnMoves_B(const struct position *pos, int square, struct move *moves) {
 	assert(pos);
 	assert(square >= 0 && square <= 63);
 	assert(moves);
@@ -122,7 +122,7 @@ int genPawnMoves_B(struct position *pos, int square, struct move *moves) {
 	}
 	return num_moves;
 }
-int genKnightMoves_B(struct position *pos, int square, struct move *moves) {
+int genKnightMoves_B(const struct position *pos, int square, struct move *moves) {
 	assert(pos);
 	assert(square >= 0 && square <= 63);
 	assert(moves);
@@ -154,7 +154,7 @@ int genKnightMoves_B(struct position *pos, int square, struct move *moves) {
 	}
 	return num_moves;
 }
-int genBishopMoves_B(struct position *pos, int square, struct move *moves) {
+int genBishopMoves_B(const struct position *pos, int square, struct move *moves) {
 	assert(pos);
 	assert(square >= 0 && square <= 63);
 	assert(moves);
@@ -198,7 +198,7 @@ int genBishopMoves_B(struct position *pos, int square, struct move *moves) {
 	}
 	return num_moves;
 }
-int genRookMoves_B(struct position *pos, int square, struct move *moves) {
+int genRookMoves_B(const struct position *pos, int square, struct move *moves) {
 	assert(pos);
 	assert(square >= 0 && square <= 63);
 	assert(moves);
@@ -241,7 +241,7 @@ int genRookMoves_B(struct position *pos, int square, struct move *moves) {
 	}
 	return num_moves;
 }
-int genQueenMoves_B(struct position *pos, int square, struct move *moves) {
+int genQueenMoves_B(const struct position *pos, int square, struct move *moves) {
 	assert(pos);
 	assert(square >= 0 && square <= 63);
 	assert(moves);
@@ -284,7 +284,7 @@ int genQueenMoves_B(struct position *pos, int square, struct move *moves) {
 	}
 	return num_moves;
 }
-int genKingMoves_B(struct position *pos, int square, struct move *moves) {
+int genKingMoves_B(const struct position *pos, int square, struct move *moves) {
 	assert(pos);
 	assert(square >= 0 && square <= 63);
 	assert(moves);
@@ -352,7 +352,7 @@ int genKingMoves_B(struct position *pos, int square, struct move *moves) {
 	}
 	return num_moves;
 }
-int genMoves_B(struct position *pos, struct move *moves) {
+int genMoves_B(const struct position *pos, struct move *moves) {
 	assert(pos);
 	assert(moves);
 	int num_moves = 0;

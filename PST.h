@@ -244,7 +244,7 @@ int PSTBP_EG[] = {
 0,0,0,0,0,0,0,0
 };
 
-int PSTval(char piece, int square, char gamestage) {
+int PSTval(const char piece, const int square, const char gamestage) {
 	assert(piece);
 	assert(square >= 0 && square <= 63);
 	if (gamestage == 'E') {

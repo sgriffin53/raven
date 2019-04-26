@@ -3,7 +3,7 @@
 
 #include "functions.h"
 
-void makeMove(struct move *move, struct position *pos) {
+void makeMove(const struct move *move, struct position *pos) {
 	assert(move);
 	assert(pos);
 
@@ -131,7 +131,7 @@ void unmakeMove(struct position *pos) {
 	*pos = posstack[posstackend - 1];
 	}
 }
-void makeMovestr(char move[], struct position *pos) {
+void makeMovestr(const char move[], struct position *pos) {
 	assert(move);
 	assert(pos);
 	char startsquare[3];

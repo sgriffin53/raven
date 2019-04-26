@@ -154,7 +154,9 @@ int capval(char piece) {
 	assert(0);
 	return 0;
 }
-int mvvlva(char piece, char cappiece) { return 10 * capval(cappiece) - capval(piece); }
+int mvvlva(char piece, char cappiece) {
+	return 10 * capval(cappiece) - capval(piece);
+}
 
 void sortMoves(const struct position *pos, struct move *moves, const int num_moves) {
 	assert(moves);
@@ -243,7 +245,7 @@ int isThreefold(const struct position *pos) {
 	}
 	return 0;
 }
-int isAttacked(struct position *pos, int square, int colour) {
+int isAttacked(const struct position *pos, int square, int colour) {
 	// colour is colour of attacking side
 
 	assert(pos);
@@ -431,7 +433,7 @@ int isAttacked(struct position *pos, int square, int colour) {
 	}
 	return 0;
 }
-int isCheck(struct position *pos) {
+int isCheck(const struct position *pos) {
 	int kingpos;
 	if (pos->tomove == WHITE) kingpos = pos->Wkingpos;
 	else kingpos = pos->Bkingpos;
