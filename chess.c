@@ -5,78 +5,18 @@
 #include <time.h>
 #include <assert.h>
 #include <inttypes.h>
-
-#define WHITE 1
-#define BLACK 0
-#define MAX_MOVES 2048
-#define MATE_SCORE 99999
-
-int Qdirs[8][2] = {{-1,-1},{-1,+1},{+1,-1},{+1,+1},{0,1},{0,-1},{-1,0},{1,0}};
-int Kdirs[8][2] = {{-1,-1},{-1,+1},{+1,-1},{+1,+1},{0,1},{0,-1},{-1,0},{1,0}};
-int Ndirs[8][2] = {{-2,-1},{-1,-2},{+1,-2},{+2,-1},{+2,+1},{+1,+2},{-1,+2},{-2,+1}};
-int Bdirs[4][2] = {{-1,-1},{-1,+1},{+1,-1},{+1,+1}};
-int Rdirs[4][2] = {{0,1},{0,-1},{-1,0},{1,0}};
-int WPdirs[2][2] = {{-1,-1},{+1,-1}};
-int BPdirs[2][2] = {{-1,+1},{+1,+1}};
-
-
-enum SQUARE{A8,B8,C8,D8,E8,F8,G8,H8,
-			A7,B7,C7,D7,E7,F7,G7,H7,
-			A6,B6,C6,D6,E6,F6,G6,H6,
-			A5,B5,C5,D5,E5,F5,G5,H5,
-			A4,B4,C4,D4,E4,F4,G4,H4,
-			A3,B3,C3,D3,E3,F3,G3,H3,
-			A2,B2,C2,D2,E2,F2,G2,H2,
-			A1,B1,C1,D1,E1,F1,G1,H1};
-
-typedef unsigned long long U64;
-
-struct position {
-	int epsquare;
-	char board[64];
-	int WcastleQS;
-	int WcastleKS;
-	int BcastleKS;
-	int BcastleQS;
-	int tomove;
-	int Wkingpos;
-	int Bkingpos;
-	int halfmoves;
-};
-struct move {
-	int from;
-	int to;
-	char prom;
-	char cappiece;
-};
-
-struct position posstack[1024];
-int posstackend = 0;
-int nodesSearched = 0;
-
-#include "board.h"
+#include <limits.h>
+#include "globals.h"
 #include "hash.h"
-#include "functions.h"
-#include "TT.h"
+//#include "TT.h"
 #include "makemove.h"
 #include "movegen.h"
 #include "PST.h"
 #include "eval.h"
 #include "search.h"
 #include "perft.h"
+#include "position.h"
 
-struct position setstartpos() {
-	struct position pos = {.epsquare=-1,.board={'r','n','b','q','k','b','n','r',
-				'p','p','p','p','p','p','p','p',
-				'0','0','0','0','0','0','0','0',
-				'0','0','0','0','0','0','0','0',
-				'0','0','0','0','0','0','0','0',
-				'0','0','0','0','0','0','0','0',
-				'P','P','P','P','P','P','P','P',
-				'R','N','B','Q','K','B','N','R'},.WcastleQS=1,.WcastleKS=1,.BcastleQS=1,.BcastleKS=1,
-				.tomove=WHITE,.Wkingpos=60,.Bkingpos=4,.halfmoves=0};
-	return pos;
-}
 int main() {
 	setbuf(stdout, NULL);
 	setbuf(stdin, NULL);
@@ -95,9 +35,9 @@ int main() {
 
 	initZobrist();
 
-	initPTT(&PTT);
-	initTT(&TT);
-	initETT(&ETT);
+	//initPTT(&PTT);
+	//initTT(&TT);
+	//initETT(&ETT);
 
 	while (keeprunning) {
 		// read input from stdin
@@ -270,8 +210,8 @@ int main() {
 		}
 
 	}
-	free(TT.entries);
-	free(PTT.entries);
-	free(ETT.entries);
+	//free(TT.entries);
+	//free(PTT.entries);
+	//free(ETT.entries);
 	return 0;
 }

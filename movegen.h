@@ -1,11 +1,16 @@
 #ifndef MOVEGEN_H
 #define MOVEGEN_H
 
-#include "functions.h"
-#include "movegen_black.h"
-#include "movegen_white.h"
+#include <assert.h>
+#include "position.h"
+#include "move.h"
 
-int genLegalMoves(const struct position *pos, struct move *moves) {
+#define MAX_MOVES 2048
+
+int genMoves_W(const struct position *pos, struct move *moves);
+int genMoves_B(const struct position *pos, struct move *moves);
+
+static inline int genLegalMoves(const struct position *pos, struct move *moves) {
 	assert(pos);
 	assert(moves);
 	int num_moves = 0;
@@ -13,4 +18,5 @@ int genLegalMoves(const struct position *pos, struct move *moves) {
 	else num_moves += genMoves_B(pos,&moves[num_moves]);
 	return num_moves;
 }
+
 #endif

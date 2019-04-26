@@ -1,9 +1,12 @@
 #ifndef PERFT_H
 #define PERFT_H
 
-#include "TT.h"
+#include <assert.h>
+#include "position.h"
+#include "move.h"
 #include "movegen.h"
 #include "makemove.h"
+#include "attacks.h"
 
 U64 perft(struct position *pos, int depth) {
 	assert(pos);
@@ -42,6 +45,7 @@ U64 perft(struct position *pos, int depth) {
 
 	return nodes;
 }
+
 U64 splitperft(struct position *pos, int depth) {
 	struct move moves[MAX_MOVES];
 	U64 total_nodes = 0;
@@ -69,4 +73,5 @@ U64 splitperft(struct position *pos, int depth) {
 	}
 	return total_nodes;
 }
+
 #endif
