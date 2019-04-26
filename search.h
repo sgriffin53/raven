@@ -6,6 +6,17 @@
 #include "functions.h"
 #include "eval.h"
 
+int reduction(const struct move *move, const int depthleft) {
+	assert(move);
+	assert(depthleft >= 0);
+
+	if ((move->cappiece == '0') && (depthleft >= 2) && (move->prom == 0)) {
+		return 1;
+	}
+
+	return 0;
+}
+
 int negaMax(struct position *pos,int depth,int timeLeft) {
 	assert(depth >= 0);
 	nodesSearched++;
@@ -197,20 +208,17 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 
 		legalmoves++;
 
-		//non-cap reduction
-		int score;
-		//if ((movenum > 3) && (depthleft >= 4) && (moves[i].cappiece == '0') && (moves[i].prom == 0) && (!incheck)) { // +25 elo over version without
-		if ((moves[i].cappiece == '0') && (depthleft >= 2) && (moves[i].prom == 0)) { // + 200 elo over version without LMR
-			// try to reduce non-capture moves
-			score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 - 1, 0, endtime);
-			if (score > alpha) {
-				//re search
-				score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, endtime);
-			}
-		}
-		else {
+		// Reduction
+		const int r = reduction(&moves[i], depthleft);
+
+		// Search
+		int score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 - r, 0, endtime);
+
+		// Redo search
+		if (r > 0 && score > alpha) {
 			score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, endtime);
 		}
+
 		unmakeMove(pos);
 
 		if (score >= beta) {
