@@ -14,7 +14,6 @@ int negaMax(struct position *pos,int depth,int timeLeft) {
 		//return taperedEval(pos);
 	}
 
-	int kingpos;
 	struct move moves[MAX_MOVES];
 	int maxScore = -9999;
 	int num_moves = genLegalMoves(pos,moves);
@@ -191,8 +190,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		//int time_spentms = (int)(time_spent * 1000);
 		makeMove(&moves[i],pos);
 		pos->tomove = !pos->tomove;
-		int incheck = isCheck(pos);
-		if (incheck) {
+		if (isCheck(pos)) {
 			unmakeMove(pos);
 			continue;
 		}
@@ -202,7 +200,6 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 
 		//non-cap reduction
 		int score;
-		int movenum = legalmoves;
 		incheck = isCheck(pos);
 		//if ((movenum > 3) && (depthleft >= 4) && (moves[i].cappiece == '0') && (moves[i].prom == 0) && (!incheck)) { // +25 elo over version without
 		if ((moves[i].cappiece == '0') && (depthleft >= 2) && (moves[i].prom == 0)) { // + 200 elo over version without LMR
@@ -228,7 +225,6 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 
 	if (legalmoves == 0) {
 		// no legal moves
-		int incheck = isCheck(pos);
 		if (incheck) {
 			// side to move is in checkmate
 			return -MATE_SCORE;
@@ -242,13 +238,11 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	return alpha;
 }
 struct move search(struct position pos, int searchdepth,int movetime) {
-	assert(&pos);
 	assert(searchdepth>=0);
 	assert(movetime>0);
 	nodesSearched = 0;
 
 	struct move moves[MAX_MOVES];
-	int kingpos;
 
 	clock_t begin = clock();
 	int timeElapsed = 0;
@@ -266,7 +260,6 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 		for (int i = 0;i < num_moves;i++) {
 			clock_t end = clock();
 			time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-			int time_spentms = (int)(time_spent * 1000);
 			assert((moves[i].to >= 0 && moves[i].to <= 63));
 			makeMove(&moves[i],&pos);
 			pos.tomove = !pos.tomove;

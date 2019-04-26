@@ -22,7 +22,6 @@ U64 perft(struct position *pos, int depth) {
 	U64 nodes = 0;
 	struct move moves[MAX_MOVES];
 	int n_moves = genLegalMoves(pos,moves);
-	int kingpos;
 
 	for (int i = 0; i < n_moves;i++) {
 		makeMove(&moves[i], pos);
@@ -46,7 +45,6 @@ U64 perft(struct position *pos, int depth) {
 U64 splitperft(struct position *pos, int depth) {
 	struct move moves[MAX_MOVES];
 	U64 total_nodes = 0;
-	int kingpos;
 
 	if (depth == 0) return 1;
 

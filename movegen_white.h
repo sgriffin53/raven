@@ -323,7 +323,6 @@ int genKingMoves_W(struct position *pos, int square, struct move *moves) {
 		}
 	}
 	// King side castling
-	int kingpos = pos->Wkingpos;
 	if ((pos->WcastleKS == 1) &&
 		pos->board[F1] == '0' &&
 		pos->board[G1] == '0' &&

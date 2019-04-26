@@ -83,18 +83,18 @@ struct position parsefen(char fen[]) {
 												'0','0','0','0','0','0','0','0',
 												'0','0','0','0','0','0','0','0'},.WcastleQS=0,.WcastleKS=0,.BcastleQS=0,.BcastleKS=0,
 				.tomove=1,.Wkingpos=0,.Bkingpos=0};
-	int i = 0;
+	int n = 0;
 	int j = 0;
 
 	token = strtok(fen," ");
 	while (token != NULL) {
-		strcpy(splitstr[i],token);
-		i++;
+		strcpy(splitstr[n],token);
+		n++;
 		token = strtok(NULL, " ");
 	}
 
 	//int splitstrend = i; // position of end of splitstr array
-	for (i = 0;i<strlen(splitstr[0]);i++) {
+	for (size_t i = 0;i<strlen(splitstr[0]);i++) {
 		char letter = splitstr[0][i];
 		switch (letter) {
 			case 'p': pos.board[j] = 'p'; break;
@@ -126,7 +126,7 @@ struct position parsefen(char fen[]) {
 	if (strcmp(splitstr[1],"w") == 0) pos.tomove = WHITE;
 	if (strcmp(splitstr[1],"b") == 0) pos.tomove = BLACK;
 
-	for (i = 0;i < strlen(splitstr[2]);i++) {
+	for (size_t i = 0;i < strlen(splitstr[2]);i++) {
 		if (splitstr[2][i] == 'K') pos.WcastleKS = 1;
 		else if (splitstr[2][i] == 'Q') pos.WcastleQS = 1;
 		else if (splitstr[2][i] == 'k') pos.BcastleKS = 1;

@@ -1,15 +1,15 @@
-# include <stdio.h>
-# include <string.h>
-# include <ctype.h>
-# include <stdlib.h>
-# include <time.h>
-# include <assert.h>
-# include <inttypes.h>
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+#include <stdlib.h>
+#include <time.h>
+#include <assert.h>
+#include <inttypes.h>
 
-# define WHITE 1
-# define BLACK 0
-# define MAX_MOVES 2048
-# define MATE_SCORE 99999
+#define WHITE 1
+#define BLACK 0
+#define MAX_MOVES 2048
+#define MATE_SCORE 99999
 
 int Qdirs[8][2] = {{-1,-1},{-1,+1},{+1,-1},{+1,+1},{0,1},{0,-1},{-1,0},{1,0}};
 int Kdirs[8][2] = {{-1,-1},{-1,+1},{+1,-1},{+1,+1},{0,1},{0,-1},{-1,0},{1,0}};
@@ -88,7 +88,6 @@ int main() {
 	char * token;
 	int wtime, btime;
 	int movetime;
-	int splitstrend;
 	int keeprunning = 1;
 	struct position pos = setstartpos(); // set start position
 	posstack[0] = pos;
@@ -108,19 +107,17 @@ int main() {
 		//split instr into tokens into splitstr by space
 		token = strtok(instr," ");
 
-		int i = 0;
+		int splitstrend = 0;
 		while (token != NULL) {
-			strcpy(splitstr[i],token);
-			i++;
+			strcpy(splitstr[splitstrend],token);
+			splitstrend++;
 			token = strtok(NULL, " ");
 		}
-		splitstrend = i; // position of end of splitstr array
 
 		if (strcmp(splitstr[0],"legalmoves") == 0) {
 
 			struct move moves[MAX_MOVES];
 			int num_moves = genLegalMoves(&pos,moves);
-			int kingpos;
 			//sortMoves(&pos,moves,num_moves);
 			for (int i = 0;i < num_moves;i++) {
 				makeMove(&moves[i], &pos);
@@ -242,7 +239,7 @@ int main() {
 		else if ( (strcmp(splitstr[0],"position") == 0) && (strcmp(splitstr[1],"fen") == 0) ) {
 			char fen[1024] = "";
 			int readingfen = 1;
-			for (i = 2;i < splitstrend;i++) {
+			for (int i = 2;i < splitstrend;i++) {
 				if (!readingfen) {
 					makeMovestr(splitstr[i],&pos);
 				}
