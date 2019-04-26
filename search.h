@@ -200,7 +200,6 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 
 		//non-cap reduction
 		int score;
-		incheck = isCheck(pos);
 		//if ((movenum > 3) && (depthleft >= 4) && (moves[i].cappiece == '0') && (moves[i].prom == 0) && (!incheck)) { // +25 elo over version without
 		if ((moves[i].cappiece == '0') && (depthleft >= 2) && (moves[i].prom == 0)) { // + 200 elo over version without LMR
 			// try to reduce non-capture moves
