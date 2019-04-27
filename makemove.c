@@ -9,12 +9,6 @@ void makeMove(const struct move *move, struct position *pos) {
 
 	char piece = pos->board[move->from];
 	int newepsquare = -1; // init to -1, will be changed to en passant square if there is one
-	int newWkingpos = pos->Wkingpos;
-	int newBkingpos = pos->Bkingpos;
-	int newWcastleQS = pos->WcastleQS;
-	int newWcastleKS = pos->WcastleKS;
-	int newBcastleQS = pos->BcastleQS;
-	int newBcastleKS = pos->BcastleKS;
 	int torank = getrank(move->to);
 	int cappiece = pos->board[move->to];
 	pos->board[move->to] = piece;
@@ -59,9 +53,9 @@ void makeMove(const struct move *move, struct position *pos) {
 	}
 
 	if (piece == 'K') { // white king
-		newWcastleQS = 0;
-		newWcastleKS = 0;
-		newWkingpos = move->to;
+		pos->WcastleQS = 0;
+		pos->WcastleKS = 0;
+		pos->Wkingpos = move->to;
 
 		if ((move->from == E1) && (move->to == G1)) { // white kingside castling
 			pos->board[E1] = '0';
@@ -79,9 +73,9 @@ void makeMove(const struct move *move, struct position *pos) {
 	}
 
 	if (piece == 'k') { // black king
-		newBcastleQS = 0;
-		newBcastleKS = 0;
-		newBkingpos = move->to;
+		pos->BcastleQS = 0;
+		pos->BcastleKS = 0;
+		pos->Bkingpos = move->to;
 		if ((move->from == E8) && (move->to == G8)) { // black kingside castling
 			pos->board[E8] = '0';
 			pos->board[G8] = 'k';
@@ -96,26 +90,20 @@ void makeMove(const struct move *move, struct position *pos) {
 		}
 	}
 	if (pos->board[0] != 'r') { // black a8 rook moved or captured
-		newBcastleQS = 0;
+		pos->BcastleQS = 0;
 	}
 	if (pos->board[7] != 'r') { // black h8 rook moved or captured
-		newBcastleKS = 0;
+		pos->BcastleKS = 0;
 	}
 	if (pos->board[56] != 'R') { // white a1 rook moved or captured
-		newWcastleQS = 0;
+		pos->WcastleQS = 0;
 	}
 	if (pos->board[63] != 'R') { // white h1 rook moved or captured
-		newWcastleKS = 0;
+		pos->WcastleKS = 0;
 	}
 
 	pos->tomove = !pos->tomove;
 	pos->epsquare = newepsquare;
-	pos->Bkingpos = newBkingpos;
-	pos->Wkingpos = newWkingpos;
-	pos->WcastleQS = newWcastleQS;
-	pos->WcastleKS = newWcastleKS;
-	pos->BcastleQS = newBcastleQS;
-	pos->BcastleKS = newBcastleKS;
 
 	posstack[posstackend] = *pos;
 	posstackend++;
