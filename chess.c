@@ -132,7 +132,7 @@ int main() {
 			fflush(stdout);
 		}
 
-		else if (strcmp(splitstr[0],"board") == 0) dspboard(pos);
+		else if (strcmp(splitstr[0],"board") == 0) dspboard(&pos);
 
 		else if (strcmp(splitstr[0],"move") == 0) makeMovestr(splitstr[1], &pos);
 

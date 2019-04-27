@@ -137,10 +137,8 @@ struct position parsefen(char fen[]) {
 	return pos;
 }
 
-void dspboard(struct position pos) {
-	assert(pos.board);
-	char board[65];
-	strcpy(board,pos.board);
+void dspboard(const struct position *pos) {
+    assert(pos);
 
 	printf("\n");
 	printf("  +---+---+---+---+---+---+---+---+\n");
@@ -154,7 +152,7 @@ void dspboard(struct position pos) {
 			printf(" |");
 		}
 
-		char piece = board[i];
+		char piece = pos->board[i];
 		if (piece == '0') piece = ' ';
 		printf(" %c |", piece);
 	}
@@ -163,27 +161,27 @@ void dspboard(struct position pos) {
 	printf("\n    A   B   C   D   E   F   G   H  \n");
 
 	printf("Side to move: ");
-	if (pos.tomove == 0) printf("Black");
+	if (pos->tomove == 0) printf("Black");
 	else printf("White");
 	printf("\n");
-	printf("Is Check: %d",isCheck(&pos));
+	printf("Is Check: %d",isCheck(pos));
 	printf("\n");
-	printf("EP Square: %d",pos.epsquare);
+	printf("EP Square: %d",pos->epsquare);
 	printf("\n");
-	printf("White King pos: %d",pos.Wkingpos);
+	printf("White King pos: %d",pos->Wkingpos);
 	printf("\n");
-	printf("Black King pos: %d",pos.Bkingpos);
+	printf("Black King pos: %d",pos->Bkingpos);
 	printf("\n");
-	printf("White castling QS: %d",pos.WcastleQS);
+	printf("White castling QS: %d",pos->WcastleQS);
 	printf("\n");
-	printf("White castling KS: %d",pos.WcastleKS);
+	printf("White castling KS: %d",pos->WcastleKS);
 	printf("\n");
-	printf("Black castling QS: %d",pos.BcastleQS);
+	printf("Black castling QS: %d",pos->BcastleQS);
 	printf("\n");
-	printf("Black castling KS: %d",pos.BcastleKS);
+	printf("Black castling KS: %d",pos->BcastleKS);
 	printf("\n");
-	printf("Half moves: %d",pos.halfmoves);
+	printf("Half moves: %d",pos->halfmoves);
 	printf("\n");
-	printf("Is threefold: %d",isThreefold(&pos));
+	printf("Is threefold: %d",isThreefold(pos));
 	printf("\n");
 }

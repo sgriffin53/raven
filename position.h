@@ -39,6 +39,6 @@ char* squareidxtostr(int square);
 int fileranktosquareidx(int file,int rank);
 struct position setstartpos();
 struct position parsefen(char fen[]);
-void dspboard(struct position pos);
+void dspboard(const struct position *pos);
 
 #endif
