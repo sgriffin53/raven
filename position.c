@@ -130,6 +130,7 @@ void parsefen(struct position *pos, const char *ofen) {
 
 void dspboard(const struct position *pos) {
 	assert(pos);
+    assert(legalPos(pos));
 
 	printf("\n");
 	printf("  +---+---+---+---+---+---+---+---+\n");
@@ -175,4 +176,85 @@ void dspboard(const struct position *pos) {
 	printf("\n");
 	printf("Is threefold: %d",isThreefold(pos));
 	printf("\n");
+}
+
+int legalPos(const struct position *pos) {
+    assert(pos);
+
+    // Count pieces
+    int numWP = 0;
+    int numWN = 0;
+    int numWB = 0;
+    int numWR = 0;
+    int numWQ = 0;
+    int numWK = 0;
+    int numBP = 0;
+    int numBN = 0;
+    int numBB = 0;
+    int numBR = 0;
+    int numBQ = 0;
+    int numBK = 0;
+    int numEmpty = 0;
+
+    for (int i = 0; i < 64; ++i) {
+        switch (pos->board[i]) {
+            case 'P': numWP++; break;
+            case 'N': numWN++; break;
+            case 'B': numWB++; break;
+            case 'R': numWR++; break;
+            case 'Q': numWQ++; break;
+            case 'K': numWK++; break;
+            case 'p': numBP++; break;
+            case 'n': numBN++; break;
+            case 'b': numBB++; break;
+            case 'r': numBR++; break;
+            case 'q': numBQ++; break;
+            case 'k': numBK++; break;
+            case '0': numEmpty++; break;
+            default: return 0;
+        }
+    }
+
+    const int numWhite = numWP + numWB + numWN + numWR + numWQ + numWK;
+    const int numBlack = numBP + numBB + numBN + numBR + numBQ + numBK;
+
+    // Check king positions
+    if (pos->board[pos->Wkingpos] != 'K') return 0;
+    if (pos->board[pos->Bkingpos] != 'k') return 0;
+
+    // Piece counts
+    if (numWP > 8 || numBP > 8) return 0;
+    if (numWN > 10 || numBN > 10) return 0;
+    if (numWB > 10 || numBB > 10) return 0;
+    if (numWR > 10 || numBR > 10) return 0;
+    if (numWQ > 10 || numBQ > 10) return 0;
+    if (numWK != 1 || numBK != 1) return 0;
+    if (numWhite > 16) return 0;
+    if (numBlack > 16) return 0;
+    if (numEmpty < 32) return 0;
+    if (numWhite + numBlack + numEmpty != 64) return 0;
+
+    // En passant square
+    if (pos->epsquare != -1) {
+        if (pos->tomove == WHITE) {
+            // Has to be on the 6th rank
+            if (getrank(pos->epsquare) != 2) return 0;
+            // Has to have a pawn in the right place
+            if (pos->board[pos->epsquare+8] != 'p') return 0;
+        } else {
+            // Has to be on the 3rd rank
+            if (getrank(pos->epsquare) != 5) return 0;
+            // Has to have a pawn in the right place
+            if (pos->board[pos->epsquare-8] != 'P') return 0;
+        }
+    }
+
+    // Can't capture the opponent's king
+    if (pos->tomove == WHITE) {
+        if (isAttacked(pos, pos->Bkingpos, WHITE)) return 0;
+    } else {
+        if (isAttacked(pos, pos->Wkingpos, BLACK)) return 0;
+    }
+
+    return 1;
 }

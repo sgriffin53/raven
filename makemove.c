@@ -6,6 +6,7 @@
 void makeMove(const struct move *move, struct position *pos) {
 	assert(move);
 	assert(pos);
+    assert(legalPos(pos));
 
 	char piece = pos->board[move->from];
 	int newepsquare = -1; // init to -1, will be changed to en passant square if there is one
