@@ -49,33 +49,27 @@ int fileranktosquareidx(int file,int rank) {
 	return (rank) * 8 + file;
 }
 
-struct position setstartpos() {
-	struct position pos = {.epsquare=-1,.board={'r','n','b','q','k','b','n','r',
-				'p','p','p','p','p','p','p','p',
-				'0','0','0','0','0','0','0','0',
-				'0','0','0','0','0','0','0','0',
-				'0','0','0','0','0','0','0','0',
-				'0','0','0','0','0','0','0','0',
-				'P','P','P','P','P','P','P','P',
-				'R','N','B','Q','K','B','N','R'},.WcastleQS=1,.WcastleKS=1,.BcastleKS=1,.BcastleQS=1,
-				.tomove=WHITE,.Wkingpos=60,.Bkingpos=4,.halfmoves=0};
-	return pos;
-}
+void parsefen(struct position *pos, const char *ofen) {
+	assert(pos);
+	assert(ofen);
 
-struct position parsefen(char fen[]) {
-	assert(fen);
+	// Handle "startpos"
+	if (strncmp(ofen, "startpos", 8) == 0) {
+		parsefen(pos, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+		return;
+	}
+
+	char fen[strlen(ofen)];
+	strcpy(fen, ofen);
+
 	char splitstr[100][8192];
 	char * token;
+
 	// set blank position
-	struct position pos = {.epsquare=-1,.board={'0','0','0','0','0','0','0','0',
-												'0','0','0','0','0','0','0','0',
-												'0','0','0','0','0','0','0','0',
-												'0','0','0','0','0','0','0','0',
-												'0','0','0','0','0','0','0','0',
-												'0','0','0','0','0','0','0','0',
-												'0','0','0','0','0','0','0','0',
-												'0','0','0','0','0','0','0','0'},.WcastleQS=0,.WcastleKS=0,.BcastleKS=0,.BcastleQS=0,
-				.tomove=1,.Wkingpos=0,.Bkingpos=0};
+	memset(pos, 0, sizeof(struct position));
+	for (int i = 0; i < 64; ++i) pos->board[i] = '0';
+	pos->epsquare = -1;
+
 	int n = 0;
 	int j = 0;
 
@@ -90,18 +84,18 @@ struct position parsefen(char fen[]) {
 	for (size_t i = 0;i<strlen(splitstr[0]);i++) {
 		char letter = splitstr[0][i];
 		switch (letter) {
-			case 'p': pos.board[j] = 'p'; break;
-			case 'n': pos.board[j] = 'n'; break;
-			case 'b': pos.board[j] = 'b'; break;
-			case 'r': pos.board[j] = 'r'; break;
-			case 'q': pos.board[j] = 'q'; break;
-			case 'k': pos.board[j] = 'k'; pos.Bkingpos = j; break;
-			case 'P': pos.board[j] = 'P'; break;
-			case 'N': pos.board[j] = 'N'; break;
-			case 'B': pos.board[j] = 'B'; break;
-			case 'R': pos.board[j] = 'R'; break;
-			case 'Q': pos.board[j] = 'Q'; break;
-			case 'K': pos.board[j] = 'K'; pos.Wkingpos = j; break;
+			case 'p': pos->board[j] = 'p'; break;
+			case 'n': pos->board[j] = 'n'; break;
+			case 'b': pos->board[j] = 'b'; break;
+			case 'r': pos->board[j] = 'r'; break;
+			case 'q': pos->board[j] = 'q'; break;
+			case 'k': pos->board[j] = 'k'; pos->Bkingpos = j; break;
+			case 'P': pos->board[j] = 'P'; break;
+			case 'N': pos->board[j] = 'N'; break;
+			case 'B': pos->board[j] = 'B'; break;
+			case 'R': pos->board[j] = 'R'; break;
+			case 'Q': pos->board[j] = 'Q'; break;
+			case 'K': pos->board[j] = 'K'; pos->Wkingpos = j; break;
 			case '/': j--; break;
 			case '1' : break;
 			case '2' : j++; break;
@@ -111,34 +105,31 @@ struct position parsefen(char fen[]) {
 			case '6' : j+=5; break;
 			case '7' : j+=6; break;
 			case '8' : j+=7; break;
-
 		}
 		j++;
 	}
 
-	if (strcmp(splitstr[1],"w") == 0) pos.tomove = WHITE;
-	if (strcmp(splitstr[1],"b") == 0) pos.tomove = BLACK;
+	if (strcmp(splitstr[1],"w") == 0) pos->tomove = WHITE;
+	if (strcmp(splitstr[1],"b") == 0) pos->tomove = BLACK;
 
 	for (size_t i = 0;i < strlen(splitstr[2]);i++) {
-		if (splitstr[2][i] == 'K') pos.WcastleKS = 1;
-		else if (splitstr[2][i] == 'Q') pos.WcastleQS = 1;
-		else if (splitstr[2][i] == 'k') pos.BcastleKS = 1;
-		else if (splitstr[2][i] == 'q') pos.BcastleQS = 1;
+		if (splitstr[2][i] == 'K') pos->WcastleKS = 1;
+		else if (splitstr[2][i] == 'Q') pos->WcastleQS = 1;
+		else if (splitstr[2][i] == 'k') pos->BcastleKS = 1;
+		else if (splitstr[2][i] == 'q') pos->BcastleQS = 1;
 	}
 
 	if (strcmp(splitstr[3],"-") != 0) {
 		//en passant square given
-		pos.epsquare = strsquaretoidx(splitstr[3]);
+		pos->epsquare = strsquaretoidx(splitstr[3]);
 	}
 
-	pos.halfmoves = atoi(splitstr[4]);
-	if (splitstr[4][0] == '-') pos.halfmoves = 0;
-
-	return pos;
+	pos->halfmoves = atoi(splitstr[4]);
+	if (splitstr[4][0] == '-') pos->halfmoves = 0;
 }
 
 void dspboard(const struct position *pos) {
-    assert(pos);
+	assert(pos);
 
 	printf("\n");
 	printf("  +---+---+---+---+---+---+---+---+\n");

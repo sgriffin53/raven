@@ -37,8 +37,7 @@ int isBlackPiece(char piece);
 int isWhitePiece(char piece);
 char* squareidxtostr(int square);
 int fileranktosquareidx(int file,int rank);
-struct position setstartpos();
-struct position parsefen(char fen[]);
+void parsefen(struct position *pos, const char *ofen);
 void dspboard(const struct position *pos);
 
 #endif

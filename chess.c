@@ -29,7 +29,8 @@ int main() {
 	int wtime, btime;
 	int movetime;
 	int keeprunning = 1;
-	struct position pos = setstartpos(); // set start position
+	struct position pos;
+	parsefen(&pos, "startpos"); // set start position
 	posstack[0] = pos;
 	posstackend = 1;
 
@@ -184,7 +185,7 @@ int main() {
 					makeMovestr(splitstr[i],&pos);
 				}
 				if (strcmp(splitstr[i],"moves") == 0) {
-					pos = parsefen(fen);
+					parsefen(&pos, fen);
 					readingfen = 0;
 				}
 				if (readingfen) {
@@ -192,12 +193,12 @@ int main() {
 					if (i != (splitstrend - 1)) strcat(fen," ");
 				}
 			}
-			if (readingfen) pos = parsefen(fen);
+			if (readingfen) parsefen(&pos, fen);
 			posstack[0] = pos;
 		}
 
 		else if ( (strcmp(splitstr[0],"position") == 0) && (strcmp(splitstr[1],"startpos") == 0) ) {
-			pos = setstartpos(); // set start position
+			parsefen(&pos, "startpos"); // set start position
 			posstack[0] = pos;
 			posstackend = 1;
 			if (strcmp(splitstr[2],"moves") == 0) {
