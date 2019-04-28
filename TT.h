@@ -1,33 +1,43 @@
 #ifndef TT_H
 #define TT_H
 
+#include <assert.h>
+#include <stdlib.h>
+#include "hash.h"
+
 struct TTentry {
 	U64 hash;
 	struct position pos;
 	int depth;
 	int score;
 };
+
 struct PTTentry {
 	U64 hash;
 	int depth;
 	U64 nodes;
 };
+
 struct ETTentry {
 	U64 hash;
 	int eval;
 };
+
 struct PTTtable {
 	struct PTTentry *entries;
 	int totentries;
 };
+
 struct TTtable {
 	struct TTentry *entries;
 	int totentries;
 };
+
 struct ETTtable {
 	struct ETTentry *entries;
 	int totentries;
 };
+
 void initETT(struct ETTtable *table) {
 	assert(table);
 	int ETTsizemb = 32;
@@ -35,10 +45,12 @@ void initETT(struct ETTtable *table) {
 	table->entries = malloc(totentries * sizeof(struct ETTentry));
 	table->totentries = totentries;
 }
+
 struct ETTentry getETTentry(struct ETTtable *table,U64 hash) {
 	int index = hash % table->totentries;
 	return table->entries[index];
 }
+
 void addETTentry(struct ETTtable *table,U64 hash, int eval) {
 	int index = hash % table->totentries;
 	struct ETTentry newentry;
@@ -46,6 +58,7 @@ void addETTentry(struct ETTtable *table,U64 hash, int eval) {
 	newentry.eval = eval;
 	table->entries[index] = newentry;
 }
+
 void initPTT(struct PTTtable *table) {
 	assert(table);
 	int PTTsizemb = 32;
@@ -53,10 +66,12 @@ void initPTT(struct PTTtable *table) {
 	table->entries = malloc(totentries * sizeof(struct PTTentry));
 	table->totentries = totentries;
 }
+
 struct PTTentry getPTTentry(struct PTTtable *table,U64 hash) {
 	int index = hash % table->totentries;
 	return table->entries[index];
 }
+
 void addPTTentry(struct PTTtable *table,U64 hash, int depth,U64 nodes) {
 	int index = hash % table->totentries;
 	struct PTTentry newentry;
@@ -68,6 +83,7 @@ void addPTTentry(struct PTTtable *table,U64 hash, int depth,U64 nodes) {
 	assert(newentry.depth == getPTTentry(table,hash).depth);
 	assert(newentry.nodes == getPTTentry(table,hash).nodes);
 }
+
 void initTT(struct TTtable *table) {
 	assert(table);
 	int PTTsizemb = 32;
@@ -75,6 +91,7 @@ void initTT(struct TTtable *table) {
 	table->entries = malloc(totentries * sizeof(struct TTentry));
 	table->totentries = totentries;
 }
+
 void addTTentry(struct TTtable *table,U64 hash, struct position pos,int depth,int score) {
 	int index = hash % table->totentries;
 	struct TTentry newentry;
@@ -84,12 +101,10 @@ void addTTentry(struct TTtable *table,U64 hash, struct position pos,int depth,in
 	newentry.score = score;
 	table->entries[index] = newentry;
 }
+
 struct TTentry getTTentry(struct TTtable *table,U64 hash) {
 	int index = hash % table->totentries;
 	return table->entries[index];
 }
-struct PTTtable PTT;
-struct TTtable TT;
-struct ETTtable ETT;
 
 #endif
