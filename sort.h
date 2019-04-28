@@ -21,7 +21,7 @@ int mvvlva(char piece, char cappiece) {
 	return 10 * capval(cappiece) - capval(piece);
 }
 
-void sortMoves(const struct position *pos, struct move *moves, const int num_moves) {
+void sortMoves(const struct position *pos, struct move *moves, const int num_moves, struct move TTmove) {
 	assert(moves);
 	assert(pos);
 	assert(num_moves < MAX_MOVES);
@@ -31,6 +31,11 @@ void sortMoves(const struct position *pos, struct move *moves, const int num_mov
 	for (int i = 0; i < num_moves; ++i) {
 		char cappiece = moves[i].cappiece;
 		char piece = pos->board[moves[i].from];
+		if (TTmove.from != -1) {
+			if ((moves[i].from == TTmove.from) && (moves[i].to == TTmove.to) && (moves[i].prom == TTmove.prom)) {
+				scores[i] = 500000;
+			}
+		}
 		if (cappiece != '0') {
 			//if (piece == '0') dspboard(*pos);
 			//printf("%s %c %c\n",movetostr(moves[i]),piece,cappiece);

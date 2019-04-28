@@ -8,6 +8,8 @@
 #include "time.h"
 #include "attacks.h"
 #include "sort.h"
+#include "misc.h"
+#include "TT.h"
 
 int reduction(const struct move *move, const int depthleft) {
 	assert(move);
@@ -89,14 +91,41 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	}
 
 	nodesSearched++;
-
+	currenthash = 0;
 	if (isThreefold(pos)) return 0;
 	if (pos->halfmoves >= 100) return 0;
-
+	
 	// check extensions
 	const int incheck = isCheck(pos);
 	if (incheck) depthleft++;
-
+	
+	struct move bestmove;
+	struct move TTmove = {.to=-1,.from=-1,.prom=-1,.cappiece=-1};
+	int origAlpha = alpha;
+	U64 hash;
+	if (currenthash == 0) {
+		hash = generateHash(pos);
+	}
+	else hash = currenthash;
+	struct TTentry TTdata = getTTentry(&TT,hash);
+	if (TTdata.hash == hash && TTdata.depth == depthleft) {
+		int flag = TTdata.flag;
+		int score = TTdata.score;
+		if (flag == EXACT) {
+			return score;
+		}
+		else if (flag == LOWERBOUND) {
+			alpha = max(score, alpha);
+		}
+		else if (flag == UPPERBOUND) {
+			beta = min(beta, score);
+		}
+		if (alpha >= beta) {
+			return score;
+		}
+		TTmove = TTdata.bestmove;
+	}
+	
 	if (depthleft <= 0) {
 		return qSearch(pos,alpha,beta,endtime);
 		//return taperedEval(pos);
@@ -133,8 +162,9 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 
 	struct move moves[MAX_MOVES];
 	const int num_moves = genLegalMoves(pos,moves);
-	sortMoves(pos,moves,num_moves);
+	sortMoves(pos,moves,num_moves,TTmove);
 	int legalmoves = 0;
+	int bestscore = -MATE_SCORE;
 	for (int i = 0;(i < num_moves);i++) {
 		//clock_t end = clock();
 		//double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
@@ -159,14 +189,14 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		if (r > 0 && score > alpha) {
 			score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, endtime);
 		}
-
-		unmakeMove(pos);
-
-		if (score >= beta) {
-			return beta;
+		if (score >= bestscore) {
+			bestmove = moves[i];
 		}
-		if (score > alpha) {
-			alpha = score;
+		bestscore = max(bestscore,score);
+		unmakeMove(pos);
+		alpha = max(bestscore,alpha);
+		if (alpha >= beta) {
+			break;
 		}
 	}
 
@@ -181,8 +211,18 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			return 0;
 		}
 	}
-
-	return alpha;
+	int newflag;
+	if (bestscore <= origAlpha) {
+		int newflag = UPPERBOUND;
+	}
+	else if (bestscore >= beta) {
+		newflag = LOWERBOUND;
+	}
+	else {
+		newflag = EXACT;
+	}
+	addTTentry(&TT, hash, depthleft, newflag, bestmove, bestscore);
+	return bestscore;
 }
 
 struct move search(struct position pos, int searchdepth,int movetime) {
@@ -260,8 +300,11 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 			nps = nodesSearched / time_spent;
 		}
 		
+		if ((num_moves - numcheckmoves) == 1) bestmove = moves[legalmoveidx];
 		if (nodesSearched == 0) bestmove = moves[legalmoveidx];
-		
+		//makeMove(&bestmove,&pos);
+		//if (isCheck(&pos)) bestmove  = moves[legalmoveidx];
+		//unmakeMove(&pos);
 		//lastbestmove = bestmove;
 		/*
 		printf("moves before: ");
@@ -301,6 +344,5 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 		*/
 		printf("info depth %d nodes %d time %d nps %d score cp %d pv %s\n",(curdepth),nodesSearched,((int)(time_spent*1000)),nps,bestScore,movetostr(bestmove));
 	}
-	if ((num_moves - numcheckmoves) == 1) return moves[legalmoveidx];
 	return bestmove;
 }

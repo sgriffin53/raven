@@ -8,7 +8,7 @@
 #include <limits.h>
 #include "globals.h"
 #include "hash.h"
-//#include "TT.h"
+#include "TT.h"
 #include "makemove.h"
 #include "movegen.h"
 #include "PST.h"
@@ -37,7 +37,8 @@ int main() {
 	initZobrist();
 
 	//initPTT(&PTT);
-	//initTT(&TT);
+	initTT(&TT);
+	clearTT(&TT);
 	//initETT(&ETT);
 
 	while (keeprunning) {
@@ -54,7 +55,11 @@ int main() {
 			splitstrend++;
 			token = strtok(NULL, " ");
 		}
-
+		
+		if (strcmp(splitstr[0],"ucinewgame") == 0) {
+			clearTT(&TT);
+		}
+		
 		if (strcmp(splitstr[0],"legalmoves") == 0) {
 
 			struct move moves[MAX_MOVES];
