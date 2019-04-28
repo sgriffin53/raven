@@ -27,7 +27,7 @@ int qSearch(struct position *pos, int alpha, int beta, clock_t endtime) {
 	//int score;
 	//int kingpos;
 	if (clock() >= endtime) {
-		return 0;
+		return -MATE_SCORE;
 	}
 	//int ispawnless = isPawnless(pos);
 	const int standpat = taperedEval(pos);
@@ -85,7 +85,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	assert(beta > alpha);
 	assert(depthleft >= 0);
 	if (clock() >= endtime) {
-		return 0;
+		return -MATE_SCORE;
 	}
 
 	nodesSearched++;
@@ -259,8 +259,10 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 
 			nps = nodesSearched / time_spent;
 		}
-
-		lastbestmove = bestmove;
+		
+		if (nodesSearched == 0) bestmove = moves[legalmoveidx];
+		
+		//lastbestmove = bestmove;
 		/*
 		printf("moves before: ");
 		for (int i =0;i<num_moves;i++) {
