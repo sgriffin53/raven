@@ -55,7 +55,18 @@ int main() {
 			splitstrend++;
 			token = strtok(NULL, " ");
 		}
-		
+		if (strcmp(splitstr[0],"setoption") == 0) {
+			if ((strcmp(splitstr[1],"name") == 0) && (strcmp(splitstr[3],"value") == 0))   {
+				char name[128];
+				char value[128];
+				strcpy(name,splitstr[2]);
+				strcpy(value,splitstr[4]);
+				if (strcmp(strlwr(name),"hash") == 0) {
+					hashsize = atoi(value);
+				}
+				
+			}
+		}
 		if (strcmp(splitstr[0],"ucinewgame") == 0) {
 			clearTT(&TT);
 		}
@@ -125,17 +136,15 @@ int main() {
 			struct move bestmove = search(pos,searchdepth,movetime);
 
 			printf("bestmove %s\n",movetostr(bestmove));
-			fflush(stdout);
 		}
 
 		else if (strcmp(splitstr[0],"isready") == 0) {
 			printf("readyok\n");
-			fflush(stdout);
 		}
 
 		else if (strcmp(splitstr[0],"uci") == 0) {
-			printf("id name Raven 0.30\nid author JimmyRustles\nuciok\n");
-			fflush(stdout);
+			printf("id name Raven 0.30\nid author Steve Griffin\nuciok\n");
+			printf("option name Hash type spin default 32 min 32 max 256\n");
 		}
 
 		else if (strcmp(splitstr[0],"board") == 0) dspboard(&pos);
@@ -146,7 +155,6 @@ int main() {
 
 		else if (strcmp(splitstr[0],"eval") == 0) {
 			//printf("score: %d",taperedEval(&pos));
-			fflush(stdout);
 		}
 
 		else if (strcmp(splitstr[0],"perft") == 0) {
