@@ -12,7 +12,7 @@ extern struct TTtable TT;
 //struct ETTtable ETT;
 extern struct position posstack[1024];
 extern int posstackend;
-extern int nodesSearched;
+extern U64 nodesSearched;
 extern U64 currenthash;
 
 #endif
