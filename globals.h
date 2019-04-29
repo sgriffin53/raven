@@ -6,6 +6,7 @@
 #include "TT.h"
 #include "hash.h"
 
+extern int hashsize;
 extern struct TTtable TT;
 //struct PTTtable PTT;
 //struct ETTtable ETT;

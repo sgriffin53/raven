@@ -3,6 +3,7 @@
 #include "hash.h"
 #include "TT.h"
 #include "move.h"
+#include "globals.h"
 
 void initETT(struct ETTtable *table) {
 	assert(table);
@@ -52,7 +53,7 @@ void addPTTentry(struct PTTtable *table,U64 hash, int depth,U64 nodes) {
 
 void initTT(struct TTtable *table) {
 	assert(table);
-	int PTTsizemb = 32;
+	int PTTsizemb = hashsize;
 	const int totentries = (PTTsizemb*1024*1024) / sizeof(struct TTentry);
 	table->entries = malloc(totentries * sizeof(struct TTentry));
 	table->totentries = totentries;
