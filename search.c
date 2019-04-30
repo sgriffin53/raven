@@ -10,6 +10,9 @@
 #include "sort.h"
 #include "misc.h"
 #include "TT.h"
+#include "hash.h"
+
+#include <inttypes.h>
 
 int reduction(const struct move *move, const int depthleft) {
 	assert(move);
@@ -279,13 +282,13 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 				curscore = 0;
 			}
 			else {
-				curscore = -alphaBeta(&pos,-99999,99999,curdepth-1,0,endtime);
+				curscore = -alphaBeta(&pos,-MATE_SCORE,MATE_SCORE,curdepth-1,0,endtime);
 			}
 			if (curscore == MATE_SCORE) {
 				end = clock();
 				time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 				nps = nodesSearched / time_spent;
-				printf("info depth %d nodes %d time %d nps %d score mate %d pv %s\n",(curdepth),nodesSearched,((int)(time_spent*1000)),nps,curdepth,movetostr(moves[i]));
+				printf("info depth %d nodes %" PRIu64 " time %d nps %d score mate %d pv %s\n",(curdepth),nodesSearched,((int)(time_spent*1000)),nps,curdepth,movetostr(moves[i]));
 				unmakeMove(&pos);
 				return moves[i];
 			}
@@ -299,7 +302,7 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 
 			nps = nodesSearched / time_spent;
 		}
-		
+		if (clock() >= endtime) {break;}
 		if ((num_moves - numcheckmoves) == 1) bestmove = moves[legalmoveidx];
 		if (nodesSearched == 0) bestmove = moves[legalmoveidx];
 		//makeMove(&bestmove,&pos);
@@ -342,7 +345,7 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 		}
 		printf("\n");
 		*/
-		printf("info depth %d nodes %d time %d nps %d score cp %d pv %s\n",(curdepth),nodesSearched,((int)(time_spent*1000)),nps,bestScore,movetostr(bestmove));
+		printf("info depth %d nodes %" PRIu64 " time %d nps %d score cp %d pv %s\n",(curdepth),nodesSearched,((int)(time_spent*1000)),nps,bestScore,movetostr(bestmove));
 	}
 	return bestmove;
 }
