@@ -1,10 +1,11 @@
-# chess0.30
-Raven Chess Engine 0.30 (C rewrite)
+# Raven Chess Engine
 
 Features:
 
 Negamax search with alpha beta pruning
 
 Quiescence search
+
+Transposition table
 
 UCI protocol compatible
