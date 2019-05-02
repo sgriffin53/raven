@@ -13,6 +13,7 @@
 #include "hash.h"
 
 #include <inttypes.h>
+#include <limits.h>
 
 int reduction(const struct move *move, const int depthleft) {
 	assert(move);
@@ -167,7 +168,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	const int num_moves = genLegalMoves(pos,moves);
 	sortMoves(pos,moves,num_moves,TTmove);
 	int legalmoves = 0;
-	int bestscore = -MATE_SCORE;
+	int bestscore = INT_MIN;
 	for (int i = 0;(i < num_moves);i++) {
 		//clock_t end = clock();
 		//double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
@@ -225,6 +226,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		newflag = EXACT;
 	}
 	addTTentry(&TT, hash, depthleft, newflag, bestmove, bestscore);
+	assert(bestscore > MIN_INT);
 	return bestscore;
 }
 
@@ -247,7 +249,7 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 	int numcheckmoves = 0;
 	int legalmoveidx = 0;
 	for (int curdepth = 1; (curdepth < searchdepth+1 && timeElapsed == 0);curdepth++) {
-		int bestScore = -MATE_SCORE;
+		int bestScore = INT_MIN;
 		for (int i = 0;i < num_moves;i++) {
 			clock_t end = clock();
 			time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
@@ -293,7 +295,8 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 				return moves[i];
 			}
 
-			if (curscore >= bestScore) {
+			if (curscore > bestScore) {
+				//printf("%s %d\n",movetostr(moves[i]),curscore);
 				bestScore = curscore;
 				bestmove = moves[i];
 			}
@@ -302,9 +305,13 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 
 			nps = nodesSearched / time_spent;
 		}
-		if (clock() >= endtime) {break;}
 		if ((num_moves - numcheckmoves) == 1) bestmove = moves[legalmoveidx];
 		if (nodesSearched == 0) bestmove = moves[legalmoveidx];
+		if (clock() >= endtime) {
+			//printf("info depth %d nodes %" PRIu64 " time %d nps %d score cp %d pv %s\n",(curdepth),nodesSearched,((int)(time_spent*1000)),nps,bestScore,movetostr(bestmove));
+			
+			break;
+		}
 		//makeMove(&bestmove,&pos);
 		//if (isCheck(&pos)) bestmove  = moves[legalmoveidx];
 		//unmakeMove(&pos);
@@ -345,6 +352,7 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 		}
 		printf("\n");
 		*/
+		assert(bestScore > INT_MIN);
 		printf("info depth %d nodes %" PRIu64 " time %d nps %d score cp %d pv %s\n",(curdepth),nodesSearched,((int)(time_spent*1000)),nps,bestScore,movetostr(bestmove));
 	}
 	return bestmove;

@@ -16,6 +16,7 @@
 #include "search.h"
 #include "perft.h"
 #include "position.h"
+#include "draw.h"
 
 int main() {
 	setbuf(stdout, NULL);
@@ -189,7 +190,12 @@ int main() {
 			int depth = atoi(splitstr[1]);
 			splitperft(&pos,depth);
 		}
-
+		else if (strcmp(splitstr[0],"moves") == 0) {
+			for (int i = 1;i < splitstrend;i++) {
+				// make move
+				makeMovestr(splitstr[i],&pos);
+			}
+		}
 		else if ( (strcmp(splitstr[0],"position") == 0) && (strcmp(splitstr[1],"fen") == 0) ) {
 			char fen[1024] = "";
 			int readingfen = 1;
@@ -214,6 +220,7 @@ int main() {
 			parsefen(&pos, "startpos"); // set start position
 			posstack[0] = pos;
 			posstackend = 1;
+			clearHashstack(100);
 			if (strcmp(splitstr[2],"moves") == 0) {
 				// make all moves given by position command
 				for (int i = 3;i < splitstrend;i++) {

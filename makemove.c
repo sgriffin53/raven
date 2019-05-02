@@ -2,6 +2,7 @@
 #include <ctype.h>
 #include "makemove.h"
 #include "globals.h"
+#include "draw.h"
 
 void makeMove(const struct move *move, struct position *pos) {
 	assert(move);
@@ -18,6 +19,7 @@ void makeMove(const struct move *move, struct position *pos) {
 	pos->halfmoves = pos->halfmoves + 1;
 
 	if (cappiece != '0') {
+		//clearHashstack(pos->halfmoves);
 		pos->halfmoves = 0;
 	}
 
@@ -33,7 +35,7 @@ void makeMove(const struct move *move, struct position *pos) {
 		if ((move->from - move->to) == 16) { // pawn moved 2 spaces forward
 			newepsquare = move->to + 8; // set ep square
 		}
-
+		clearHashstack(pos->halfmoves);
 		pos->halfmoves = 0;
 	}
 
@@ -49,7 +51,7 @@ void makeMove(const struct move *move, struct position *pos) {
 		if ((move->to - move->from) == 16) { // pawn moved 2 spaces forward
 			newepsquare = move->to - 8; // set ep square
 		}
-
+		//clearHashstack(pos->halfmoves);
 		pos->halfmoves = 0;
 	}
 
@@ -119,6 +121,7 @@ void unmakeMove(struct position *pos) {
 	}
 	else {
 	*pos = posstack[posstackend - 1];
+	hashstack[posstackend - 1] = 0;
 	}
 }
 
