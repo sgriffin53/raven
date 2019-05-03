@@ -295,8 +295,7 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 				return moves[i];
 			}
 
-			if (curscore > bestScore) {
-				//printf("%s %d\n",movetostr(moves[i]),curscore);
+			if (curscore >= bestScore) {
 				bestScore = curscore;
 				bestmove = moves[i];
 			}
@@ -307,11 +306,7 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 		}
 		if ((num_moves - numcheckmoves) == 1) bestmove = moves[legalmoveidx];
 		if (nodesSearched == 0) bestmove = moves[legalmoveidx];
-		if (clock() >= endtime) {
-			//printf("info depth %d nodes %" PRIu64 " time %d nps %d score cp %d pv %s\n",(curdepth),nodesSearched,((int)(time_spent*1000)),nps,bestScore,movetostr(bestmove));
-			
-			break;
-		}
+		if (clock() >= endtime) {break;}
 		//makeMove(&bestmove,&pos);
 		//if (isCheck(&pos)) bestmove  = moves[legalmoveidx];
 		//unmakeMove(&pos);

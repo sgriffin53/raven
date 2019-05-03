@@ -16,7 +16,6 @@
 #include "search.h"
 #include "perft.h"
 #include "position.h"
-#include "draw.h"
 
 int main() {
 	setbuf(stdout, NULL);
@@ -220,7 +219,6 @@ int main() {
 			parsefen(&pos, "startpos"); // set start position
 			posstack[0] = pos;
 			posstackend = 1;
-			clearHashstack(100);
 			if (strcmp(splitstr[2],"moves") == 0) {
 				// make all moves given by position command
 				for (int i = 3;i < splitstrend;i++) {

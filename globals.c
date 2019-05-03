@@ -8,4 +8,3 @@ int posstackend = 0;
 U64 nodesSearched = 0;
 struct TTtable TT;
 U64 currenthash;
-U64 hashstack[100];
