@@ -143,8 +143,9 @@ int main() {
 		}
 
 		else if (strcmp(splitstr[0],"uci") == 0) {
-			printf("id name Raven 0.30\nid author Steve Griffin\nuciok\n");
+			printf("id name Raven 0.30\nid author Steve Griffin\n");
 			printf("option name Hash type spin default 32 min 32 max 256\n");
+			printf("uciok\n");
 		}
 
 		else if (strcmp(splitstr[0],"board") == 0) dspboard(&pos);
