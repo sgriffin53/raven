@@ -52,7 +52,6 @@ int fileranktosquareidx(int file,int rank) {
 void parsefen(struct position *pos, const char *ofen) {
 	assert(pos);
 	assert(ofen);
-
 	// Handle "startpos"
 	if (strncmp(ofen, "startpos", 8) == 0) {
 		parsefen(pos, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");

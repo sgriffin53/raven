@@ -16,6 +16,7 @@
 #include "search.h"
 #include "perft.h"
 #include "position.h"
+#include "tests.h"
 
 int main() {
 	setbuf(stdout, NULL);
@@ -54,6 +55,11 @@ int main() {
 			strcpy(splitstr[splitstrend],token);
 			splitstrend++;
 			token = strtok(NULL, " ");
+		}
+		if (strcmp(splitstr[0],"test") == 0) {
+			testRunAll();
+			parsefen(&pos, "startpos");
+			posstack[0] = pos;
 		}
 		if (strcmp(splitstr[0],"setoption") == 0) {
 			if ((strcmp(splitstr[1],"name") == 0) && (strcmp(splitstr[3],"value") == 0))   {
@@ -100,7 +106,6 @@ int main() {
 		}
 
 		else if (strcmp(splitstr[0],"go") == 0) {
-
 			int searchdepth = 100;
 			//movetime = 2147483646;
 			movetime = INT_MAX / 100;
@@ -212,10 +217,11 @@ int main() {
 					if (i != (splitstrend - 1)) strcat(fen," ");
 				}
 			}
-			if (readingfen) parsefen(&pos, fen);
+			if (readingfen) {
+				parsefen(&pos, fen);
+			}
 			posstack[0] = pos;
 		}
-
 		else if ( (strcmp(splitstr[0],"position") == 0) && (strcmp(splitstr[1],"startpos") == 0) ) {
 			parsefen(&pos, "startpos"); // set start position
 			posstack[0] = pos;

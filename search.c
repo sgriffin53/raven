@@ -193,7 +193,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		if (r > 0 && score > alpha) {
 			score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, endtime);
 		}
-		if (score >= bestscore) {
+		if (score > bestscore) {
 			bestmove = moves[i];
 		}
 		bestscore = max(bestscore,score);
