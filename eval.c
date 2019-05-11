@@ -55,6 +55,8 @@ int taperedEval(const struct position *pos) {
 	int openingEval = 0;
 	int endgameEval = 0;
 	int material = 0;
+	int WPawns[8] = {0,0,0,0,0,0,0,0};
+	int BPawns[8] = {0,0,0,0,0,0,0,0};
 	for (int i = 0;i<64;i++) {
 		char piece = pos->board[i];
 		if (piece != '0') {
@@ -67,6 +69,20 @@ int taperedEval(const struct position *pos) {
 			endgameEval += pval;
 			openingEval += pval;
 			material += pval;
+			if (piece == 'p') {
+				BPawns[getfile(i)]++;
+				if (BPawns[getfile(i)] == 2) {
+					openingEval += 20;
+					endgameEval += 20;
+				}
+			}
+			if (piece == 'P') {
+				WPawns[getfile(i)]++;
+				if (WPawns[getfile(i)] == 2) {
+					openingEval -= 20;
+					endgameEval -= 20;
+				}
+			}
 			// bonus for R and Q being 2 squares or less away from enemy king
 			if ((piece == 'R') || (piece == 'Q')) {
 				int enemykingpos = pos->Bkingpos;
@@ -108,6 +124,19 @@ int taperedEval(const struct position *pos) {
 		openingEval += 30;
 		endgameEval += 30;
 	}
+	
+	// knight value decreases as pawns disappear
+	//openingEval -= num_WN * (16 - (num_WP + num_BP)) * 3;
+	//endgameEval -= num_WN * (16 - (num_WP + num_BP)) * 3;
+	//openingEval += num_BN * (16 - (num_WP + num_BP)) * 3;
+	//endgameEval += num_BN * (16 - (num_WP + num_BP)) * 3;
+	
+	// rook value increases as pawns disappear
+	//openingEval += num_WR * (16 - (num_WP + num_BP)) * 3;
+	//endgameEval += num_WR * (16 - (num_WP + num_BP)) * 3;
+	//openingEval -= num_BR * (16 - (num_WP + num_BP)) * 3;
+	//endgameEval -= num_BR * (16 - (num_WP + num_BP)) * 3;
+	
 	int totalPhase = pawnPhase * 16 + knightPhase * 4 + bishopPhase*4 + rookPhase*4 + queenPhase*2;
 	int phase = totalPhase;
 
