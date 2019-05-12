@@ -53,6 +53,9 @@ int qSearch(struct position *pos, int alpha, int beta, clock_t endtime) {
 
 	struct move moves[MAX_MOVES];
 	const int num_moves = genLegalMoves(pos,moves);
+	
+	struct move TTmove = {.to=-1,.from=-1,.prom=-1,.cappiece=-1};
+	sortMoves(pos,moves,num_moves,TTmove);
 
 	for (int i = 0;(i < num_moves);i++) {
 		//clock_t end = clock();
@@ -112,20 +115,22 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	}
 	else hash = currenthash;
 	struct TTentry TTdata = getTTentry(&TT,hash);
-	if (TTdata.hash == hash && TTdata.depth == depthleft) {
-		int flag = TTdata.flag;
-		int score = TTdata.score;
-		if (flag == EXACT) {
-			return score;
-		}
-		else if (flag == LOWERBOUND) {
-			alpha = max(score, alpha);
-		}
-		else if (flag == UPPERBOUND) {
-			beta = min(beta, score);
-		}
-		if (alpha >= beta) {
-			return score;
+	if (TTdata.hash == hash) {
+		if (TTdata.depth == depthleft) {
+			int flag = TTdata.flag;
+			int score = TTdata.score;
+			if (flag == EXACT) {
+				return score;
+			}
+			else if (flag == LOWERBOUND) {
+				alpha = max(score, alpha);
+			}
+			else if (flag == UPPERBOUND) {
+				beta = min(beta, score);
+			}
+			if (alpha >= beta) {
+				return score;
+			}
 		}
 		TTmove = TTdata.bestmove;
 	}
@@ -200,6 +205,8 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		unmakeMove(pos);
 		alpha = max(bestscore,alpha);
 		if (alpha >= beta) {
+			numbetacutoffs++;
+			if (legalmoves == 1) numinstantbetacutoffs++;
 			break;
 		}
 	}
@@ -237,6 +244,8 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 
 	struct move moves[MAX_MOVES];
 
+	numbetacutoffs = 0;
+	numinstantbetacutoffs = 0;
 	clock_t begin = clock();
 	int timeElapsed = 0;
 	double time_spent;
