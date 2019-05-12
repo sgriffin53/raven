@@ -14,5 +14,7 @@ extern struct position posstack[1024];
 extern int posstackend;
 extern U64 nodesSearched;
 extern U64 currenthash;
+extern int numbetacutoffs;
+extern int numinstantbetacutoffs;
 
 #endif

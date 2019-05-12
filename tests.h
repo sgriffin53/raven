@@ -6,5 +6,6 @@ void testRunAll();
 void testRunPerft();
 void testRunMakemove();
 void testRunMates();
+void testRunBetaCutoffs();
 
 #endif

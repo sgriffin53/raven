@@ -8,3 +8,5 @@ int posstackend = 0;
 U64 nodesSearched = 0;
 struct TTtable TT;
 U64 currenthash;
+int numbetacutoffs = 0;
+int numinstantbetacutoffs = 0;
