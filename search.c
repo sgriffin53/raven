@@ -26,7 +26,7 @@ int reduction(const struct move *move, const int depthleft) {
 	return 0;
 }
 
-int qSearch(struct position *pos, int alpha, int beta, clock_t endtime) {
+int qSearch(struct position *pos, int alpha, int beta, clock_t endtime,struct move TTmove) {
 	assert(pos);
 	assert(alpha >= -MATE_SCORE && beta <= MATE_SCORE);
 	//int incheck;
@@ -54,7 +54,7 @@ int qSearch(struct position *pos, int alpha, int beta, clock_t endtime) {
 	struct move moves[MAX_MOVES];
 	const int num_moves = genLegalMoves(pos,moves);
 	
-	struct move TTmove = {.to=-1,.from=-1,.prom=-1,.cappiece=-1};
+	//struct move TTmove = {.to=-1,.from=-1,.prom=-1,.cappiece=-1};
 	sortMoves(pos,moves,num_moves,TTmove);
 
 	for (int i = 0;(i < num_moves);i++) {
@@ -74,9 +74,19 @@ int qSearch(struct position *pos, int alpha, int beta, clock_t endtime) {
 			continue;
 		}
 		pos->tomove = !pos->tomove;
-
+		
+		U64 hash = generateHash(pos);
+		struct TTentry TTdata = getTTentry(&TT,hash);
+		if (TTdata.hash == hash) {
+			TTmove = TTdata.bestmove;
+		}
+		else {
+			struct move badTTmove = {.to=-1,.from=-1,.prom=-1,.cappiece=-1};
+			TTmove = badTTmove;
+		}
+		
 		// score node
-		const int score = -qSearch(pos,-beta,-alpha, endtime);
+		const int score = -qSearch(pos,-beta,-alpha, endtime,TTmove);
 
 		nodesSearched++;
 
@@ -136,7 +146,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	}
 	
 	if (depthleft <= 0) {
-		return qSearch(pos,alpha,beta,endtime);
+		return qSearch(pos,alpha,beta,endtime,TTmove);
 		//return taperedEval(pos);
 	}
 /*
@@ -255,6 +265,13 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 	int num_moves = genLegalMoves(&pos,moves);
 	if (num_moves == 1) return moves[0];
 	struct move lastbestmove = moves[0];
+	struct move TTmove = {.to=-1,.from=-1,.prom=-1,.cappiece=-1};
+	//U64 hash = generateHash(&pos);
+	//struct TTentry TTdata = getTTentry(&TT,hash);
+	//if (TTdata.hash == hash) {
+	//	TTmove = TTdata.bestmove;
+	//}
+	sortMoves(&pos,moves,num_moves,TTmove);
 	int numcheckmoves = 0;
 	int legalmoveidx = 0;
 	for (int curdepth = 1; (curdepth < searchdepth+1 && timeElapsed == 0);curdepth++) {
