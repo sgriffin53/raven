@@ -57,6 +57,8 @@ int taperedEval(const struct position *pos) {
 	int material = 0;
 	int WPawns[8] = {0,0,0,0,0,0,0,0};
 	int BPawns[8] = {0,0,0,0,0,0,0,0};
+	int WRooks[8] = {0,0,0,0,0,0,0,0};
+	int BRooks[8] = {0,0,0,0,0,0,0,0};
 	for (int i = 0;i<64;i++) {
 		char piece = pos->board[i];
 		if (piece != '0') {
@@ -82,6 +84,13 @@ int taperedEval(const struct position *pos) {
 					openingEval -= 20;
 					endgameEval -= 20;
 				}
+			}
+			
+			if (piece == 'r') {
+				BRooks[getfile(i)]++;
+			}
+			if (piece == 'R') {
+				WRooks[getfile(i)]++;
 			}
 			
 			// bonus for N being near king
@@ -176,6 +185,23 @@ int taperedEval(const struct position *pos) {
 				case 'Q': num_WQ += 1; break;
 			}
 		}
+		if (getrank(i) == 7) {
+			int file = getfile(i);
+			if (WRooks[file] > 0) {
+				if ((WPawns[file] == 0) && (BPawns[file] == 0)) {
+					// white rook on open file
+					openingEval += 12;
+					endgameEval += 12;
+				}
+			}
+			if (BRooks[file] > 0) {
+				if ((WPawns[file] == 0) && (BPawns[file] == 0)) {
+					// black rook on open file
+					openingEval -= 12;
+					endgameEval -= 12;
+				}
+			}
+		}
 	}
 	if (num_BB >= 2) {
 		openingEval -= 30;
@@ -185,6 +211,27 @@ int taperedEval(const struct position *pos) {
 		openingEval += 30;
 		endgameEval += 30;
 	}
+	
+	// Bonus for rooks on open files
+	
+	/*
+	for (int file = 0;file < 7;file++) {
+		if (WRooks[file] > 0) {
+			if ((WPawns[file] == 0) && (BPawns[file] == 0)) {
+				// white rook on open file
+				openingEval += 8;
+				endgameEval += 8;
+			}
+		}
+		if (BRooks[file] > 0) {
+			if ((WPawns[file] == 0) && (BPawns[file] == 0)) {
+				// black rook on open file
+				openingEval -= 8;
+				endgameEval -= 8;
+			}
+		}
+	}
+	*/
 	
 	// Isolated pawns penalties
 	
