@@ -83,6 +83,30 @@ int taperedEval(const struct position *pos) {
 					endgameEval -= 20;
 				}
 			}
+			
+			// bonus for N being near king
+			
+			if (piece == 'N') {
+				int enemykingpos = pos->Bkingpos;
+				int kingdistx = abs(getfile(i) - getfile(enemykingpos));
+				int kingdisty = abs(getrank(i) - getrank(enemykingpos));
+				int dist = (kingdistx + kingdisty);
+				if (dist <= 3) {
+					openingEval += 20;
+					endgameEval += 20;
+				}
+			}
+			if (piece == 'n') {
+				int enemykingpos = pos->Wkingpos;
+				int kingdistx = abs(getfile(i) - getfile(enemykingpos));
+				int kingdisty = abs(getrank(i) - getrank(enemykingpos));
+				int dist = (kingdistx + kingdisty);
+				if (dist <= 3) {
+					openingEval -= 20;
+					endgameEval -= 20;
+				}
+			}
+			
 			// bonus for R and Q being 2 squares or less away from enemy king
 			if ((piece == 'R') || (piece == 'Q')) {
 				int enemykingpos = pos->Bkingpos;
@@ -102,6 +126,43 @@ int taperedEval(const struct position *pos) {
 					endgameEval -= 30;
 				}
 			}
+			/* // isolated pawn penalties, doesn't work
+			if (getrank(i) == 7) {
+				//on last rank, calculate doubled pawn penalties
+				//since all pawns will have been counted at this point
+				//saves looping over the pawns again after this loop
+				int file = getfile(i);
+				int WPawncount = WPawns[file];
+				if (WPawncount >= 1) {
+					int leftpc, rightpc;
+					int leftfile = file - 1;
+					if (leftfile < 0) leftpc = 0;
+					else leftpc = WPawns[leftfile];
+					int rightfile = file + 1;
+					if (rightfile > 7) rightpc = 0;
+					else rightpc = WPawns[rightfile];
+					if (leftpc == 0 && rightpc == 0) {
+						openingEval -= 4;
+						endgameEval -= 4;
+					}
+				}
+				int BPawncount = BPawns[file];
+				if (BPawncount >= 1) {
+					int leftpc, rightpc;
+					int leftfile = file - 1;
+					if (leftfile < 0) leftpc = 0;
+					else leftpc = BPawns[leftfile];
+					int rightfile = file + 1;
+					if (rightfile > 7) rightpc = 0;
+					else rightpc = BPawns[rightfile];
+					if (leftpc == 0 && rightpc == 0) {
+						openingEval += 4;
+						endgameEval += 4;
+					}
+				}
+				
+			}
+			 */
 			switch (piece) {
 				case 'p': num_BP += 1; break;
 				case 'n': num_BN += 1; break;
@@ -125,11 +186,14 @@ int taperedEval(const struct position *pos) {
 		endgameEval += 30;
 	}
 	
+	// Isolated pawns penalties
+	
+	
 	// knight value decreases as pawns disappear
-	//openingEval -= num_WN * (16 - (num_WP + num_BP)) * 3;
-	//endgameEval -= num_WN * (16 - (num_WP + num_BP)) * 3;
-	//openingEval += num_BN * (16 - (num_WP + num_BP)) * 3;
-	//endgameEval += num_BN * (16 - (num_WP + num_BP)) * 3;
+	//openingEval -= num_WN * (16 - (num_WP + num_BP)) * 1;
+	//endgameEval -= num_WN * (16 - (num_WP + num_BP)) * 1;
+	//openingEval += num_BN * (16 - (num_WP + num_BP)) * 1;
+	//endgameEval += num_BN * (16 - (num_WP + num_BP)) * 1;
 	
 	// rook value increases as pawns disappear
 	//openingEval += num_WR * (16 - (num_WP + num_BP)) * 3;
