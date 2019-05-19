@@ -208,15 +208,17 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		if (r > 0 && score > alpha) {
 			score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, endtime);
 		}
-		if (score > bestscore) {
+		if (score >= bestscore) {
 			bestmove = moves[i];
+			bestscore = score;
 		}
-		bestscore = max(bestscore,score);
 		unmakeMove(pos);
-		alpha = max(bestscore,alpha);
+		if (bestscore >= alpha) {
+			alpha = bestscore;
+		}
 		if (alpha >= beta) {
-			numbetacutoffs++;
-			if (legalmoves == 1) numinstantbetacutoffs++;
+			//numbetacutoffs++;
+			//if (legalmoves == 1) numinstantbetacutoffs++;
 			break;
 		}
 	}
@@ -316,12 +318,15 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 				end = clock();
 				time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 				nps = nodesSearched / time_spent;
-				printf("info depth %d nodes %" PRIu64 " time %d nps %d score mate %d pv %s\n",(curdepth),nodesSearched,((int)(time_spent*1000)),nps,curdepth,movetostr(moves[i]));
+				if (silentsearch == 0) {
+					printf("info depth %d nodes %" PRIu64 " time %d nps %d score mate %d pv %s\n",(curdepth),nodesSearched,((int)(time_spent*1000)),nps,curdepth,movetostr(moves[i]));
+					printf("bestmove %s\n",movetostr(moves[i]));
+				}
 				unmakeMove(&pos);
 				return moves[i];
 			}
 
-			if (curscore >= bestScore) {
+			if (curscore > bestScore) {
 				bestScore = curscore;
 				bestmove = moves[i];
 			}
@@ -374,7 +379,12 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 		printf("\n");
 		*/
 		assert(bestScore > INT_MIN);
-		printf("info depth %d nodes %" PRIu64 " time %d nps %d score cp %d pv %s\n",(curdepth),nodesSearched,((int)(time_spent*1000)),nps,bestScore,movetostr(bestmove));
+		if (silentsearch == 0) {
+			printf("info depth %d nodes %" PRIu64 " time %d nps %d score cp %d pv %s\n",(curdepth),nodesSearched,((int)(time_spent*1000)),nps,bestScore,movetostr(bestmove));
+		}
+	}
+	if (silentsearch == 0) {
+		printf("bestmove %s\n",movetostr(bestmove));
 	}
 	return bestmove;
 }

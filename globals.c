@@ -10,3 +10,4 @@ struct TTtable TT;
 U64 currenthash;
 int numbetacutoffs = 0;
 int numinstantbetacutoffs = 0;
+int silentsearch = 0;

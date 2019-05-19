@@ -13,14 +13,102 @@
 #include "globals.h"
 
 
-void testRunAll() {
+void testRunAll(int silent) {
 	printf("Running all tests\n\n");
+	if (silent) silentsearch = 1;
 	testRunPerft();
 	testRunMakemove();
+	testRunCastlingRights();
+	testRunThreeFold();
 	testRunMates();
-	testRunBetaCutoffs();
+	silentsearch = 0;
+	//testRunBetaCutoffs();
 }
-
+void testRunThreeFold() {
+	struct position pos;
+	struct move chosenmove;
+	
+	printf("Running Threefold tests\n");
+	
+	parsefen(&pos,"7k/3QQ3/8/8/8/PPP5/2q5/K7 b - -");
+	posstack[0] = pos;
+	char bestmove[5] = "c2c1";
+	bestmove[4] = 0;
+	nodesSearched = 0;
+	chosenmove = search(pos,32,1000);
+	if (strcmp(movetostr(chosenmove),bestmove) == 0) {
+		printf("Threefold test 1 - Passed (expected %s, got %s)\n",bestmove,movetostr(chosenmove));
+	}
+	else {
+		printf("Threefold test 1 - Failed (expected %s, got %s)\n",bestmove,movetostr(chosenmove));
+	}
+	printf("\n");
+	
+	parsefen(&pos,"k7/2Q5/ppp5/8/8/8/3qq3/7K w - -");
+	posstack[0] = pos;
+	strcpy(bestmove, "c7c8");
+	bestmove[4] = 0;
+	nodesSearched = 0;
+	chosenmove = search(pos,32,1000);
+	if (strcmp(movetostr(chosenmove),bestmove) == 0) {
+		printf("Threefold test 2 - Passed (expected %s, got %s)\n",bestmove,movetostr(chosenmove));
+	}
+	else {
+		printf("Threefold test 2 - Failed (expected %s, got %s)\n",bestmove,movetostr(chosenmove));
+	}
+	printf("\n");
+	
+}
+void testRunCastlingRights() {
+	struct position pos;
+	printf("Running Castling Rights tests\n");
+	parsefen(&pos,"r3k2r/8/8/8/8/8/8/R3K2R w KQkq -");
+	posstack[0] = pos;
+	makeMovestr("a1a2", &pos);
+	if (pos.WcastleQS == 0) {
+		printf("Castling test 1 (WQ): Passed\n");
+	}
+	else {
+		printf("Castling test 1 (WQ): Failed\n");
+	}
+	unmakeMove(&pos);
+	
+	parsefen(&pos,"r3k2r/8/8/8/8/8/8/R3K2R w KQkq -");
+	posstack[0] = pos;
+	makeMovestr("h1h2", &pos);
+	if (pos.WcastleKS == 0) {
+		printf("Castling test 2 (WK): Passed\n");
+	}
+	else {
+		printf("Castling test 2 (WK): Failed\n");
+	}
+	unmakeMove(&pos);
+	
+	parsefen(&pos,"r3k2r/8/8/8/8/8/8/R3K2R w KQkq -");
+	posstack[0] = pos;
+	makeMovestr("a8a7", &pos);
+	if (pos.BcastleQS == 0) {
+		printf("Castling test 3 (BQ): Passed\n");
+	}
+	else {
+		printf("Castling test 3 (BQ): Failed\n");
+	}
+	unmakeMove(&pos);
+	
+	parsefen(&pos,"r3k2r/8/8/8/8/8/8/R3K2R w KQkq -");
+	posstack[0] = pos;
+	makeMovestr("h8h7", &pos);
+	if (pos.BcastleKS == 0) {
+		printf("Castling test 4 (BK): Passed\n");
+	}
+	else {
+		printf("Castling test 4 (BK): Failed\n");
+	}
+	unmakeMove(&pos);
+	parsefen(&pos,"startpos");
+	
+	printf("\n");
+}
 void testRunPerft() {
 	struct position pos;
 	parsefen(&pos,"startpos");

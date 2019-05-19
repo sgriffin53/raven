@@ -7,5 +7,7 @@ void testRunPerft();
 void testRunMakemove();
 void testRunMates();
 void testRunBetaCutoffs();
+void testRunCastlingRights();
+void testRunThreeFold();
 
 #endif

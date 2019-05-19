@@ -16,5 +16,6 @@ extern U64 nodesSearched;
 extern U64 currenthash;
 extern int numbetacutoffs;
 extern int numinstantbetacutoffs;
+extern int silentsearch;
 
 #endif

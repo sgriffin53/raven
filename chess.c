@@ -57,7 +57,10 @@ int main() {
 			token = strtok(NULL, " ");
 		}
 		if (strcmp(splitstr[0],"test") == 0) {
-			testRunAll();
+			if (strcmp(splitstr[1],"silent") == 0) {
+				testRunAll(1);
+			}
+			else testRunAll();
 			parsefen(&pos, "startpos");
 			posstack[0] = pos;
 		}
@@ -140,7 +143,7 @@ int main() {
 
 			struct move bestmove = search(pos,searchdepth,movetime);
 
-			printf("bestmove %s\n",movetostr(bestmove));
+			//printf("bestmove %s\n",movetostr(bestmove));
 		}
 
 		else if (strcmp(splitstr[0],"isready") == 0) {

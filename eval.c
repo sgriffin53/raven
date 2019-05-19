@@ -140,35 +140,6 @@ int taperedEval(const struct position *pos) {
 				//on last rank, calculate doubled pawn penalties
 				//since all pawns will have been counted at this point
 				//saves looping over the pawns again after this loop
-				int file = getfile(i);
-				int WPawncount = WPawns[file];
-				if (WPawncount >= 1) {
-					int leftpc, rightpc;
-					int leftfile = file - 1;
-					if (leftfile < 0) leftpc = 0;
-					else leftpc = WPawns[leftfile];
-					int rightfile = file + 1;
-					if (rightfile > 7) rightpc = 0;
-					else rightpc = WPawns[rightfile];
-					if (leftpc == 0 && rightpc == 0) {
-						openingEval -= 4;
-						endgameEval -= 4;
-					}
-				}
-				int BPawncount = BPawns[file];
-				if (BPawncount >= 1) {
-					int leftpc, rightpc;
-					int leftfile = file - 1;
-					if (leftfile < 0) leftpc = 0;
-					else leftpc = BPawns[leftfile];
-					int rightfile = file + 1;
-					if (rightfile > 7) rightpc = 0;
-					else rightpc = BPawns[rightfile];
-					if (leftpc == 0 && rightpc == 0) {
-						openingEval += 4;
-						endgameEval += 4;
-					}
-				}
 				
 			}
 			 */
@@ -186,19 +157,50 @@ int taperedEval(const struct position *pos) {
 			}
 		}
 		if (getrank(i) == 7) {
+			// bonus for rooks on open files
+			
 			int file = getfile(i);
 			if (WRooks[file] > 0) {
 				if ((WPawns[file] == 0) && (BPawns[file] == 0)) {
 					// white rook on open file
-					openingEval += 12;
-					endgameEval += 12;
+					openingEval += 32;
+					endgameEval += 32;
 				}
 			}
 			if (BRooks[file] > 0) {
 				if ((WPawns[file] == 0) && (BPawns[file] == 0)) {
 					// black rook on open file
-					openingEval -= 12;
-					endgameEval -= 12;
+					openingEval -= 32;
+					endgameEval -= 32;
+				}
+			}
+			// penalties for isolated pawns
+			int WPawncount = WPawns[file];
+			if (WPawncount >= 1) {
+				int leftpc, rightpc;
+				int leftfile = file - 1;
+				if (leftfile < 0) leftpc = 0;
+				else leftpc = WPawns[leftfile];
+				int rightfile = file + 1;
+				if (rightfile > 7) rightpc = 0;
+				else rightpc = WPawns[rightfile];
+				if (leftpc == 0 && rightpc == 0) {
+					openingEval -= 8;
+					endgameEval -= 8;
+				}
+			}
+			int BPawncount = BPawns[file];
+			if (BPawncount >= 1) {
+				int leftpc, rightpc;
+				int leftfile = file - 1;
+				if (leftfile < 0) leftpc = 0;
+				else leftpc = BPawns[leftfile];
+				int rightfile = file + 1;
+				if (rightfile > 7) rightpc = 0;
+				else rightpc = BPawns[rightfile];
+				if (leftpc == 0 && rightpc == 0) {
+					openingEval += 8;
+					endgameEval += 8;
 				}
 			}
 		}
@@ -211,30 +213,6 @@ int taperedEval(const struct position *pos) {
 		openingEval += 30;
 		endgameEval += 30;
 	}
-	
-	// Bonus for rooks on open files
-	
-	/*
-	for (int file = 0;file < 7;file++) {
-		if (WRooks[file] > 0) {
-			if ((WPawns[file] == 0) && (BPawns[file] == 0)) {
-				// white rook on open file
-				openingEval += 8;
-				endgameEval += 8;
-			}
-		}
-		if (BRooks[file] > 0) {
-			if ((WPawns[file] == 0) && (BPawns[file] == 0)) {
-				// black rook on open file
-				openingEval -= 8;
-				endgameEval -= 8;
-			}
-		}
-	}
-	*/
-	
-	// Isolated pawns penalties
-	
 	
 	// knight value decreases as pawns disappear
 	//openingEval -= num_WN * (16 - (num_WP + num_BP)) * 1;
