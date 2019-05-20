@@ -17,6 +17,7 @@
 #include "perft.h"
 #include "position.h"
 #include "tests.h"
+#include "misc.h"
 
 int main() {
 	setbuf(stdout, NULL);
@@ -70,7 +71,8 @@ int main() {
 				char value[128];
 				strcpy(name,splitstr[2]);
 				strcpy(value,splitstr[4]);
-				if (strcmp(strlwr(name),"hash") == 0) {
+				strtolwr(name);
+				if (strcmp(name,"hash") == 0) {
 					hashsize = atoi(value);
 				}
 				
