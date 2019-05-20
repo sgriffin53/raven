@@ -75,14 +75,14 @@ int taperedEval(const struct position *pos) {
 				BPawns[getfile(i)]++;
 				if (BPawns[getfile(i)] == 2) {
 					openingEval += 20;
-					endgameEval += 20;
+					endgameEval += 30;
 				}
 			}
 			if (piece == 'P') {
 				WPawns[getfile(i)]++;
 				if (WPawns[getfile(i)] == 2) {
 					openingEval -= 20;
-					endgameEval -= 20;
+					endgameEval -= 30;
 				}
 			}
 			
@@ -204,7 +204,7 @@ int taperedEval(const struct position *pos) {
 				else rightpc = WPawns[rightfile];
 				if (leftpc == 0 && rightpc == 0) {
 					openingEval -= 8;
-					endgameEval -= 8;
+					endgameEval -= 16;
 				}
 			}
 			int BPawncount = BPawns[file];
@@ -218,11 +218,22 @@ int taperedEval(const struct position *pos) {
 				else rightpc = BPawns[rightfile];
 				if (leftpc == 0 && rightpc == 0) {
 					openingEval += 8;
-					endgameEval += 8;
+					endgameEval += 16;
 				}
 			}
 		}
 	}
+	// side to move bonus
+	
+	if (pos->tomove == WHITE) {
+		openingEval += 30;
+		endgameEval += 30;
+	}
+	if (pos->tomove == BLACK) {
+		openingEval -= 30;
+		endgameEval -= 30;
+	}
+	
 	if (num_BB >= 2) {
 		openingEval -= 30;
 		endgameEval -= 30;
@@ -239,10 +250,17 @@ int taperedEval(const struct position *pos) {
 	endgameEval += num_BN * (16 - (num_WP + num_BP)) * 16;
 	
 	// rook value increases as pawns disappear
-	//openingEval += num_WR * (16 - (num_WP + num_BP)) * 3;
-	//endgameEval += num_WR * (16 - (num_WP + num_BP)) * 3;
-	//openingEval -= num_BR * (16 - (num_WP + num_BP)) * 3;
-	//endgameEval -= num_BR * (16 - (num_WP + num_BP)) * 3;
+	//openingEval += num_WR * (16 - (num_WP + num_BP)) * 30;
+	//endgameEval += num_WR * (16 - (num_WP + num_BP)) * 30;
+	//openingEval -= num_BR * (16 - (num_WP + num_BP)) * 30;
+	//endgameEval -= num_BR * (16 - (num_WP + num_BP)) * 30;
+	
+	// bishop value increases as pawns disappear
+	
+	//openingEval += num_WB * (16 - (num_WP + num_BP)) * 10;
+	//endgameEval += num_WB * (16 - (num_WP + num_BP)) * 15;
+	//openingEval -= num_BB * (16 - (num_WP + num_BP)) * 10;
+	//endgameEval -= num_BB * (16 - (num_WP + num_BP)) * 15;
 	
 	int totalPhase = pawnPhase * 16 + knightPhase * 4 + bishopPhase*4 + rookPhase*4 + queenPhase*2;
 	int phase = totalPhase;
