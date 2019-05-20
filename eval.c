@@ -166,12 +166,30 @@ int taperedEval(const struct position *pos) {
 					openingEval += 32;
 					endgameEval += 32;
 				}
+				else if ((WPawns[file] == 0) && (BPawns[file] > 0)) {
+					// white rook on semi-open file
+					openingEval += 6;
+					endgameEval += 6;
+				}
+				if ((WRooks[file] >= 2) && (WPawns[file] == 0))  {
+					openingEval += 18;
+					endgameEval += 18;
+				}
 			}
 			if (BRooks[file] > 0) {
 				if ((WPawns[file] == 0) && (BPawns[file] == 0)) {
 					// black rook on open file
 					openingEval -= 32;
 					endgameEval -= 32;
+				}
+				else if ((WPawns[file] > 0) && (BPawns[file] == 0)) {
+					// black rook on semi-open file
+					openingEval -= 6;
+					endgameEval -= 6;
+				}
+				if ((BRooks[file] >= 2) && (BPawns[file] == 0)) {
+					openingEval -= 18;
+					endgameEval -= 18;
 				}
 			}
 			// penalties for isolated pawns
@@ -215,10 +233,10 @@ int taperedEval(const struct position *pos) {
 	}
 	
 	// knight value decreases as pawns disappear
-	//openingEval -= num_WN * (16 - (num_WP + num_BP)) * 1;
-	//endgameEval -= num_WN * (16 - (num_WP + num_BP)) * 1;
-	//openingEval += num_BN * (16 - (num_WP + num_BP)) * 1;
-	//endgameEval += num_BN * (16 - (num_WP + num_BP)) * 1;
+	openingEval -= num_WN * (16 - (num_WP + num_BP)) * 16;
+	endgameEval -= num_WN * (16 - (num_WP + num_BP)) * 16;
+	openingEval += num_BN * (16 - (num_WP + num_BP)) * 16;
+	endgameEval += num_BN * (16 - (num_WP + num_BP)) * 16;
 	
 	// rook value increases as pawns disappear
 	//openingEval += num_WR * (16 - (num_WP + num_BP)) * 3;
