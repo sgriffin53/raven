@@ -64,7 +64,7 @@ U64 generateHash(const struct position *pos) {
 
 	for(int square = 0; square < 64; square++) {
 		if(pos->board[square] != '0') {
-			char squarepiece = pos->board[square];
+			//char squarepiece = pos->board[square];
 			//printf("piece: %c %d\n",squarepiece,(int)squarepiece);
 			int piece = pieceintval(pos->board[square]);
 			zobrist ^= pieceHash[piece][square];

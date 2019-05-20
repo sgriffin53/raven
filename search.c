@@ -98,7 +98,7 @@ int qSearch(struct position *pos, int alpha, int beta, clock_t endtime,struct mo
 	return alpha;
 }
 
-int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int nullmove, clock_t endtime) {
+int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, clock_t endtime) {
 	assert(pos);
 	assert(alpha >= -MATE_SCORE && beta <= MATE_SCORE);
 	assert(beta > alpha);
@@ -188,6 +188,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		//clock_t end = clock();
 		//double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 		//int time_spentms = (int)(time_spent * 1000);
+		
 		makeMove(&moves[i],pos);
 		pos->tomove = !pos->tomove;
 		if (isCheck(pos)) {
@@ -195,18 +196,21 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			continue;
 		}
 		pos->tomove = !pos->tomove;
-
+		
 		legalmoves++;
-
+		
+		//passed pawn extensions
+		
 		// Reduction
 		const int r = reduction(&moves[i], depthleft);
 
+		
 		// Search
-		int score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 - r, 0, endtime);
+		int score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 - r, endtime);
 
 		// Redo search
 		if (r > 0 && score > alpha) {
-			score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, endtime);
+			score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, endtime);
 		}
 		if (score >= bestscore) {
 			bestmove = moves[i];
@@ -236,7 +240,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	}
 	int newflag;
 	if (bestscore <= origAlpha) {
-		int newflag = UPPERBOUND;
+		newflag = UPPERBOUND;
 	}
 	else if (bestscore >= beta) {
 		newflag = LOWERBOUND;
@@ -245,7 +249,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		newflag = EXACT;
 	}
 	addTTentry(&TT, hash, depthleft, newflag, bestmove, bestscore);
-	assert(bestscore > MIN_INT);
+	assert(bestscore > INT_MIN);
 	return bestscore;
 }
 
@@ -266,7 +270,7 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 	int nps;
 	int num_moves = genLegalMoves(&pos,moves);
 	if (num_moves == 1) return moves[0];
-	struct move lastbestmove = moves[0];
+	//struct move lastbestmove = moves[0];
 	struct move TTmove = {.to=-1,.from=-1,.prom=-1,.cappiece=-1};
 	//U64 hash = generateHash(&pos);
 	//struct TTentry TTdata = getTTentry(&TT,hash);
@@ -274,7 +278,7 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 	//	TTmove = TTdata.bestmove;
 	//}
 	sortMoves(&pos,moves,num_moves,TTmove);
-	int numcheckmoves = 0;
+	int legalmoves = 0;
 	int legalmoveidx = 0;
 	for (int curdepth = 1; (curdepth < searchdepth+1 && timeElapsed == 0);curdepth++) {
 		int bestScore = INT_MIN;
@@ -286,10 +290,10 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 			pos.tomove = !pos.tomove;
 			int incheck = isCheck(&pos);
 			if (incheck) {
-				numcheckmoves++;
 				unmakeMove(&pos);
 				continue;
 			}
+			legalmoves++;
 			//set legalmoveidx to index of known legal move
 			//to use in case there's only one legal move
 			legalmoveidx = i;
@@ -302,7 +306,6 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 				timeElapsed = 1;
 				break;
 			}
-
 			int curscore;
 			//int curscore = -negaMax(&pos,curdepth-1,(movetime - time_spentms));
 			if (isThreefold(&pos)) {
@@ -312,7 +315,7 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 				curscore = 0;
 			}
 			else {
-				curscore = -alphaBeta(&pos,-MATE_SCORE,MATE_SCORE,curdepth-1,0,endtime);
+				curscore = -alphaBeta(&pos,-MATE_SCORE,MATE_SCORE,curdepth-1,endtime);
 			}
 			if (curscore == MATE_SCORE) {
 				end = clock();
@@ -335,7 +338,7 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 
 			nps = nodesSearched / time_spent;
 		}
-		if ((num_moves - numcheckmoves) == 1) bestmove = moves[legalmoveidx];
+		if (legalmoves == 1) bestmove = moves[legalmoveidx];
 		if (nodesSearched == 0) bestmove = moves[legalmoveidx];
 		if (clock() >= endtime) {break;}
 		//makeMove(&bestmove,&pos);

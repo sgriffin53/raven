@@ -207,9 +207,8 @@ void testRunMates() {
 }
 void testRunBetaCutoffs() {
 	struct position pos;
-	struct move chosenmove;
 	parsefen(&pos,"r3kb1r/pp1n1ppp/1q3n2/2pP1QN1/2P2B2/8/PP2PPPP/R3KB1R w KQkq - 3 12");
-	chosenmove = search(pos,6,3000);
+	search(pos,6,3000);
 	printf("Beta cutoff rate: %.2f%%",(float)(numinstantbetacutoffs * (100 / (float)numbetacutoffs)));
 	printf("\n");
 }

@@ -141,7 +141,7 @@ int main() {
 
 			nodesSearched = 0;
 
-			struct move bestmove = search(pos,searchdepth,movetime);
+			search(pos,searchdepth,movetime);
 
 			//printf("bestmove %s\n",movetostr(bestmove));
 		}
