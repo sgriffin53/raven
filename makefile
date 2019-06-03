@@ -1,7 +1,9 @@
-SOURCES = chess.c position.c search.c attacks.c movegen_white.c movegen_black.c hash.c eval.c makemove.c globals.c TT.c misc.c tests.c perft.c
+SOURCES = chess.c position.c hash.c makemove.c tests.c movegen.c attacks.c bitboards.c magicmoves.c perft.c search.c eval.c TT.c
 DFLAGS  = -Wpedantic -Wall -Wextra -Wshadow
 RFLAGS  = -flto -Ofast -DNDEBUG
 release:
 	gcc $(RFLAGS) $(SOURCES) -o raven
 debug:
 	gcc $(DFLAGS) $(SOURCES) -o raven-debug
+fast:
+	gcc $(SOURCES) -o raven-fast

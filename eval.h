@@ -3,7 +3,10 @@
 
 #include "position.h"
 
-int evalBoard(const struct position *pos);
-int taperedEval(const struct position *pos);
+int pieceval(const char inpiece);
+int evalBoard(struct position *pos);
+int taperedEval(struct position *pos);
+int isEndgame(struct position *pos);
+int mobility(struct position *pos, int side);
 
 #endif

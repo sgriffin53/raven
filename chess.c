@@ -1,48 +1,39 @@
 #include <stdio.h>
-#include <string.h>
-#include <ctype.h>
 #include <stdlib.h>
-#include <time.h>
-#include <assert.h>
+#include <string.h>
 #include <inttypes.h>
-#include <limits.h>
-#include "globals.h"
-#include "hash.h"
+#include <time.h>
 #include "TT.h"
-#include "makemove.h"
-#include "movegen.h"
-#include "PST.h"
-#include "eval.h"
-#include "search.h"
-#include "perft.h"
 #include "position.h"
+#include "move.h"
+#include "makemove.h"
 #include "tests.h"
-#include "misc.h"
+#include "magicmoves.h"
+#include "movegen.h"
+#include "perft.h"
+#include "globals.h"
+#include "search.h"
+#include "bitboards.h"
+#include <limits.h>
 
 int main() {
 	setbuf(stdout, NULL);
 	setbuf(stdin, NULL);
 	setvbuf(stdout, NULL, _IONBF, 0);
 	setvbuf(stdin, NULL, _IONBF, 0);
-
+	struct position pos;
+	parsefen(&pos,"startpos");
 	char instr[8192];
 	char splitstr[1000][200];
 	char * token;
-	int wtime, btime;
-	int movetime;
 	int keeprunning = 1;
-	struct position pos;
-	parsefen(&pos, "startpos"); // set start position
-	posstack[0] = pos;
-	posstackend = 1;
-
+	int wtime, btime;
 	initZobrist();
-
-	//initPTT(&PTT);
+	initmagicmoves();
 	initTT(&TT);
 	clearTT(&TT);
-	//initETT(&ETT);
-
+	initETT(&ETT);
+	clearETT(&ETT);
 	while (keeprunning) {
 		// read input from stdin
 		fgets(instr, 8192, stdin);
@@ -58,62 +49,52 @@ int main() {
 			token = strtok(NULL, " ");
 		}
 		if (strcmp(splitstr[0],"test") == 0) {
-			if (strcmp(splitstr[1],"silent") == 0) {
-				testRunAll(1);
-			}
-			else testRunAll();
-			parsefen(&pos, "startpos");
-			posstack[0] = pos;
+			runTestsAll();
 		}
-		if (strcmp(splitstr[0],"setoption") == 0) {
-			if ((strcmp(splitstr[1],"name") == 0) && (strcmp(splitstr[3],"value") == 0))   {
-				char name[128];
-				char value[128];
-				strcpy(name,splitstr[2]);
-				strcpy(value,splitstr[4]);
-				strtolwr(name);
-				if (strcmp(name,"hash") == 0) {
-					hashsize = atoi(value);
+		if (strcmp(splitstr[0],"test2") == 0) {
+			parsefen(&pos,"8/8/8/8/6k1/K7/8/8 b - -");
+			int kingpos = pos.Bkingpos;
+			printf("%d\n",isAttacked(&pos, H3, !pos.tomove));
+			
+		}
+		if (strcmp(splitstr[0],"testBB") == 0) {
+			U64 BBwhitepawns = (pos.BBwhitepieces & pos.BBpawns);
+			while (BBwhitepawns) {
+				int square = __builtin_ctzll(BBwhitepawns);
+				BBwhitepawns &= ~(1ULL << square);
+				U64 BBpiece = (1ULL << square);
+				U64 BBmidsquare = BBpiece;
+				U64 BBchecksquares = 0ULL;
+				int rank = getrank(square);
+				//printf("\n%d\n",rank);
+				while (rank < 6) {
+					BBchecksquares |= noWeOne(BBmidsquare);
+					BBchecksquares |= northOne(BBmidsquare);
+					BBchecksquares |= noEaOne(BBmidsquare);
+					BBmidsquare = northOne(BBmidsquare);
+					rank++;
 				}
-				
+				U64 BBenemypawns = (BBchecksquares & (pos.BBblackpieces & pos.BBpawns));
+			}
+		}
+		if (strcmp(splitstr[0],"magic") == 0) {
+			U64 BBrook = Rmagic(E4,pos.BBwhitepieces | pos.BBblackpieces);
+			dspBB(BBrook & ~pos.BBblackpieces);
+		}
+		else if (strcmp(splitstr[0],"moves") == 0) {
+			for (int i = 1;i < splitstrend;i++) {
+				// make move
+				makeMovestr(splitstr[i],&pos);
 			}
 		}
 		if (strcmp(splitstr[0],"ucinewgame") == 0) {
 			clearTT(&TT);
+			clearETT(&ETT);
 		}
-		
-		if (strcmp(splitstr[0],"legalmoves") == 0) {
-
-			struct move moves[MAX_MOVES];
-			int num_moves = genLegalMoves(&pos,moves);
-			//sortMoves(&pos,moves,num_moves);
-			for (int i = 0;i < num_moves;i++) {
-				makeMove(&moves[i], &pos);
-				pos.tomove = !pos.tomove;
-				int incheck = isCheck(&pos);
-				if (incheck) {
-					unmakeMove(&pos);
-					continue;
-				}
-				pos.tomove = !pos.tomove;
-				unmakeMove(&pos);
-				printf("%s ",movetostr(moves[i]));
-				fflush(stdout);
-			}
-			printf("\n");
-		}
-
-		else if (strcmp(splitstr[0],"quit") == 0) keeprunning = 0;
-
-		else if (strcmp(splitstr[0],"hash") == 0) {
-			U64 hash = generateHash(&pos);
-			printf("%" PRIu64 "\n",hash);
-		}
-
 		else if (strcmp(splitstr[0],"go") == 0) {
 			int searchdepth = 100;
 			//movetime = 2147483646;
-			movetime = INT_MAX / 100;
+			int movetime = INT_MAX / 100;
 
 			if (strcmp(splitstr[1],"depth") == 0) {
 				searchdepth = atoi(splitstr[2]);
@@ -147,28 +128,7 @@ int main() {
 
 			//printf("bestmove %s\n",movetostr(bestmove));
 		}
-
-		else if (strcmp(splitstr[0],"isready") == 0) {
-			printf("readyok\n");
-		}
-
-		else if (strcmp(splitstr[0],"uci") == 0) {
-			printf("id name Raven 0.30\nid author Steve Griffin\n");
-			printf("option name Hash type spin default 32 min 32 max 256\n");
-			printf("uciok\n");
-		}
-
-		else if (strcmp(splitstr[0],"board") == 0) dspboard(&pos);
-
-		else if (strcmp(splitstr[0],"move") == 0) makeMovestr(splitstr[1], &pos);
-
-		else if (strcmp(splitstr[0],"unmove") == 0) unmakeMove(&pos);
-
-		else if (strcmp(splitstr[0],"eval") == 0) {
-			//printf("score: %d",taperedEval(&pos));
-		}
-
-		else if (strcmp(splitstr[0],"perft") == 0) {
+		if (strcmp(splitstr[0],"perft") == 0) {
 			int depth;
 			U64 pnodes;
 			U64 nps;
@@ -179,31 +139,66 @@ int main() {
 				clock_t end = clock();
 				double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 				nps = pnodes / time_spent;
-				printf("info depth %d nodes %" PRIu64 " time %f nps %" PRIu64 "\n",i,pnodes,time_spent,nps);
-				fflush(stdout);
+				printf("info depth %d nodes %" PRIu64 " time %d nps %" PRIu64 "\n",i,pnodes,(int)(1000 * time_spent),nps);
 			}
 
 			printf("nodes %" PRIu64 "\n", pnodes);
-			fflush(stdout);
 		}
-
-		else if (strcmp(splitstr[0],"PST") == 0) {
-			char piece = splitstr[1][0];
-			printf("%d\n",PSTval(piece, atoi(splitstr[2]),'O'));
-		}
-
-		else if (strcmp(splitstr[0],"rank") == 0) printf("%d\n",getrank(atoi(splitstr[1])));
-
-		else if (strcmp(splitstr[0],"file") == 0) printf("%d\n",getfile(atoi(splitstr[1])));
-
 		else if (strcmp(splitstr[0],"sperft") == 0) {
 			int depth = atoi(splitstr[1]);
 			splitperft(&pos,depth);
 		}
-		else if (strcmp(splitstr[0],"moves") == 0) {
-			for (int i = 1;i < splitstrend;i++) {
-				// make move
-				makeMovestr(splitstr[i],&pos);
+		if (strcmp(splitstr[0],"move") == 0) {
+			makeMovestr(splitstr[1],&pos);
+		}
+		if (strcmp(splitstr[0],"legalmoves") == 0) {
+			struct move moves[MAX_MOVES];
+			int num_moves = genMoves(&pos,moves);
+			int j;
+			printf("%d num moves\n",num_moves);
+			printf("%d --\n",num_moves);
+			for (j = 0;j < num_moves;j++) {
+				printf("%d - %s\n",j,movetostr(moves[j]));
+			}
+		}
+		if (strcmp(splitstr[0],"unmove") == 0) {
+			unmakeMove(&pos);
+		}
+		if (strcmp(splitstr[0],"dspBB") == 0) {
+			printf("Displaying %s bitboard.\n",splitstr[1]);
+			dspBBstr(splitstr[1],pos);
+		}
+		if (strcmp(splitstr[0],"board") == 0) {
+			dspBoard(&pos);
+		}
+		if (strcmp(splitstr[0],"set") == 0) {
+			setPiece(&pos,atoi(splitstr[1]),splitstr[2][0]);;
+		}
+		if (strcmp(splitstr[0],"isready") == 0) {
+			printf("readyok\n");
+		}
+		if (strcmp(splitstr[0],"piece") == 0) {
+			printf("%c\n",getPiece(&pos,atoi(splitstr[1])));
+		}
+
+		else if (strcmp(splitstr[0],"uci") == 0) {
+			printf("id name Raven 0.30\nid author Steve Griffin\n");
+			printf("option name Hash type spin default 32 min 32 max 256\n");
+			printf("uciok\n");
+		}
+		else if (strcmp(splitstr[0],"quit") == 0) {
+			keeprunning = 0;
+		}
+		else if ( (strcmp(splitstr[0],"position") == 0) && (strcmp(splitstr[1],"startpos") == 0) ) {
+			parsefen(&pos, "startpos"); // set start position
+			//posstack[0] = pos;
+			//posstackend = 1;
+			if (strcmp(splitstr[2],"moves") == 0) {
+				// make all moves given by position command
+				for (int i = 3;i < splitstrend;i++) {
+					// make move
+					makeMovestr(splitstr[i],&pos);
+				}
 			}
 		}
 		else if ( (strcmp(splitstr[0],"position") == 0) && (strcmp(splitstr[1],"fen") == 0) ) {
@@ -227,22 +222,7 @@ int main() {
 			}
 			posstack[0] = pos;
 		}
-		else if ( (strcmp(splitstr[0],"position") == 0) && (strcmp(splitstr[1],"startpos") == 0) ) {
-			parsefen(&pos, "startpos"); // set start position
-			posstack[0] = pos;
-			posstackend = 1;
-			if (strcmp(splitstr[2],"moves") == 0) {
-				// make all moves given by position command
-				for (int i = 3;i < splitstrend;i++) {
-					// make move
-					makeMovestr(splitstr[i],&pos);
-				}
-			}
-		}
-
 	}
-	//free(TT.entries);
-	//free(PTT.entries);
-	//free(ETT.entries);
+	
 	return 0;
 }

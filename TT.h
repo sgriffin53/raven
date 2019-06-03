@@ -1,5 +1,6 @@
 #ifndef TT_H
 #define TT_H
+
 #include "move.h"
 #include "hash.h"
 
@@ -50,6 +51,7 @@ void addTTentry(struct TTtable *table,U64 hash, int depth,int flag, struct move 
 void addPTTentry(struct PTTtable *table,U64 hash, int depth,U64 nodes);
 
 void clearTT(struct TTtable *table);
+void clearETT(struct ETTtable *table);
 
 struct PTTentry getPTTentry(struct PTTtable *table,U64 hash);
 struct ETTentry getETTentry(struct ETTtable *table,U64 hash);

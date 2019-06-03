@@ -1,7 +1,10 @@
 #ifndef MOVE_H
 #define MOVE_H
 
-#include "assert.h"
+#include <string.h>
+#include "position.h"
+
+#define MAX_MOVES 2048
 
 struct move {
 	int from;
@@ -16,9 +19,9 @@ static inline char* movetostr(struct move move) {
 
 	char returnstring[6];
 	char startsquarefile = (char)(getfile(move.from) + 97);
-	char startsquarerank = (char)(7 - getrank(move.from) + 49);
+	char startsquarerank = (char)(getrank(move.from) + 49);
 	char endsquarefile = (char)(getfile(move.to) + 97);
-	char endsquarerank = (char)(7 - getrank(move.to) + 49);
+	char endsquarerank = (char)(getrank(move.to) + 49);
 	returnstring[0] = startsquarefile;
 	returnstring[1] = startsquarerank;
 	returnstring[2] = endsquarefile;

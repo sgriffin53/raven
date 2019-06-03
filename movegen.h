@@ -1,23 +1,15 @@
-#ifndef MOVEGEN_H
+#ifndef MOVEGEN_HclTabCtrl
 #define MOVEGEN_H
 
-#include <assert.h>
+#include "attacks.h"
 #include "position.h"
 #include "move.h"
 
-#define MAX_MOVES 2048
-
-int genMoves_W(const struct position *pos, struct move *moves);
-int genMoves_B(const struct position *pos, struct move *moves);
-
-static inline int genLegalMoves(const struct position *pos, struct move *moves) {
-	assert(pos);
-	assert(moves);
-    assert(legalPos(pos));
-	int num_moves = 0;
-	if (pos->tomove == WHITE) num_moves += genMoves_W(pos,&moves[num_moves]);
-	else num_moves += genMoves_B(pos,&moves[num_moves]);
-	return num_moves;
-}
-
+int genMoves(struct position *pos, struct move *moves);
+int genKingMoves(struct position *pos, int square, struct move *moves);
+int genKnightMoves(struct position *pos, int square, struct move *moves);
+int genRookMoves(struct position *pos, int square, struct move *moves);
+int genQueenMoves(struct position *pos, int square, struct move *moves);
+int genBishopMoves(struct position *pos, int square, struct move *moves);
+int genPawnMoves(struct position *pos, int square, struct move *moves);
 #endif

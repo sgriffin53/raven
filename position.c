@@ -1,11 +1,16 @@
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <inttypes.h>
 #include "position.h"
+#include "hash.h"
+#include "globals.h"
 #include "attacks.h"
-#include "draw.h"
 
 int getrank(int square) {
 	assert(square >= 0 && square <= 63);
-	if (!(square >= 0 && square <= 63))  printf("%d\n",square);
-	return (int)(square / 8);
+	return square / 8;
 }
 
 int getfile(int square) {
@@ -13,51 +18,11 @@ int getfile(int square) {
 	return square % 8;
 }
 
-int strsquaretoidx(char square[]) {
-	int file = (int)square[0] - 97;
-	int rank = (int)square[1] - 49;
-	rank = 7 - rank;
-	return (((rank) << 3) | (file));
-}
-
-int isBlackPiece(char piece) {
-	if ((piece >= 'a') && (piece <= 'z')) {
-		return 1;
-	}
-	return 0;
-}
-
-int isWhitePiece(char piece) {
-	if ((piece >= 'A') && (piece <= 'Z')) {
-		return 1;
-	}
-	return 0;
-}
-
-char* squareidxtostr(int square) {
-	assert(square >= 0 && square <= 63);
-	char returnstring[3];
-	char squarefile = (char)(getfile(square) + 97);
-	char squarerank = (char)(7 - getrank(square) + 49);
-	returnstring[0] = squarefile;
-	returnstring[1] = squarerank;
-	returnstring[2] = 0;
-	return strdup(returnstring);
-}
-
-int fileranktosquareidx(int file,int rank) {
-	return (rank) * 8 + file;
-}
-
 void parsefen(struct position *pos, const char *ofen) {
-	assert(pos);
-	assert(ofen);
-	// Handle "startpos"
 	if (strncmp(ofen, "startpos", 8) == 0) {
 		parsefen(pos, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 		return;
 	}
-
 	char fen[strlen(ofen)];
 	strcpy(fen, ofen);
 
@@ -66,35 +31,104 @@ void parsefen(struct position *pos, const char *ofen) {
 
 	// set blank position
 	memset(pos, 0, sizeof(struct position));
-	for (int i = 0; i < 64; ++i) pos->board[i] = '0';
+	
 	pos->epsquare = -1;
-
+	pos->WcastleKS = 0;
+	pos->WcastleQS = 0;
+	pos->BcastleKS = 0;
+	pos->BcastleQS = 0;
+	
+	
 	int n = 0;
-	int j = 0;
-
 	token = strtok(fen," ");
 	while (token != NULL) {
 		strcpy(splitstr[n],token);
 		n++;
 		token = strtok(NULL, " ");
 	}
-
-	//int splitstrend = i; // position of end of splitstr array
-	for (size_t i = 0;i<strlen(splitstr[0]);i++) {
+	
+	pos->BBpawns = 0ULL;
+	pos->BBknights = 0ULL;
+	pos->BBbishops = 0ULL;
+	pos->BBrooks = 0ULL;
+	pos->BBqueens = 0ULL;
+	pos->BBkings = 0ULL;
+	pos->BBwhitepieces = 0ULL;
+	pos->BBblackpieces = 0ULL;
+	
+	
+	int j = 0;
+	for (int i = 0;i < (int)strlen(splitstr[0]);i++) {
 		char letter = splitstr[0][i];
+		
+		//get rank and file of A1 = 0 board from A8 = 0 board
+		int realrank = 7 - (j/8);
+		int realfile = j % 8;
+		//printf("%c %d %d\n",letter,realfile,realrank);
+		int a = fileranktosquareidx(realfile,realrank);
 		switch (letter) {
-			case 'p': pos->board[j] = 'p'; break;
-			case 'n': pos->board[j] = 'n'; break;
-			case 'b': pos->board[j] = 'b'; break;
-			case 'r': pos->board[j] = 'r'; break;
-			case 'q': pos->board[j] = 'q'; break;
-			case 'k': pos->board[j] = 'k'; pos->Bkingpos = j; break;
-			case 'P': pos->board[j] = 'P'; break;
-			case 'N': pos->board[j] = 'N'; break;
-			case 'B': pos->board[j] = 'B'; break;
-			case 'R': pos->board[j] = 'R'; break;
-			case 'Q': pos->board[j] = 'Q'; break;
-			case 'K': pos->board[j] = 'K'; pos->Wkingpos = j; break;
+			case 'p': {
+				pos->BBpawns |= (1ULL << a);
+				pos->BBblackpieces |= (1ULL << a);
+				break;
+			}
+			case 'n': {
+				pos->BBknights |= (1ULL << a);
+				pos->BBblackpieces |= (1ULL << a);
+				break;
+			}
+			case 'b': {
+				pos->BBbishops |= (1ULL << a);
+				pos->BBblackpieces |= (1ULL << a);
+				break;
+			}
+			case 'r': {
+				pos->BBrooks |= (1ULL << a);
+				pos->BBblackpieces |= (1ULL << a);
+				break;
+			}
+			case 'q': {
+				pos->BBqueens |= (1ULL << a);
+				pos->BBblackpieces |= (1ULL << a);
+				break;
+			}
+			case 'k': {
+				pos->BBkings |= (1ULL << a);
+				pos->BBblackpieces |= (1ULL << a);
+				pos->Bkingpos = a;
+				break;
+			}
+			case 'P': {
+				pos->BBpawns |= (1ULL << a);
+				pos->BBwhitepieces |= (1ULL << a);
+				break;
+			}
+			case 'N': {
+				pos->BBknights |= (1ULL << a);
+				pos->BBwhitepieces |= (1ULL << a);
+				break;
+			}
+			case 'B': {
+				pos->BBbishops |= (1ULL << a);
+				pos->BBwhitepieces |= (1ULL << a);
+				break;
+			}
+			case 'R': {
+				pos->BBrooks |= (1ULL << a);
+				pos->BBwhitepieces |= (1ULL << a);
+				break;
+			}
+			case 'Q': {
+				pos->BBqueens |= (1ULL << a);
+				pos->BBwhitepieces |= (1ULL << a);
+				break;
+			}
+			case 'K': {
+				pos->BBkings |= (1ULL << a);
+				pos->BBwhitepieces |= (1ULL << a);
+				pos->Wkingpos = a;
+				break;
+			}
 			case '/': j--; break;
 			case '1' : break;
 			case '2' : j++; break;
@@ -107,7 +141,6 @@ void parsefen(struct position *pos, const char *ofen) {
 		}
 		j++;
 	}
-
 	if (strcmp(splitstr[1],"w") == 0) pos->tomove = WHITE;
 	if (strcmp(splitstr[1],"b") == 0) pos->tomove = BLACK;
 
@@ -125,37 +158,264 @@ void parsefen(struct position *pos, const char *ofen) {
 
 	pos->halfmoves = atoi(splitstr[4]);
 	if (splitstr[4][0] == '-') pos->halfmoves = 0;
+	posstack[0] = *pos;
+	posstackend = 1;
 }
-
-void dspboard(const struct position *pos) {
+int fileranktosquareidx(int file,int rank) {
+	return (rank) * 8 + file;
+}
+int strsquaretoidx(char square[]) {
+	int file = (int)square[0] - 97;
+	int rank = (int)square[1] - 49;
+	return fileranktosquareidx(file,rank);
+}
+char getPiece(struct position *pos, int sq) {
 	assert(pos);
-    assert(legalPos(pos));
+	assert(sq >= 0 && sq <= 63);
+	U64 BBsquare = (1ULL << sq);
+	if (pos->BBpawns & BBsquare) {
+		if (pos->BBwhitepieces & BBsquare) return 'P';
+		else return 'p';
+	}
+	if (pos->BBknights & BBsquare) {
+		if (pos->BBwhitepieces & BBsquare) return 'N';
+		else return 'n';
+	}
+	if (pos->BBbishops & BBsquare) {
+		if (pos->BBwhitepieces & BBsquare) return 'B';
+		else return 'b';
+	}
+	if (pos->BBrooks & BBsquare) {
+		if (pos->BBwhitepieces & BBsquare) return 'R';
+		else return 'r';
+	}
+	if (pos->BBqueens & BBsquare) {
+		if (pos->BBwhitepieces & BBsquare) return 'Q';
+		else return 'q';
+	}
+	if (pos->BBkings & BBsquare) {
+		if (pos->BBwhitepieces & BBsquare) return 'K';
+		else return 'k';
+	}
+	return '0';
+}
+void setPiece(struct position *pos, int sq, char piece) {
+	assert(piece);
+	assert(pos);
+	assert(sq >= 0 && sq <= 63);
+	U64 BBsquare = (1ULL << sq);
+	//clear bitboard of old square
+	char oldpiece = getPiece(pos,sq);
 
+	if ((oldpiece == 'p') || (oldpiece == 'P')) {
+		pos->BBpawns &= ~BBsquare;
+	}
+	else if ((oldpiece == 'n') || (oldpiece == 'N')) {
+		pos->BBknights &= ~BBsquare;
+	}
+	else if ((oldpiece == 'b') || (oldpiece == 'B')) {
+		pos->BBbishops &= ~BBsquare;
+	}
+	else if ((oldpiece == 'r') || (oldpiece == 'R')) {
+		pos->BBrooks &= ~BBsquare;
+	}
+	else if ((oldpiece == 'q') || (oldpiece == 'Q')) {
+		pos->BBqueens &= ~BBsquare;
+	}
+	else if ((oldpiece == 'k') || (oldpiece == 'K')) {
+		pos->BBkings &= ~BBsquare;
+	}
+	//clear white and black piece bitboards of that square
+	pos->BBwhitepieces &= ~BBsquare;
+	pos->BBblackpieces &= ~BBsquare;
+	//white pieces
+	if (piece == 'P') {
+		pos->BBpawns |= BBsquare;
+		pos->BBwhitepieces |= BBsquare;
+	}
+	else if (piece == 'N') {
+		pos->BBknights |= BBsquare;
+		pos->BBwhitepieces |= BBsquare;
+	}
+	else if (piece == 'B') {
+		pos->BBbishops |= BBsquare;
+		pos->BBwhitepieces |= BBsquare;
+	}
+	else if (piece == 'R') {
+		pos->BBrooks |= BBsquare;
+		pos->BBwhitepieces |= BBsquare;
+	}
+	else if (piece == 'Q') {
+		pos->BBqueens |= BBsquare;
+		pos->BBwhitepieces |= BBsquare;
+	}
+	else if (piece == 'K') {
+		pos->BBkings |= BBsquare;
+		pos->BBwhitepieces |= BBsquare;
+		pos->Wkingpos = sq;
+	}
+	//black pieces
+	else if (piece == 'p') {
+		pos->BBpawns |= BBsquare;
+		pos->BBblackpieces |= BBsquare;
+	}
+	else if (piece == 'n') {
+		pos->BBknights |= BBsquare;
+		pos->BBblackpieces |= BBsquare;
+	}
+	else if (piece == 'b') {
+		pos->BBbishops |= BBsquare;
+		pos->BBblackpieces |= BBsquare;
+	}
+	else if (piece == 'r') {
+		pos->BBrooks |= BBsquare;
+		pos->BBblackpieces |= BBsquare;
+	}
+	else if (piece == 'q') {
+		pos->BBqueens |= BBsquare;
+		pos->BBblackpieces |= BBsquare;
+	}
+	else if (piece == 'k') {
+		pos->BBkings |= BBsquare;
+		pos->BBblackpieces |= BBsquare;
+		pos->Bkingpos = sq;
+	}
+	//empty square
+	/*
+	else if (piece == '0') {
+		pos->BBpawns &= ~BBsquare;
+		pos->BBknights &= ~BBsquare;
+		pos->BBbishops &= ~BBsquare;
+		pos->BBrooks &= ~BBsquare;
+		pos->BBqueens &= ~BBsquare;
+		pos->BBkings &= ~BBsquare;
+		pos->BBwhitepieces &= ~BBsquare;
+		pos->BBblackpieces &= ~BBsquare;
+	}
+	 */
+	
+}
+void dspBBstr(char* BBstr,struct position pos) {
+	if (strcmp(BBstr,"pawns") == 0) {
+		dspBB(pos.BBpawns);
+	}
+	if (strcmp(BBstr,"knights") == 0) {
+		dspBB(pos.BBknights);
+	}
+	if (strcmp(BBstr,"bishops") == 0) {
+		dspBB(pos.BBbishops);
+	}
+	if (strcmp(BBstr,"rooks") == 0) {
+		dspBB(pos.BBrooks);
+	}
+	if (strcmp(BBstr,"queens") == 0) {
+		dspBB(pos.BBqueens);
+	}
+	if (strcmp(BBstr,"kings") == 0) {
+		dspBB(pos.BBkings);
+	}
+	if (strcmp(BBstr,"Wpawns") == 0) {
+		dspBB((pos.BBpawns & pos.BBwhitepieces));
+	}
+	if (strcmp(BBstr,"Wknights") == 0) {
+		dspBB((pos.BBknights & pos.BBwhitepieces));
+	}
+	if (strcmp(BBstr,"Wbishops") == 0) {
+		dspBB((pos.BBbishops & pos.BBwhitepieces));
+	}
+	if (strcmp(BBstr,"Wrooks") == 0) {
+		dspBB((pos.BBrooks & pos.BBwhitepieces));
+	}
+	if (strcmp(BBstr,"Wqueens") == 0) {
+		dspBB((pos.BBqueens & pos.BBwhitepieces));
+	}
+	if (strcmp(BBstr,"Wkings") == 0) {
+		dspBB((pos.BBkings & pos.BBwhitepieces));
+	}
+	if (strcmp(BBstr,"Bpawns") == 0) {
+		dspBB((pos.BBpawns & pos.BBblackpieces));
+	}
+	if (strcmp(BBstr,"Bknights") == 0) {
+		dspBB((pos.BBknights & pos.BBblackpieces));
+	}
+	if (strcmp(BBstr,"Bbishops") == 0) {
+		dspBB((pos.BBbishops & pos.BBblackpieces));
+	}
+	if (strcmp(BBstr,"Brooks") == 0) {
+		dspBB((pos.BBrooks & pos.BBblackpieces));
+	}
+	if (strcmp(BBstr,"Bqueens") == 0) {
+		dspBB((pos.BBqueens & pos.BBblackpieces));
+	}
+	if (strcmp(BBstr,"Bkings") == 0) {
+		dspBB((pos.BBkings & pos.BBblackpieces));
+	}
+	if (strcmp(BBstr,"blackpieces") == 0) {
+		dspBB(pos.BBblackpieces);
+	}
+	if (strcmp(BBstr,"whitepieces") == 0) {
+		dspBB(pos.BBwhitepieces);
+	}
+	if (strcmp(BBstr,"pieces") == 0) {
+		dspBB((pos.BBwhitepieces | pos.BBblackpieces));
+	}
+}
+void dspBB(U64 BB) {
+	
 	printf("\n");
 	printf("  +---+---+---+---+---+---+---+---+\n");
 	printf("8 |");
-
-	for (int i = 0;i<64;i++) {
-		if ( ((i%8) == 0) && (i != 0) ) {
-			printf("\n");
-			printf("  +---+---+---+---+---+---+---+---+\n");
-			printf("%d",(8 - i/8));
+	
+	int rank = 0;
+	int file = 0;
+	int sq = 0;
+	for (rank = 7;rank >= 0;rank--) {
+		for (file = 0;file <= 7;file++) {
+			sq = fileranktosquareidx(file,rank);
+			if ((1ULL << sq) & BB) {
+				printf(" 1 |");
+			}
+			else {
+				printf(" 0 |");
+			}
+		}
+		printf("\n");
+		printf("  +---+---+---+---+---+---+---+---+\n");
+		if ((sq/8) != 0) {
+			printf("%d",(sq/8));
 			printf(" |");
 		}
-
-		char piece = pos->board[i];
-		if (piece == '0') piece = ' ';
-		printf(" %c |", piece);
 	}
+	printf("    A   B   C   D   E   F   G   H  \n");
+}
 
-	printf("\n  +---+---+---+---+---+---+---+---+");
-	printf("\n    A   B   C   D   E   F   G   H  \n");
-
+void dspBoard(struct position *pos) {
+	
+	printf("\n");
+	printf("  +---+---+---+---+---+---+---+---+\n");
+	printf("8 |");
+	
+	int rank = 0;
+	int file = 0;
+	int sq = 0;
+	for (rank = 7;rank >= 0;rank--) {
+		for (file = 0;file <= 7;file++) {
+			sq = fileranktosquareidx(file,rank);
+			char piece = getPiece(pos,sq);
+			if (piece == '0') piece = ' ';
+			printf(" %c |",piece);
+		}
+		printf("\n");
+		printf("  +---+---+---+---+---+---+---+---+\n");
+		if ((sq/8) != 0) {
+			printf("%d",(sq/8));
+			printf(" |");
+		}
+	}
+	printf("    A   B   C   D   E   F   G   H  \n");
 	printf("Side to move: ");
 	if (pos->tomove == 0) printf("Black");
 	else printf("White");
-	printf("\n");
-	printf("Is Check: %d",isCheck(pos));
 	printf("\n");
 	printf("EP Square: %d",pos->epsquare);
 	printf("\n");
@@ -173,87 +433,11 @@ void dspboard(const struct position *pos) {
 	printf("\n");
 	printf("Half moves: %d",pos->halfmoves);
 	printf("\n");
-	printf("Is threefold: %d",isThreefold(pos));
+	printf("Hash: %"PRIu64,generateHash(pos));
 	printf("\n");
-}
-
-int legalPos(const struct position *pos) {
-    assert(pos);
-
-    // Count pieces
-    int numWP = 0;
-    int numWN = 0;
-    int numWB = 0;
-    int numWR = 0;
-    int numWQ = 0;
-    int numWK = 0;
-    int numBP = 0;
-    int numBN = 0;
-    int numBB = 0;
-    int numBR = 0;
-    int numBQ = 0;
-    int numBK = 0;
-    int numEmpty = 0;
-
-    for (int i = 0; i < 64; ++i) {
-        switch (pos->board[i]) {
-            case 'P': numWP++; break;
-            case 'N': numWN++; break;
-            case 'B': numWB++; break;
-            case 'R': numWR++; break;
-            case 'Q': numWQ++; break;
-            case 'K': numWK++; break;
-            case 'p': numBP++; break;
-            case 'n': numBN++; break;
-            case 'b': numBB++; break;
-            case 'r': numBR++; break;
-            case 'q': numBQ++; break;
-            case 'k': numBK++; break;
-            case '0': numEmpty++; break;
-            default: return 0;
-        }
-    }
-
-    const int numWhite = numWP + numWB + numWN + numWR + numWQ + numWK;
-    const int numBlack = numBP + numBB + numBN + numBR + numBQ + numBK;
-
-    // Check king positions
-    if (pos->board[pos->Wkingpos] != 'K') return 0;
-    if (pos->board[pos->Bkingpos] != 'k') return 0;
-
-    // Piece counts
-    if (numWP > 8 || numBP > 8) return 0;
-    if (numWN > 10 || numBN > 10) return 0;
-    if (numWB > 10 || numBB > 10) return 0;
-    if (numWR > 10 || numBR > 10) return 0;
-    if (numWQ > 10 || numBQ > 10) return 0;
-    if (numWK != 1 || numBK != 1) return 0;
-    if (numWhite > 16) return 0;
-    if (numBlack > 16) return 0;
-    if (numEmpty < 32) return 0;
-    if (numWhite + numBlack + numEmpty != 64) return 0;
-
-    // En passant square
-    if (pos->epsquare != -1) {
-        if (pos->tomove == WHITE) {
-            // Has to be on the 6th rank
-            if (getrank(pos->epsquare) != 2) return 0;
-            // Has to have a pawn in the right place
-            if (pos->board[pos->epsquare+8] != 'p') return 0;
-        } else {
-            // Has to be on the 3rd rank
-            if (getrank(pos->epsquare) != 5) return 0;
-            // Has to have a pawn in the right place
-            if (pos->board[pos->epsquare-8] != 'P') return 0;
-        }
-    }
-
-    // Can't capture the opponent's king
-    if (pos->tomove == WHITE) {
-        if (isAttacked(pos, pos->Bkingpos, WHITE)) return 0;
-    } else {
-        if (isAttacked(pos, pos->Wkingpos, BLACK)) return 0;
-    }
-
-    return 1;
+	int kingpos;
+	if (pos->tomove == WHITE) kingpos = pos->Wkingpos;
+	else kingpos = pos->Bkingpos;
+	printf("In check: %d",isCheck(pos));
+	printf("\n");
 }

@@ -6,7 +6,7 @@
 #include "position.h"
 #include "hash.h"
 
-static inline int isThreefold(const struct position *pos) {
+static inline int isThreefold(struct position *pos) {
 	assert(pos);
 	assert(pos->halfmoves >= 0);
 	if (pos->halfmoves <= 4) return 0;

@@ -1,215 +1,125 @@
-#ifndef TESTS_C
-#define TESTS_C
 
-
-#include <inttypes.h>
-#include <math.h>
+#include <stdio.h>
 #include "tests.h"
-#include "hash.h"
-#include "perft.h"
 #include "position.h"
-#include "search.h"
-#include "move.h"
 #include "globals.h"
+#include "search.h"
+#include "makemove.h"
 
-
-void testRunAll(int silent) {
-	printf("Running all tests\n\n");
-	if (silent) silentsearch = 1;
-	testRunPerft();
-	testRunMakemove();
-	testRunCastlingRights();
-	testRunThreeFold();
-	testRunMates();
-	silentsearch = 0;
-	//testRunBetaCutoffs();
-}
-void testRunThreeFold() {
-	struct position pos;
-	struct move chosenmove;
-	
-	printf("Running Threefold tests\n");
-	
-	parsefen(&pos,"7k/3QQ3/8/8/8/PPP5/2q5/K7 b - -");
-	posstack[0] = pos;
-	char bestmove[5] = "c2c1";
-	bestmove[4] = 0;
-	nodesSearched = 0;
-	chosenmove = search(pos,32,1000);
-	if (strcmp(movetostr(chosenmove),bestmove) == 0) {
-		printf("Threefold test 1 - Passed (expected %s, got %s)\n",bestmove,movetostr(chosenmove));
-	}
-	else {
-		printf("Threefold test 1 - Failed (expected %s, got %s)\n",bestmove,movetostr(chosenmove));
-	}
-	printf("\n");
-	
-	parsefen(&pos,"k7/2Q5/ppp5/8/8/8/3qq3/7K w - -");
-	posstack[0] = pos;
-	strcpy(bestmove, "c7c8");
-	bestmove[4] = 0;
-	nodesSearched = 0;
-	chosenmove = search(pos,32,1000);
-	if (strcmp(movetostr(chosenmove),bestmove) == 0) {
-		printf("Threefold test 2 - Passed (expected %s, got %s)\n",bestmove,movetostr(chosenmove));
-	}
-	else {
-		printf("Threefold test 2 - Failed (expected %s, got %s)\n",bestmove,movetostr(chosenmove));
-	}
-	printf("\n");
-	
-}
-void testRunCastlingRights() {
-	struct position pos;
-	printf("Running Castling Rights tests\n");
-	parsefen(&pos,"r3k2r/8/8/8/8/8/8/R3K2R w KQkq -");
-	posstack[0] = pos;
-	makeMovestr("a1a2", &pos);
-	if (pos.WcastleQS == 0) {
-		printf("Castling test 1 (WQ): Passed\n");
-	}
-	else {
-		printf("Castling test 1 (WQ): Failed\n");
-	}
-	unmakeMove(&pos);
-	
-	parsefen(&pos,"r3k2r/8/8/8/8/8/8/R3K2R w KQkq -");
-	posstack[0] = pos;
-	makeMovestr("h1h2", &pos);
-	if (pos.WcastleKS == 0) {
-		printf("Castling test 2 (WK): Passed\n");
-	}
-	else {
-		printf("Castling test 2 (WK): Failed\n");
-	}
-	unmakeMove(&pos);
-	
-	parsefen(&pos,"r3k2r/8/8/8/8/8/8/R3K2R w KQkq -");
-	posstack[0] = pos;
-	makeMovestr("a8a7", &pos);
-	if (pos.BcastleQS == 0) {
-		printf("Castling test 3 (BQ): Passed\n");
-	}
-	else {
-		printf("Castling test 3 (BQ): Failed\n");
-	}
-	unmakeMove(&pos);
-	
-	parsefen(&pos,"r3k2r/8/8/8/8/8/8/R3K2R w KQkq -");
-	posstack[0] = pos;
-	makeMovestr("h8h7", &pos);
-	if (pos.BcastleKS == 0) {
-		printf("Castling test 4 (BK): Passed\n");
-	}
-	else {
-		printf("Castling test 4 (BK): Failed\n");
-	}
-	unmakeMove(&pos);
-	parsefen(&pos,"startpos");
-	
-	printf("\n");
-}
-void testRunPerft() {
-	struct position pos;
-	parsefen(&pos,"startpos");
-	posstack[0] = pos;
-	U64 perftVals[5] = {20, 400, 8902, 197281, 4865609};
-	printf("Running perft tests\n");
-	for (int i = 0;i < 5;i++) {
-		U64 nodes = perft(&pos,i+1);
-		U64 expectednodes = perftVals[i];
-		if (nodes == expectednodes) {
-			printf("Perft depth %d test - Passed (expected %" PRIu64 ", got %" PRIu64 ")\n",i+1,expectednodes,nodes);
-		}
-		else {
-			printf("Perft depth %d test - Failed (expected %" PRIu64 ", got %" PRIu64 ")\n",i+1,expectednodes,nodes);
-		}
-	}
-	printf("\n");
-}
-
-void testRunMakemove() {
-	struct position pos;
-	parsefen(&pos,"startpos");
-	posstack[0] = pos;
-	printf("Running makemove tests\n");
-	U64 hash = generateHash(&pos);
-	makeMovestr("e2e4",&pos);
-	U64 newhash = generateHash(&pos);
-	if (hash != newhash) {
-		printf("Makemove test - Passed\n");
-	}
-	else {
-		printf("Makemove test - Failed\n");
-	}
-	unmakeMove(&pos);
-	newhash = generateHash(&pos);
-	if (hash == newhash) {
-		printf("Unmake move test - Passed\n");
-	}
-	else {
-		printf("Unmake move test - Failed\n");
-	}
-	printf("\n");
-}
-void testRunMates() {
-	struct position pos;
-	struct move chosenmove;
-	printf("Running mate in N tests\n\n");
-	
-	// Mate in 2 test
-	printf("Running mate in 2 test\n");
-	parsefen(&pos,"r2qkb1r/pp2nppp/3p4/2pNN1B1/2BnP3/3P4/PPP2PPP/R2bK2R w KQkq - 1 0");
-	posstack[0] = pos;
-	char bestmove[5] = "d5f6";
-	bestmove[4] = 0;
-	nodesSearched = 0;
-	chosenmove = search(pos,2,10000);
-	if (strcmp(movetostr(chosenmove),bestmove) == 0) {
-		printf("Mate in 2 test - Passed (expected %s, got %s)\n",bestmove,movetostr(chosenmove));
-	}
-	else {
-		printf("Mate in 2 test - Failed (expected %s, got %s)\n",bestmove,movetostr(chosenmove));
-	}
-	printf("\n");
-	
-	// Mate in 3 test
-	printf("Running mate in 3 test\n");
-	parsefen(&pos,"r1b1kb1r/pppp1ppp/5q2/4n3/3KP3/2N3PN/PPP4P/R1BQ1B1R b kq - 0 1");
-	posstack[0] = pos;
-	strcpy(bestmove,"f8c5");
-	bestmove[4] = 0;
-	nodesSearched = 0;
-	chosenmove = search(pos,4,10000);
-	if (strcmp(movetostr(chosenmove),bestmove) == 0) {
-		printf("Mate in 3 test - Passed (expected %s, got %s)\n",bestmove,movetostr(chosenmove));
-	}
-	else {
-		printf("Mate in 3 test - Failed (expected %s, got %s)\n",bestmove,movetostr(chosenmove));
-	}
-	printf("\n");
-	
-	// Mate in 4 test
-	printf("Running mate in 4 test\n");
-	parsefen(&pos,"r5rk/2p1Nppp/3p3P/pp2p1P1/4P3/2qnPQK1/8/R6R w - - 1 0");
-	posstack[0] = pos;
-	strcpy(bestmove,"h6g7");
-	bestmove[4] = 0;
-	nodesSearched = 0;
-	chosenmove = search(pos,4,10000);
-	if (strcmp(movetostr(chosenmove),bestmove) == 0) {
-		printf("Mate in 4 test - Passed (expected %s, got %s)\n",bestmove,movetostr(chosenmove));
-	}
-	else {
-		printf("Mate in 4 test - Failed (expected %s, got %s)\n",bestmove,movetostr(chosenmove));
-	}
-	printf("\n");
+void runTestsAll() {
+	runTestsMakeMove();
+	testRunBetaCutoffs();
 }
 void testRunBetaCutoffs() {
 	struct position pos;
-	parsefen(&pos,"r3kb1r/pp1n1ppp/1q3n2/2pP1QN1/2P2B2/8/PP2PPPP/R3KB1R w KQkq - 3 12");
+	numbetacutoffs = 0;
+	numinstantbetacutoffs = 0;
+	//parsefen(&pos,"r3kb1r/pp1n1ppp/1q3n2/2pP1QN1/2P2B2/8/PP2PPPP/R3KB1R w KQkq - 3 12");
+	parsefen(&pos,"1r1q1rk1/5ppp/p1p2b2/2pp4/N5b1/2PP1N2/PP3PPP/R2QR1K1 b - - 0 14");
 	search(pos,6,3000);
 	printf("Beta cutoff rate: %.2f%%",(float)(numinstantbetacutoffs * (100 / (float)numbetacutoffs)));
 	printf("\n");
 }
-#endif
+void runTestsMakeMove() {
+	printf("Running make move tests:\n\n");
+	struct position pos;
+	
+	parsefen(&pos,"startpos");
+	printf("White normal move test: ");
+	makeMovestr("e2e4",&pos);
+	if ((getPiece(&pos,E4) == 'P') && (getPiece(&pos,E2) == '0')) {
+		printf("Passed\n");
+	}
+	else printf("Failed\n");
+	
+	parsefen(&pos,"startpos");
+	printf("Black normal move test: ");
+	makeMovestr("e2e4",&pos);
+	makeMovestr("e7e5",&pos);
+	if ((getPiece(&pos,E5) == 'p') && (getPiece(&pos,E7) == '0')) {
+		printf("Passed\n");
+	}
+	else printf("Failed\n");
+	
+	parsefen(&pos,"startpos");
+	printf("White en passant move test: ");
+	makeMovestr("e2e5",&pos);
+	makeMovestr("d7d5",&pos);
+	makeMovestr("e5d6",&pos);
+	if ((getPiece(&pos,D6) == 'P') && (getPiece(&pos,D5) == '0')) {
+		printf("Passed\n");
+	}
+	else printf("Failed\n");
+	
+	parsefen(&pos,"startpos");
+	printf("Black en passant move test: ");
+	makeMovestr("a2a3",&pos);
+	makeMovestr("d7d4",&pos);
+	makeMovestr("e2e4",&pos);
+	makeMovestr("d4e3",&pos);
+	if ((getPiece(&pos,E3) == 'p') && (getPiece(&pos,E4) == '0')) {
+		printf("Passed\n");
+	}
+	else printf("Failed\n");
+	
+	parsefen(&pos,"startpos");
+	printf("White promotion test: ");
+	makeMovestr("e2e7",&pos);
+	makeMovestr("a7a6",&pos);
+	makeMovestr("e7f8r",&pos);
+	
+	if ((getPiece(&pos,F8) == 'R') && (getPiece(&pos,E7) == '0')) {
+		printf("Passed\n");
+	}
+	else printf("Failed\n");
+	
+	parsefen(&pos,"startpos");
+	printf("Black promotion test: ");
+	makeMovestr("a2a3",&pos);
+	makeMovestr("d7d2",&pos);
+	makeMovestr("a3a4",&pos);
+	makeMovestr("d2c1r",&pos);
+	
+	
+	if ((getPiece(&pos,C1) == 'r') && (getPiece(&pos,D2) == '0')) {
+		printf("Passed\n");
+	}
+	else printf("Failed\n");
+	
+	parsefen(&pos,"r3k2r/8/8/8/8/8/8/R3K2R w - -");
+	printf("White kingside castling test: ");
+	makeMovestr("e1g1",&pos);
+	
+	if ((getPiece(&pos,G1) == 'K') && (getPiece(&pos,F1) == 'R')) {
+		printf("Passed\n");
+	}
+	else printf("Failed\n");
+
+	parsefen(&pos,"r3k2r/8/8/8/8/8/8/R3K2R w - -");
+	printf("White queenside castling test: ");
+	makeMovestr("e1c1",&pos);
+	
+	if ((getPiece(&pos,C1) == 'K') && (getPiece(&pos,D1) == 'R')) {
+		printf("Passed\n");
+	}
+	else printf("Failed\n");
+	
+	parsefen(&pos,"r3k2r/8/8/8/8/8/8/R3K2R b - -");
+	printf("Black kingside castling test: ");
+	makeMovestr("e8g8",&pos);
+	
+	if ((getPiece(&pos,G8) == 'k') && (getPiece(&pos,F8) == 'r')) {
+		printf("Passed\n");
+	}
+	else printf("Failed\n");
+		parsefen(&pos,"r3k2r/8/8/8/8/8/8/R3K2R b - -");
+		
+	printf("Black queenside castling test: ");
+	makeMovestr("e8c8",&pos);
+	
+	if ((getPiece(&pos,C8) == 'k') && (getPiece(&pos,D8) == 'r')) {
+		printf("Passed\n");
+	}
+	else printf("Failed\n");
+	
+}

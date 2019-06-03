@@ -2,6 +2,8 @@
 #define SORT_H
 
 #include <ctype.h>
+
+
 #include "position.h"
 #include "move.h"
 
@@ -21,7 +23,7 @@ int mvvlva(char piece, char cappiece) {
 	return 10 * capval(cappiece) - capval(piece);
 }
 
-void sortMoves(const struct position *pos, struct move *moves, const int num_moves, struct move TTmove) {
+void sortMoves(struct position *pos, struct move *moves, const int num_moves, struct move TTmove) {
 	assert(moves);
 	assert(pos);
 	assert(num_moves < MAX_MOVES);
@@ -29,8 +31,8 @@ void sortMoves(const struct position *pos, struct move *moves, const int num_mov
 
 	// Score
 	for (int i = 0; i < num_moves; ++i) {
-		char cappiece = moves[i].cappiece;
-		char piece = pos->board[moves[i].from];
+		char cappiece = getPiece(pos,moves[i].to);
+		char piece = getPiece(pos,moves[i].from);
 		if (TTmove.from != -1) {
 			if ((moves[i].from == TTmove.from) && (moves[i].to == TTmove.to) && (moves[i].prom == TTmove.prom)) {
 				scores[i] = 500000;
@@ -65,37 +67,6 @@ void sortMoves(const struct position *pos, struct move *moves, const int num_mov
 		scores[index] = scores[a];
 		scores[a] = copy2;
 	}
-}
-
-int sortMovesOld(const struct position *pos,struct move *moves, const int num_moves) {
-	assert(pos);
-	assert(moves);
-	assert(num_moves >= 0);
-	assert(num_moves <= MAX_MOVES);
-	struct move capmoves[num_moves];
-	struct move noncapmoves[num_moves];
-	int capmovesctr = 0;
-	int noncapmovesctr = 0;
-	for (int i=0;i<num_moves;i++) {
-		if (pos->board[moves[i].to] != '0') {
-			// capture
-			capmoves[capmovesctr] = moves[i];
-			capmovesctr++;
-		}
-		else {
-			// not capture
-			noncapmoves[noncapmovesctr] = moves[i];
-			noncapmovesctr++;
-		}
-	}
-	// rebuild moves array in order of captures first
-	for (int i = 0;i < capmovesctr;i++) {
-		moves[i] = capmoves[i];
-	}
-	for (int i=0;i < noncapmovesctr;i++) {
-		moves[i+capmovesctr] = noncapmoves[i];
-	}
-	return num_moves;
 }
 
 #endif

@@ -1,4 +1,8 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
 #include "hash.h"
+#include "position.h"
 
 U64 pieceHash[13][64];
 U64 turnHash;
@@ -58,15 +62,16 @@ int pieceintval(char inpiece) {
 	return 0;
 }
 
-U64 generateHash(const struct position *pos) {
+U64 generateHash(struct position *pos) {
 	assert(pos);
 	U64 zobrist = 0;
 
 	for(int square = 0; square < 64; square++) {
-		if(pos->board[square] != '0') {
+		char sqpiece = getPiece(pos,square);
+		if(sqpiece != '0') {
 			//char squarepiece = pos->board[square];
 			//printf("piece: %c %d\n",squarepiece,(int)squarepiece);
-			int piece = pieceintval(pos->board[square]);
+			int piece = pieceintval(sqpiece);
 			zobrist ^= pieceHash[piece][square];
 			//printf("piece hash: %s %c %" PRIu64 "\n",squareidxtostr(square),pos->board[square],pieceHash[piece][square]);
 		}
@@ -77,7 +82,7 @@ U64 generateHash(const struct position *pos) {
 	}
 
 	if(pos->epsquare != -1) {
-		zobrist ^= pieceHash[EMPTY][pos->epsquare];
+		zobrist ^= pieceHash[0][pos->epsquare];
 	}
 
 	if (pos->WcastleKS) zobrist ^= castleHash[0];

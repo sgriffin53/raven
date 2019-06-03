@@ -1,9 +1,11 @@
 #include <assert.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "hash.h"
 #include "TT.h"
 #include "move.h"
 #include "globals.h"
+#include "position.h"
 
 void initETT(struct ETTtable *table) {
 	assert(table);
@@ -53,7 +55,7 @@ void addPTTentry(struct PTTtable *table,U64 hash, int depth,U64 nodes) {
 
 void initTT(struct TTtable *table) {
 	assert(table);
-	int PTTsizemb = hashsize;
+	int PTTsizemb = 32;
 	const int totentries = (PTTsizemb*1024*1024) / sizeof(struct TTentry);
 	table->entries = malloc(totentries * sizeof(struct TTentry));
 	table->totentries = totentries;
@@ -64,6 +66,12 @@ void clearTT(struct TTtable *table) {
 		table->entries[i].depth = 0;
 		table->entries[i].flag = 0;
 		table->entries[i].score = 0;
+	}
+}
+void clearETT(struct ETTtable *table) {
+	for (int i = 0;i < table->totentries;i++) {
+		table->entries[i].hash = 0;
+		table->entries[i].eval = 0;
 	}
 }
 void addTTentry(struct TTtable *table,U64 hash, int depth,int flag,struct move bestmove, int score) {

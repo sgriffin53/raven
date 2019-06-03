@@ -1,13 +1,18 @@
-#include "globals.h"
-#include "TT.h"
-#include "hash.h"
+#ifndef GLOBALS_C
+#define GLOBALS_C
 
-int hashsize = 32;
+#include "globals.h"
+#include "position.h"
+#include "TT.h"
+
 struct position posstack[1024];
 int posstackend = 0;
-U64 nodesSearched = 0;
+nodesSearched = 0;
+currenthash = 0;
 struct TTtable TT;
-U64 currenthash;
-int numbetacutoffs = 0;
-int numinstantbetacutoffs = 0;
-int silentsearch = 0;
+struct ETTtable ETT;
+hashsize = 32;
+int numinstantbetacutoffs;
+int numbetacutoffs;
+
+#endif

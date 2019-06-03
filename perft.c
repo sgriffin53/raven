@@ -1,8 +1,6 @@
-#ifndef PERFT_C
-#define PERFT_C
-
 #include <assert.h>
 #include <inttypes.h>
+#include <stdio.h>
 #include "hash.h"
 #include "position.h"
 #include "move.h"
@@ -17,17 +15,9 @@ U64 perft(struct position *pos, int depth) {
 
 	if (depth == 0) return 1;
 
-	//U64 hash = generateHash(pos);
-
-//	struct PTTentry PTTdata = getPTTentry(&PTT,hash);
-
-//	if ((PTTdata.hash == hash) && (PTTdata.depth == depth)) {
-//		return PTTdata.nodes;
-//	}
-
 	U64 nodes = 0;
 	struct move moves[MAX_MOVES];
-	const int n_moves = genLegalMoves(pos,moves);
+	const int n_moves = genMoves(pos,moves);
 
 	for (int i = 0; i < n_moves;i++) {
 		makeMove(&moves[i], pos);
@@ -49,19 +39,23 @@ U64 perft(struct position *pos, int depth) {
 	return nodes;
 }
 
+
+
 U64 splitperft(struct position *pos, int depth) {
 	struct move moves[MAX_MOVES];
 	U64 total_nodes = 0;
 
 	if (depth == 0) return 1;
 
-	const int n_moves = genLegalMoves(pos,moves);
+	const int n_moves = genMoves(pos,moves);
 
 	for (int i = 0; i < n_moves;i++) {
 		makeMove(&moves[i], pos);
 		pos->tomove = !pos->tomove;
 		const int incheck = isCheck(pos);
+		//printf("move - %s - %d\n",movetostr(moves[i]),incheck);
 		if (incheck) {
+		//	printf("illegal move - %s\n",movetostr(moves[i]));
 			unmakeMove(pos);
 			continue;
 		}
@@ -76,5 +70,3 @@ U64 splitperft(struct position *pos, int depth) {
 	}
 	return total_nodes;
 }
-
-#endif
