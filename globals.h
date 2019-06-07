@@ -12,5 +12,6 @@ struct TTtable TT;
 struct ETTtable ETT;
 int numinstantbetacutoffs;
 int numbetacutoffs;
+int hashsize;
 
 #endif

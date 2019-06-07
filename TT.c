@@ -55,8 +55,8 @@ void addPTTentry(struct PTTtable *table,U64 hash, int depth,U64 nodes) {
 
 void initTT(struct TTtable *table) {
 	assert(table);
-	int PTTsizemb = 32;
-	const int totentries = (PTTsizemb*1024*1024) / sizeof(struct TTentry);
+	int TTsizemb = 32;
+	const int totentries = (TTsizemb*1024*1024) / sizeof(struct TTentry);
 	table->entries = malloc(totentries * sizeof(struct TTentry));
 	table->totentries = totentries;
 }
