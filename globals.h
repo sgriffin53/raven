@@ -13,5 +13,6 @@ struct ETTtable ETT;
 int numinstantbetacutoffs;
 int numbetacutoffs;
 int hashsize;
+struct move killers[128][2];
 
 #endif

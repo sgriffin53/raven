@@ -2,7 +2,7 @@
 #define SORT_H
 
 #include <ctype.h>
-
+#include <stdio.h>
 
 #include "position.h"
 #include "move.h"
@@ -23,7 +23,7 @@ int mvvlva(char piece, char cappiece) {
 	return 10 * capval(cappiece) - capval(piece);
 }
 
-void sortMoves(struct position *pos, struct move *moves, const int num_moves, struct move TTmove) {
+void sortMoves(struct position *pos, struct move *moves, const int num_moves, struct move TTmove, int ply) {
 	assert(moves);
 	assert(pos);
 	assert(num_moves < MAX_MOVES);
@@ -33,17 +33,23 @@ void sortMoves(struct position *pos, struct move *moves, const int num_moves, st
 	for (int i = 0; i < num_moves; ++i) {
 		char cappiece = getPiece(pos,moves[i].to);
 		char piece = getPiece(pos,moves[i].from);
+		scores[i] = 0;
 		if (TTmove.from != -1) {
 			if ((moves[i].from == TTmove.from) && (moves[i].to == TTmove.to) && (moves[i].prom == TTmove.prom)) {
 				scores[i] = 500000;
 			}
 		}
+		if ((killers[ply][0].to == moves[i].to) && (killers[ply][0].from == moves[i].from) && (killers[ply][0].prom == moves[i].prom)) {
+			scores[i] = 900;
+		}
+		
+		else if ((killers[ply][1].to == moves[i].to) && (killers[ply][1].from == moves[i].from) && (killers[ply][1].prom == moves[i].prom)) {
+			scores[i] = 800;
+		}
 		if (cappiece != '0') {
 			//if (piece == '0') dspboard(*pos);
 			//printf("%s %c %c\n",movetostr(moves[i]),piece,cappiece);
-			scores[i] = mvvlva(piece, cappiece);
-		} else {
-			scores[i] = 0;
+			scores[i] = 1000 + mvvlva(piece, cappiece);
 		}
 	}
 

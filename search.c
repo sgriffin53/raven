@@ -30,8 +30,15 @@ int reduction(const struct move *move, const int depthleft, char cappiece, int l
 	return 0;
 }
 
+void clearKillers(int ply) {
+	struct move nomove = {.to=-1,.from=-1,.prom=-1,.cappiece=-1};
+	for (int i = 0;i < ply;i++) {
+		killers[ply][0] = nomove;
+		killers[ply][1] = nomove;
+	}
+}
 
-int qSearch(struct position *pos, int alpha, int beta, clock_t endtime) {
+int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime) {
 	assert(pos);
 	assert(alpha >= -MATE_SCORE && beta <= MATE_SCORE);
 	//int incheck;
@@ -71,7 +78,7 @@ int qSearch(struct position *pos, int alpha, int beta, clock_t endtime) {
 		TTmove = TTdata.bestmove;
 	}
 	 */
-	sortMoves(pos,moves,num_moves,TTmove);
+	sortMoves(pos,moves,num_moves,TTmove, ply);
 	
 	//struct move TTmove = {.to=-1,.from=-1,.prom=-1,.cappiece=-1};
 	//sortMoves(pos,moves,num_moves,TTmove);
@@ -81,7 +88,7 @@ int qSearch(struct position *pos, int alpha, int beta, clock_t endtime) {
 		//double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 		//int time_spentms = (int)(time_spent * 1000);
 		char cappiece = getPiece(pos,moves[i].to);
-		if (cappiece == '0') continue;
+		if (cappiece == '0' && moves[i].prom == 0) continue;
 
 		makeMove(&moves[i],pos);
 
@@ -94,19 +101,21 @@ int qSearch(struct position *pos, int alpha, int beta, clock_t endtime) {
 		}
 		pos->tomove = !pos->tomove;
 		currenthash = 0;
-		const int score = -qSearch(pos,-beta,-alpha, endtime);
+		const int score = -qSearch(pos,-beta,-alpha, ply + 1, endtime);
 
 		nodesSearched++;
 
 		unmakeMove(pos);
 
-		if (score >= beta) return beta;
+		if (score >= beta) {
+			return beta;
+		}
 		if (score > alpha) alpha = score;
 	}
 	return alpha;
 }
 
-int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int nullmove, clock_t endtime) {
+int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int nullmove, int ply, clock_t endtime) {
 	assert(pos);
 	assert(alpha >= -MATE_SCORE && beta <= MATE_SCORE);
 	assert(beta > alpha);
@@ -115,6 +124,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	if (clock() >= endtime) {
 		return -MATE_SCORE;
 	}
+	//ss->ply++;
 	nodesSearched += 1;
 	currenthash = 0;
 	if (isThreefold(pos)) return 0;
@@ -122,9 +132,8 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	int incheck = isCheck(pos);
 	if (incheck) depthleft++;
 	if (depthleft <= 0) {
-		return qSearch(pos, alpha, beta, endtime);
+		return qSearch(pos, alpha, beta, ply + 1, endtime);
 	}
-
 	struct move bestmove;
 	struct move TTmove = {.to=-1,.from=-1,.prom=-1,.cappiece=-1};
 	int origAlpha = alpha;
@@ -165,10 +174,12 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		 f_prune = 1;
 	struct move moves[MAX_MOVES];
 	const int num_moves = genMoves(pos,moves);
-	sortMoves(pos,moves,num_moves,TTmove);
+	//struct searchstack *ss;
+	sortMoves(pos,moves,num_moves,TTmove,ply);
 	int score;
 	int bestscore = INT_MIN;
 	int legalmoves = 0;
+	
 	for (int i = 0;i < num_moves;i++) {
 		char cappiece = getPiece(pos,moves[i].to);
 		makeMove(&moves[i],pos);
@@ -193,15 +204,14 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		
 		legalmoves++;
 		const int r = reduction(&moves[i], depthleft, cappiece, legalmoves, incheck);
-
+		
 		// Search
-		int score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 - r, 0, endtime);
+		int score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 - r, 0, ply + 1, endtime);
 
 		// Redo search
 		if (r > 0 && score > alpha) {
-			score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, endtime);
+			score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, ply + 1, endtime);
 		}
-
 		//score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, endtime);
 		unmakeMove(pos);
 		if (score >= bestscore) {
@@ -214,6 +224,10 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		if (alpha >= beta) {
 			numbetacutoffs++;
 			if (legalmoves == 1) numinstantbetacutoffs++;
+			if (cappiece == '0') {
+				killers[ply][1] = killers[ply][0];
+				killers[ply][0] = moves[i];
+			}
 			break;
 		}
 	}
@@ -244,7 +258,6 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 }
 struct move search(struct position pos, int searchdepth,int movetime) {
 	nodesSearched = 0;
-
 	struct move moves[MAX_MOVES];
 	struct move bestmove;
 	clock_t begin = clock();
@@ -258,6 +271,7 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 	int bestScore = INT_MIN;
 	for (int curdepth = 1; (curdepth < searchdepth+1 && timeElapsed == 0);curdepth++) {
 		int bestScore = INT_MIN;
+		clearKillers(128);
 		for (int i = 0;i < num_moves;i++) {
 			makeMove(&moves[i],&pos);
 			pos.tomove = !pos.tomove;
@@ -277,7 +291,7 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 				timeElapsed = 1;
 				break;
 			}
-			int curscore = -alphaBeta(&pos,-MATE_SCORE,MATE_SCORE,curdepth-1,0,endtime);
+			int curscore = -alphaBeta(&pos,-MATE_SCORE,MATE_SCORE,curdepth-1,0, 0, endtime);
 			if (curscore == MATE_SCORE) {
 				end = clock();
 				time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
