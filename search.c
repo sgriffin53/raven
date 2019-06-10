@@ -14,15 +14,16 @@
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 #define MATE_SCORE 9999
 #define MAX_MOVES 2048
 
-int reduction(const struct move *move, const int depthleft, char cappiece, int legalmoves, int incheck) {
+int reduction(const struct move *move, const int depthleft, char cappiece, int legalmoves, int incheck, int ply) {
 	assert(move);
 	assert(depthleft >= 0);
 
-	if ((!incheck) && (legalmoves > 0) && (cappiece == '0') && (depthleft >= 3) && (move->prom == 0)) {
+	if ((!incheck) && (legalmoves > 4) && (cappiece == '0') && (depthleft >= 3) && (move->prom == 0)) {
 		if (depthleft >= 6) return 2;
 		return 1;
 	}
@@ -37,7 +38,14 @@ void clearKillers(int ply) {
 		killers[ply][1] = nomove;
 	}
 }
-
+void clearHistory() {
+	for (int i = 0;i < 64;i++) {
+		for (int j = 0;j < 64;j++) {
+			history[WHITE][i][j] = 0;
+			history[BLACK][i][j] = 0;
+		}
+	}
+}
 int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime) {
 	assert(pos);
 	assert(alpha >= -MATE_SCORE && beta <= MATE_SCORE);
@@ -124,7 +132,6 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	if (clock() >= endtime) {
 		return -MATE_SCORE;
 	}
-	//ss->ply++;
 	nodesSearched += 1;
 	currenthash = 0;
 	if (isThreefold(pos)) return 0;
@@ -137,17 +144,20 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	struct move bestmove;
 	struct move TTmove = {.to=-1,.from=-1,.prom=-1,.cappiece=-1};
 	int origAlpha = alpha;
-/*
+	/*
 	U64 hash;
 	if (currenthash == 0) {
 		hash = generateHash(pos);
 	}
 	else hash = currenthash;
-	struct TTentry TTdata = getTTentry(&TT,hash);
+	hash = generateHash(pos);
+	 */
+	/*
 	if (TTdata.hash == hash) {
 		if (TTdata.depth >= depthleft) {
 			int flag = TTdata.flag;
 			int score = TTdata.score;
+			
 			if (flag == EXACT) {
 				return score;
 			}
@@ -160,10 +170,12 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			if (alpha >= beta) {
 				return score;
 			}
+			
 		}
 		TTmove = TTdata.bestmove;
 	}
 	 */
+	//U64 hash = generateHash(pos);
 	int f_prune = 0;
 	int fmargin[4] = { 0, 200, 300, 500 };
 
@@ -203,7 +215,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		}
 		
 		legalmoves++;
-		const int r = reduction(&moves[i], depthleft, cappiece, legalmoves, incheck);
+		const int r = reduction(&moves[i], depthleft, cappiece, legalmoves, incheck, ply);
 		
 		// Search
 		int score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 - r, 0, ply + 1, endtime);
@@ -227,6 +239,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			if (cappiece == '0') {
 				killers[ply][1] = killers[ply][0];
 				killers[ply][0] = moves[i];
+				history[pos->tomove][moves[i].from][moves[i].to] += pow(2,depthleft);
 			}
 			break;
 		}
@@ -269,9 +282,11 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 	int timeElapsed = 0;
 	int legalmoveidx = 0;
 	int bestScore = INT_MIN;
+	clearHistory();
 	for (int curdepth = 1; (curdepth < searchdepth+1 && timeElapsed == 0);curdepth++) {
 		int bestScore = INT_MIN;
 		clearKillers(128);
+		//clearHistory();
 		for (int i = 0;i < num_moves;i++) {
 			makeMove(&moves[i],&pos);
 			pos.tomove = !pos.tomove;

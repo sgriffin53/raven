@@ -15,5 +15,7 @@ hashsize = 32;
 int numinstantbetacutoffs;
 int numbetacutoffs;
 struct move killers[128][2];
+int history[2][64][64];
+
 
 #endif

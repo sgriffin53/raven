@@ -40,16 +40,17 @@ void sortMoves(struct position *pos, struct move *moves, const int num_moves, st
 			}
 		}
 		if ((killers[ply][0].to == moves[i].to) && (killers[ply][0].from == moves[i].from) && (killers[ply][0].prom == moves[i].prom)) {
-			scores[i] = 900;
+			scores[i] = 900000;
 		}
 		
 		else if ((killers[ply][1].to == moves[i].to) && (killers[ply][1].from == moves[i].from) && (killers[ply][1].prom == moves[i].prom)) {
-			scores[i] = 800;
+			scores[i] = 850000;
+		}
+		else if (history[pos->tomove][moves[i].from][moves[i].to] > 0) {
+			scores[i] += history[pos->tomove][moves[i].from][moves[i].to];
 		}
 		if (cappiece != '0') {
-			//if (piece == '0') dspboard(*pos);
-			//printf("%s %c %c\n",movetostr(moves[i]),piece,cappiece);
-			scores[i] = 1000 + mvvlva(piece, cappiece);
+			scores[i] = 1000000 + mvvlva(piece, cappiece);
 		}
 	}
 
