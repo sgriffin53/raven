@@ -123,7 +123,7 @@ int isAttacked(struct position *pos,int square, int colour) {
 }
 
 U64 BBkingattacks(U64 BBpiece) {
-	assert(__builtin_popcountll(BBpiece) == 1);
+	//assert(__builtin_popcountll(BBpiece) == 1);
 	// get king attack squares
 	U64 BBattacks = eastOne(BBpiece) | westOne(BBpiece); // east and west one
 	BBpiece |= BBattacks; // set piece BB to attacks
