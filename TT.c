@@ -59,6 +59,7 @@ void initTT(struct TTtable *table) {
 	const int totentries = (TTsizemb*1024*1024) / sizeof(struct TTentry);
 	table->entries = malloc(totentries * sizeof(struct TTentry));
 	table->totentries = totentries;
+	assert(table->totentries > 0);
 }
 void clearTT(struct TTtable *table) {
 	for (int i = 0;i < table->totentries;i++) {
@@ -75,6 +76,8 @@ void clearETT(struct ETTtable *table) {
 	}
 }
 void addTTentry(struct TTtable *table,U64 hash, int depth,int flag,struct move bestmove, int score) {
+	assert(table);
+	assert(table->totentries > 0);
 	int index = hash % table->totentries;
 	struct TTentry newentry;
 	newentry.hash = hash;
@@ -86,6 +89,8 @@ void addTTentry(struct TTtable *table,U64 hash, int depth,int flag,struct move b
 }
 
 struct TTentry getTTentry(struct TTtable *table,U64 hash) {
+	assert(table);
+	assert(table->totentries > 0);
 	int index = hash % table->totentries;
 	return table->entries[index];
 }
