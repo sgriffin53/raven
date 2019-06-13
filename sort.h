@@ -33,6 +33,7 @@ void sortMoves(struct position *pos, struct move *moves, const int num_moves, st
 	for (int i = 0; i < num_moves; ++i) {
 		char cappiece = getPiece(pos,moves[i].to);
 		char piece = getPiece(pos,moves[i].from);
+		int histval = history[pos->tomove][moves[i].from][moves[i].to];
 		scores[i] = 0;
 		if (TTmove.from != -1) {
 			if ((moves[i].from == TTmove.from) && (moves[i].to == TTmove.to) && (moves[i].prom == TTmove.prom)) {
@@ -46,8 +47,11 @@ void sortMoves(struct position *pos, struct move *moves, const int num_moves, st
 		else if ((killers[ply][1].to == moves[i].to) && (killers[ply][1].from == moves[i].from) && (killers[ply][1].prom == moves[i].prom)) {
 			scores[i] = 850000;
 		}
-		else if (history[pos->tomove][moves[i].from][moves[i].to] > 0) {
-			scores[i] += history[pos->tomove][moves[i].from][moves[i].to];
+		else if (histval > 0) {
+			if (histval > 800000) {
+				histval = 800000;
+			}
+			scores[i] = histval;
 		}
 		if (cappiece != '0') {
 			scores[i] = 1000000 + mvvlva(piece, cappiece);
