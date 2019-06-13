@@ -61,14 +61,14 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 		nodesSearched++;
 		return beta;
 	}
-/*
+
 	// delta pruning
-	const int BIG_DELTA = 900;
+	const int BIG_DELTA = 975;
 	if (standpat < alpha - BIG_DELTA) {
 		nodesSearched++;
 		return alpha;
 	}
-*/
+
 	if (alpha < standpat) alpha = standpat;
 
 	struct move TTmove = {.to=-1,.from=-1,.prom=-1,.cappiece=-1};
@@ -144,15 +144,14 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	struct move bestmove;
 	struct move TTmove = {.to=-1,.from=-1,.prom=-1,.cappiece=-1};
 	int origAlpha = alpha;
-	/*
+/*
 	U64 hash;
 	if (currenthash == 0) {
 		hash = generateHash(pos);
 	}
 	else hash = currenthash;
 	hash = generateHash(pos);
-	 */
-	/*
+	struct TTentry TTdata = getTTentry(&TT,hash);
 	if (TTdata.hash == hash) {
 		if (TTdata.depth >= depthleft) {
 			int flag = TTdata.flag;
@@ -191,7 +190,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	int score;
 	int bestscore = INT_MIN;
 	int legalmoves = 0;
-	
+	int fullwindow = 1;
 	for (int i = 0;i < num_moves;i++) {
 		char cappiece = getPiece(pos,moves[i].to);
 		makeMove(&moves[i],pos);
@@ -201,12 +200,12 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			continue;
 		}
 		pos->tomove = !pos->tomove;
-		
+		legalmoves++;
 		int kingpos;
 		if (pos->tomove == WHITE) kingpos = pos->Wkingpos;
 		else kingpos = pos->Bkingpos;
 		if (f_prune
-		&& legalmoves
+		&& legalmoves > 1
 		&&  cappiece == '0'
 		&&  moves[i].prom == 0) {
 		//&&  !isAttacked(pos,kingpos,pos->tomove)) {
@@ -214,18 +213,41 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			continue;
 		}
 		
-		legalmoves++;
-		const int r = reduction(&moves[i], depthleft, cappiece, legalmoves, incheck, ply);
+		int r = reduction(&moves[i], depthleft, cappiece, legalmoves, incheck, ply);
 		
+		/*
+		// PV search - doesn't work
+		if (fullwindow) {
+			score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 - r, 0, ply + 1, endtime);
+			if (r > 0 && score > alpha) {
+				score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, ply + 1, endtime);
+			}
+		}
+		else {
+			score = -alphaBeta(pos, -alpha-1, -alpha, depthleft - 1 - r, 0, ply + 1, endtime);
+			if (r > 0 && score > alpha) {
+				score = -alphaBeta(pos, -alpha-1, -alpha, depthleft - 1, 0, ply + 1, endtime);
+			}
+			if (score > alpha) {
+				score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, ply + 1, endtime);
+				if (r > 0 && score > alpha) {
+					//score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, ply + 1, endtime);
+				}
+			}
+		}
+		 */
 		// Search
-		int score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 - r, 0, ply + 1, endtime);
-
+		score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 - r, 0, ply + 1, endtime);
+		
 		// Redo search
 		if (r > 0 && score > alpha) {
 			score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, ply + 1, endtime);
 		}
 		//score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, endtime);
 		unmakeMove(pos);
+		if (score > alpha) {
+			fullwindow = 0;
+		}
 		if (score >= bestscore) {
 			bestscore = score;
 			bestmove = moves[i];
