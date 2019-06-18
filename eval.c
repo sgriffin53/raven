@@ -30,13 +30,13 @@ int pieceval(const char inpiece) {
 int taperedEval(struct position *pos) {
 	assert(pos);
 	
-	/*
+/*
 	U64 hash = generateHash(pos);
 	struct ETTentry ETTdata = getETTentry(&ETT,hash);
 	if (ETTdata.hash == hash) {
 		return ETTdata.eval;
 	}
-	*/
+*/
 	int pawnPhase = 0;
 	int knightPhase = 1;
 	int bishopPhase = 1;
@@ -474,33 +474,135 @@ int taperedEval(struct position *pos) {
 	 
 	// bonus for connected knights
 	// white
-
-	U64 BBWknights = (pos->BBwhitepieces & pos->BBknights);
-	U64 BBattacks = BBknightattacks(BBWknights);
-	U64 BBconnectedknights = BBattacks & BBWknights;
-	if (BBconnectedknights) {
-		openingEval += 25;
-		endgameEval += 25;
+	if (num_WN >= 2) {
+		U64 BBWknights = (pos->BBwhitepieces & pos->BBknights);
+		U64 BBattacks = BBknightattacks(BBWknights);
+		U64 BBconnectedknights = BBattacks & BBWknights;
+		if (BBconnectedknights) {
+			openingEval += 25;
+			endgameEval += 25;
+			//if (BBconnectedknights & BBcentre) {
+			//	openingEval += 25;
+			//	endgameEval += 25;
+			//}
+		}
 	}
 	// black
-	U64 BBBknights = (pos->BBblackpieces & pos->BBknights);
-	BBattacks = BBknightattacks(BBBknights);
-	BBconnectedknights = BBattacks & BBBknights;
-	if (BBconnectedknights) {
-		openingEval -= 25;
-		endgameEval -= 25;
+	if (num_BN >= 2) {
+		U64 BBBknights = (pos->BBblackpieces & pos->BBknights);
+		U64 BBattacks = BBknightattacks(BBBknights);
+		U64 BBconnectedknights = BBattacks & BBBknights;
+		if (BBconnectedknights) {
+			openingEval -= 25;
+			endgameEval -= 25;
+			//if (BBconnectedknights & BBcentre) {
+			//	openingEval -= 25;
+			//	endgameEval -= 25;
+			//}
+		}
 	}
-/*
+	
+	// bonus for connected rooks
+	/*
+	// white
+	if (num_WR >= 2) {
+		U64 BBrooks = (pos->BBrooks & pos->BBwhitepieces);
+		U64 BBrooksstart = BBrooks;
+		U64 BBoccupancy = (pos->BBwhitepieces | pos->BBblackpieces);
+		while (BBrooks) {
+			int square = __builtin_ctzll(BBrooks);
+			BBrooks &= ~(1ULL << square);
+			BBattacks = Rmagic(square,BBoccupancy);
+			if (BBattacks & BBrooksstart) {
+				openingEval += 30;
+				endgameEval += 30;
+				break;
+			}
+		}
+	}
+	
+	// black
+	if (num_BR >= 2) {
+		U64 BBrooks = (pos->BBrooks & pos->BBblackpieces);
+		U64 BBrooksstart = BBrooks;
+		U64 BBoccupancy = (pos->BBwhitepieces | pos->BBblackpieces);
+		while (BBrooks) {
+			int square = __builtin_ctzll(BBrooks);
+			BBrooks &= ~(1ULL << square);
+			BBattacks = Rmagic(square,BBoccupancy);
+			if (BBattacks & BBrooksstart) {
+				openingEval -= 30;
+				endgameEval -= 30;
+				break;
+			}
+		}
+	}
+	 */
+	// knight outposts
+	
+	// white
+	
+	BBwhitepawns = (pos->BBwhitepieces & pos->BBpawns);
+	U64 BBwhiteknights = (pos->BBwhitepieces & pos->BBknights);
+	while (BBwhiteknights) {
+		int square = __builtin_ctzll(BBwhiteknights);
+		BBwhiteknights &= ~(1ULL << square);
+		if ((BBpawnWestAttacksB(1ULL << square) & BBwhitepawns) || (BBpawnEastAttacksB(1ULL << square) & BBwhitepawns)) {
+			openingEval += 20;
+			endgameEval += 20;
+		}
+	}
+	
+	// black
+	
+	BBblackpawns = (pos->BBblackpieces & pos->BBpawns);
+	U64 BBblackknights = (pos->BBblackpieces & pos->BBknights);
+	while (BBblackknights) {
+		int square = __builtin_ctzll(BBblackknights);
+		BBblackknights &= ~(1ULL << square);
+		if ((BBpawnWestAttacksW(1ULL << square) & BBblackpawns) || (BBpawnEastAttacksW(1ULL << square) & BBblackpawns)) {
+			openingEval -= 20;
+			endgameEval -= 20;
+		}
+	}
+	
+	// bishop outposts
+	
+	// white
+	
+	U64 BBwhitebishops = (pos->BBwhitepieces & pos->BBbishops);
+	while (BBwhitebishops) {
+		int square = __builtin_ctzll(BBwhitebishops);
+		BBwhitebishops &= ~(1ULL << square);
+		if ((BBpawnWestAttacksB(1ULL << square) & BBwhitepawns) || (BBpawnEastAttacksB(1ULL << square) & BBwhitepawns)) {
+			openingEval += 20;
+			endgameEval += 20;
+		}
+	}
+	
+	// black
+	
+	U64 BBblackbishops = (pos->BBblackpieces & pos->BBbishops);
+	while (BBblackbishops) {
+		int square = __builtin_ctzll(BBblackbishops);
+		BBblackbishops &= ~(1ULL << square);
+		if ((BBpawnWestAttacksW(1ULL << square) & BBblackpawns) || (BBpawnEastAttacksW(1ULL << square) & BBblackpawns)) {
+			openingEval -= 20;
+			endgameEval -= 20;
+		}
+	}
+	
 	// mobility bonuses
+	/*
 	int Wmobility = mobility(pos,WHITE);
 	int Bmobility = mobility(pos,BLACK);
 	
-	openingEval += Wmobility * 6;
-	endgameEval += Wmobility * 8;
+	openingEval += Wmobility * 5;
+	endgameEval += Wmobility * 5;
 	
-	openingEval -= Bmobility * 6;
-	endgameEval -= Bmobility * 8;
-*/
+	openingEval -= Bmobility * 5;
+	endgameEval -= Bmobility * 5;
+	*/
 
 	// knight value decreases as pawns disappear
 	/*
@@ -514,7 +616,13 @@ int taperedEval(struct position *pos) {
 	//endgameEval += num_WB * (16 - (num_WP + num_BP)) * 16;
 	//openingEval -= num_BB * (16 - (num_WP + num_BP)) * 16;
 	//endgameEval -= num_BB * (16 - (num_WP + num_BP)) * 16;
+	/*
+	openingEval += __builtin_popcountll(pos->BBwhitepieces & BBbigcentre) * 24;
+	endgameEval += __builtin_popcountll(pos->BBwhitepieces & BBbigcentre) * 8;
 	
+	openingEval -= __builtin_popcountll(pos->BBblackpieces & BBbigcentre) * 24;
+	endgameEval -= __builtin_popcountll(pos->BBblackpieces & BBbigcentre) * 8;
+	*/
 	int totalPhase = pawnPhase * 16 + knightPhase * 4 + bishopPhase*4 + rookPhase*4 + queenPhase*2;
 	int phase = totalPhase;
 
