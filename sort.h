@@ -48,13 +48,18 @@ void sortMoves(struct position *pos, struct move *moves, const int num_moves, st
 			scores[i] = 850000;
 		}
 		else if (histval > 0) {
-			if (histval > 800000) {
-				histval = 800000;
+			if (histval > 700000) {
+				histval = 700000;
 			}
 			scores[i] = histval;
 		}
 		if (cappiece != '0') {
-			scores[i] = 1000000 + mvvlva(piece, cappiece);
+			if (capval(cappiece) >= capval(piece)) {
+				scores[i] = 1000000 + mvvlva(piece, cappiece);
+			}
+			else {
+				scores[i] = mvvlva(piece,cappiece);
+			}
 		}
 	}
 
