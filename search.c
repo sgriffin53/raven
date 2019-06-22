@@ -19,11 +19,10 @@
 #define MATE_SCORE 9999
 #define MAX_MOVES 2048
 
-int reduction(const struct move *move, const int depthleft, char cappiece, int legalmoves, int incheck, int ply) {
+int reduction(const struct move *move, const int depthleft, char cappiece, int legalmoves, int incheck, int givescheck, int ply) {
 	assert(move);
 	assert(depthleft >= 0);
-
-	if ((!incheck) && (legalmoves > 4) && (cappiece == '0') && (depthleft >= 3) && (move->prom == 0)) {
+	if ((!incheck) && (legalmoves > 4) && (cappiece == '0') && (depthleft >= 3) && (move->prom == 0) && (!givescheck)) {
 		if (depthleft >= 6) return 2;
 		return 1;
 	}
@@ -98,6 +97,7 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 		char cappiece = getPiece(pos,moves[i].to);
 		if (cappiece == '0' && moves[i].prom == 0) continue;
 
+
 		makeMove(&moves[i],pos);
 
 		// check if move is legal (doesn't put in check)
@@ -108,7 +108,6 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 			continue;
 		}
 		pos->tomove = !pos->tomove;
-		currenthash = 0;
 		const int score = -qSearch(pos,-beta,-alpha, ply + 1, endtime);
 
 		nodesSearched++;
@@ -139,18 +138,28 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	int incheck = isCheck(pos);
 	if (incheck) depthleft++;
 	if (depthleft <= 0) {
-		return qSearch(pos, alpha, beta, ply + 1, endtime);
+			return qSearch(pos, alpha, beta, ply + 1, endtime);
 	}
 	struct move bestmove;
 	struct move TTmove = {.to=-1,.from=-1,.prom=-1,.cappiece=-1};
 	int origAlpha = alpha;
+	
+	// null move pruning - doesn't work
+	// if (!nullmove && !isEndgame(pos) && !incheck && !(alpha != beta - 1)) {
 /*
+	if (!nullmove && !isEndgame(pos) && depthleft <= 4 && !incheck && !(alpha != beta - 1)) {
+		pos->tomove = !pos->tomove;
+		int val = -alphaBeta(pos,-beta,-beta+1, depthleft - 1 - 2, 1, ply + 1, endtime);
+		pos->tomove = !pos->tomove;
+		if (val >= beta) return beta;
+	}
+	 */
+	/*
 	U64 hash;
 	if (currenthash == 0) {
 		hash = generateHash(pos);
 	}
 	else hash = currenthash;
-	hash = generateHash(pos);
 	struct TTentry TTdata = getTTentry(&TT,hash);
 	if (TTdata.hash == hash) {
 		if (TTdata.depth >= depthleft) {
@@ -173,7 +182,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		}
 		TTmove = TTdata.bestmove;
 	}
-	 */
+	*/
 	//U64 hash = generateHash(pos);
 	int f_prune = 0;
 	int fmargin[4] = { 0, 200, 300, 500 };
@@ -212,11 +221,12 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			unmakeMove(pos);
 			continue;
 		}
+		int givescheck = isCheck(pos);
+		int r = reduction(&moves[i], depthleft, cappiece, legalmoves, incheck, givescheck, ply);
 		
-		int r = reduction(&moves[i], depthleft, cappiece, legalmoves, incheck, ply);
-		
-		/*
+
 		// PV search - doesn't work
+		/*
 		if (fullwindow) {
 			score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 - r, 0, ply + 1, endtime);
 			if (r > 0 && score > alpha) {
@@ -224,25 +234,27 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			}
 		}
 		else {
-			score = -alphaBeta(pos, -alpha-1, -alpha, depthleft - 1 - r, 0, ply + 1, endtime);
-			if (r > 0 && score > alpha) {
-				score = -alphaBeta(pos, -alpha-1, -alpha, depthleft - 1, 0, ply + 1, endtime);
-			}
-			if (score > alpha) {
-				score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, ply + 1, endtime);
+			score = -alphaBeta(pos, -alpha-1, -alpha, depthleft - 1, 0, ply + 1, endtime);
+			//if (r > 0 && score > alpha) {
+			//	score = -alphaBeta(pos, -alpha-1, -alpha, depthleft - 1, 0, ply + 1, endtime);
+			//}
+			if (score > alpha && score < beta) {
+				score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 - r, 0, ply + 1, endtime);
 				if (r > 0 && score > alpha) {
-					//score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, ply + 1, endtime);
+					score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, ply + 1, endtime);
 				}
 			}
 		}
-		 */
+		*/
 		// Search
+
 		score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 - r, 0, ply + 1, endtime);
 		
 		// Redo search
 		if (r > 0 && score > alpha) {
 			score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, ply + 1, endtime);
 		}
+
 		//score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, endtime);
 		unmakeMove(pos);
 		if (score > alpha) {
@@ -299,7 +311,9 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 	double time_spent;
 	clock_t endtime = clock() + (movetime / 1000.0 * CLOCKS_PER_SEC);
 	int nps;
+	struct move TTmove = {.to=-1,.from=-1,.prom=-1,.cappiece=-1};
 	int num_moves = genMoves(&pos,moves);
+	//sortMoves(&pos,moves,num_moves,TTmove,0);
 	int legalmoves = 0;
 	int timeElapsed = 0;
 	int legalmoveidx = 0;
@@ -309,6 +323,7 @@ struct move search(struct position pos, int searchdepth,int movetime) {
 		int bestScore = INT_MIN;
 		clearKillers(128);
 		//clearHistory();
+
 		for (int i = 0;i < num_moves;i++) {
 			makeMove(&moves[i],&pos);
 			pos.tomove = !pos.tomove;
