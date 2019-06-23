@@ -37,7 +37,7 @@ void sortMoves(struct position *pos, struct move *moves, const int num_moves, st
 		scores[i] = 0;
 		if (TTmove.from != -1) {
 			if ((moves[i].from == TTmove.from) && (moves[i].to == TTmove.to) && (moves[i].prom == TTmove.prom)) {
-				scores[i] = 500000;
+				scores[i] = 5000000;
 			}
 		}
 		if ((killers[ply][0].to == moves[i].to) && (killers[ply][0].from == moves[i].from) && (killers[ply][0].prom == moves[i].prom)) {
