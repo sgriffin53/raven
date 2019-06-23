@@ -6,7 +6,7 @@
 #include "move.h"
 
 void clearKillers(int ply);
-int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int nullmove, int ply, clock_t endtime);
+int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int nullmove, int ply, struct move *pv, clock_t endtime);
 struct move search(struct position pos, int searchdepth,int movetime);
 int reduction(const struct move *move, const int depthleft, char cappiece, int legalmoves, int incheck, int givescheck, int ply);
 int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime);
