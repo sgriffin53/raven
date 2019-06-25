@@ -42,6 +42,8 @@ void clearHistory() {
 		for (int j = 0;j < 64;j++) {
 			history[WHITE][i][j] = 0;
 			history[BLACK][i][j] = 0;
+			butterfly[WHITE][i][j] = 0;
+			butterfly[BLACK][i][j] = 0;
 		}
 	}
 }
@@ -145,10 +147,11 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	TTmove = *pv;
 	int origAlpha = alpha;
 	
+	/*
 	// null move pruning - doesn't work
 	// if (!nullmove && !isEndgame(pos) && !incheck && !(alpha != beta - 1)) {
-	/*
-	if (!nullmove && !isEndgame(pos) && !incheck && !(alpha != beta - 1)) {
+	
+	if (!nullmove && !isEndgame(pos) && !incheck && ply != 0) {
 		pos->tomove = !pos->tomove;
 		int val = -alphaBeta(pos,-beta,-beta+1, depthleft - 1 - 2, 1, ply + 1, pv, endtime);
 		pos->tomove = !pos->tomove;
@@ -216,7 +219,8 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		&& legalmoves > 1
 		&&  cappiece == '0'
 		&&  moves[i].prom == 0
-		&& !givescheck) {
+		&& !givescheck
+		&& ply != 0) {
 		//&&  !isAttacked(pos,kingpos,pos->tomove)) {
 			unmakeMove(pos);
 			continue;
@@ -237,8 +241,8 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			if (r > 0 && score > alpha) {
 				score = -alphaBeta(pos, -alpha-1, -alpha, depthleft - 1, 0, ply + 1, pv, endtime);
 			}
-			if (score > alpha) {
-				score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 - r, 0, ply + 1, pv, endtime);
+			if (score > alpha && score < beta) {
+				score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, ply + 1, pv, endtime);
 				if (r > 0 && score > alpha) {
 					score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, ply + 1, pv, endtime);
 				}
@@ -283,6 +287,12 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			}
 			break;
 		}
+		else {
+			// no beta cut off
+			if (cappiece == '0') {
+				butterfly[pos->tomove][moves[i].from][moves[i].to] += pow(2,depthleft);
+			}
+		}
 	}
 	if (legalmoves == 0) {
 		// no legal moves
@@ -315,7 +325,6 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 struct move search(struct position pos, int searchdepth, int movetime) {
 	assert(searchdepth >= 0);
 	assert(movetime > 0);
-
 	// Reset stats
 	nodesSearched = 0;
 	numbetacutoffs = 0;
@@ -334,31 +343,34 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 
 	// Only move
 	//if (num_moves == 1) return moves[0];
-
+	clearHistory();
 	// Calculate hash
 	//const U64 hash = generateHash(&pos);
 	int lastscore = 0;
 	for(int d = 1; d <= searchdepth; ++d) {
 		struct move pv;
 		
-		//int score = 0;
 		/*
+		int score = 0;
+		
 		if (d <= 3) {
 			score = alphaBeta(&pos, -MATE_SCORE, MATE_SCORE, d, 0, 0, &pv, endtime);
 		}
 		else {
-			int b[4] = {50, 300, MATE_SCORE};
+			int b[6] = {50, 200, MATE_SCORE};
 			for (int i = 0;i < 3;i++) {
-				int min = lastscore - b[i];
+				int min = lastscore -b[i];
 				int max = lastscore + b[i];
 				score = alphaBeta(&pos, min, max, d, 0, 0, &pv, endtime);
-				//if (-b[i] < score && score < b[i]) break;
-				if (score > -b[i] && score < b[i]) break;
+				if (-b[i] < score && score < b[i]) break;
+				//if (score > -b[i] && score < b[i]) break;
 			}
 		}
-		 */
-		//lastscore = score;
+		 
+		lastscore = 0;
+		*/
 		const int score = alphaBeta(&pos, -MATE_SCORE, MATE_SCORE, d, 0, 0, &pv, endtime);
+		
 		// Ignore the result if we ran out of time
 		if (d > 1 && clock() >= endtime) {
 			break;

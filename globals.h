@@ -15,5 +15,6 @@ int numbetacutoffs;
 int hashsize;
 struct move killers[128][2];
 int history[2][64][64];
+int butterfly[2][64][64];
 
 #endif

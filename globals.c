@@ -1,6 +1,3 @@
-#ifndef GLOBALS_C
-#define GLOBALS_C
-
 #include "globals.h"
 #include "position.h"
 #include "TT.h"
@@ -16,6 +13,4 @@ int numinstantbetacutoffs;
 int numbetacutoffs;
 struct move killers[128][2];
 int history[2][64][64];
-
-
-#endif
+int butterfly[2][64][64];
