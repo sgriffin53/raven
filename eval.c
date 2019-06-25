@@ -30,13 +30,13 @@ int pieceval(const char inpiece) {
 int taperedEval(struct position *pos) {
 	assert(pos);
 	
-/*
+	/*
 	U64 hash = generateHash(pos);
 	struct ETTentry ETTdata = getETTentry(&ETT,hash);
 	if (ETTdata.hash == hash) {
 		return ETTdata.eval;
 	}
-*/
+	*/
 	int pawnPhase = 0;
 	int knightPhase = 1;
 	int bishopPhase = 1;
@@ -230,7 +230,6 @@ int taperedEval(struct position *pos) {
 	int WpassedRankBonus[8] = {0, 10, 10, 15, 25, 80, 120, 0};
 	int BpassedRankBonus[8] = {0, 120, 80, 25, 15, 10, 10, 0};
 	
-	
 	U64 BBwhitepawns = (pos->BBwhitepieces & pos->BBpawns);
 	while (BBwhitepawns) {
 		
@@ -406,7 +405,7 @@ int taperedEval(struct position *pos) {
 	// white pawn shield
 	
 	int Wkingpos = pos->Wkingpos;
-	BBkingdist1 = BBkingattacks(pos->BBkings & (1ULL << Wkingpos)); // fill 1 square away
+	BBkingdist1 = BBkingattacks((1ULL << Wkingpos)); // fill 1 square away
 	U64 BBpawnshield = BBkingdist1 & (pos->BBwhitepieces & pos->BBpawns);
 	/*
 	while (BBpawnshield) {
@@ -421,7 +420,7 @@ int taperedEval(struct position *pos) {
 	// black pawn shield
 	
 	int Bkingpos = pos->Bkingpos;
-	BBkingdist1 = BBkingattacks(pos->BBkings & (1ULL << Bkingpos)); // fill 1 square away
+	BBkingdist1 = BBkingattacks((1ULL << Bkingpos)); // fill 1 square away
 	BBpawnshield = BBkingdist1 & (pos->BBblackpieces & pos->BBpawns);
 	/*
 	while (BBpawnshield) {
@@ -444,6 +443,8 @@ int taperedEval(struct position *pos) {
 	}
 	*/
 
+	// bishop pair bonus
+	
 	if (num_BB >= 2) {
 		openingEval -= 60;
 		endgameEval -= 60;
@@ -452,26 +453,34 @@ int taperedEval(struct position *pos) {
 		openingEval += 60;
 		endgameEval += 60;
 	}
+	
+	// penalties for 8 or 0 pawns
+	
+	if (num_WP == 0 || num_WP == 8) {
+		openingEval -= 10;
+		endgameEval -= 10;
+	}
+	if (num_BP == 0 || num_BP == 8) {
+		openingEval += 10;
+		endgameEval += 10;
+	}
 	// bonus for pieces in centre
 	/*
 	U64 BBWpiecesincentre = (pos->BBwhitepieces & BBbigcentre);
 	while (BBWpiecesincentre) {
 		int square = __builtin_ctzll(BBWpiecesincentre);
 		BBWpiecesincentre &= ~(1ULL << square);
-		int pval = pieceval(getPiece(pos,square));
-		openingEval += (pval / 100) * 6;
-		endgameEval += (pval / 100) * 6;
+		openingEval += 10;
+		endgameEval += 10;
 	}
-	U64 BBBpiecesincentre = (pos->BBwhitepieces & BBbigcentre);
+	U64 BBBpiecesincentre = (pos->BBblackpieces & BBbigcentre);
 	while (BBBpiecesincentre) {
 		int square = __builtin_ctzll(BBBpiecesincentre);
 		BBBpiecesincentre &= ~(1ULL << square);
-		int pval = pieceval(getPiece(pos,square));
-		openingEval -= (pval / 100) * 6;
-		endgameEval -= (pval / 100) * 6;
+		openingEval -= 10;
+		endgameEval -= 10;
 	}
 	 */
-	 
 	// bonus for connected knights
 	// white
 	if (num_WN >= 2) {
@@ -538,7 +547,7 @@ int taperedEval(struct position *pos) {
 		}
 	}
 	 */
-	// knight outposts
+	// knights protected by pawns
 	
 	// white
 	
@@ -566,7 +575,7 @@ int taperedEval(struct position *pos) {
 		}
 	}
 	
-	// bishop outposts
+	// bishops protected by pawns
 	
 	// white
 	
@@ -592,8 +601,9 @@ int taperedEval(struct position *pos) {
 		}
 	}
 	
+	
 	// mobility bonuses
-	/*
+	
 	int Wmobility = mobility(pos,WHITE);
 	int Bmobility = mobility(pos,BLACK);
 	
@@ -602,7 +612,7 @@ int taperedEval(struct position *pos) {
 	
 	openingEval -= Bmobility * 5;
 	endgameEval -= Bmobility * 5;
-	*/
+	
 
 	// knight value decreases as pawns disappear
 	/*
@@ -723,9 +733,9 @@ int evalBoard(struct position *pos) {
 		if ((piece >= 'a') && (piece <= 'z')) {
 			pval = -pval;
 		}
-		int pstscore = PSTval(piece,square,'O');
+		//int pstscore = PSTval(piece,square,'O');
 		score += pval;
-		score += pstscore;
+		//score += pstscore;
 		
 	}
 	if (pos->tomove == BLACK) return -score;
