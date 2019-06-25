@@ -158,7 +158,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		if (val >= beta) return beta;
 	}
 	*/
-	/*
+
 	U64 hash;
 	if (currenthash == 0) {
 		hash = generateHash(pos);
@@ -166,11 +166,12 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	else hash = currenthash;
 	struct TTentry TTdata = getTTentry(&TT,hash);
 	if (TTdata.hash == hash) {
-		if (TTdata.depth >= depthleft) {
+		if (TTdata.depth == depthleft) {
 			int flag = TTdata.flag;
 			int score = TTdata.score;
 			
 			if (flag == EXACT) {
+				*pv = TTdata.bestmove;
 				return score;
 			}
 			else if (flag == LOWERBOUND) {
@@ -180,13 +181,14 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 				beta = min(beta, score);
 			}
 			if (alpha >= beta) {
+				*pv = TTdata.bestmove;
 				return score;
 			}
 			
 		}
 		TTmove = TTdata.bestmove;
 	}
-	*/
+
 	//U64 hash = generateHash(pos);
 	int f_prune = 0;
 	int fmargin[4] = { 0, 200, 300, 500 };
@@ -305,7 +307,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			return 0;
 		}
 	}
-	/*
+	
 	int newflag;
 	if (bestscore <= origAlpha) {
 		newflag = UPPERBOUND;
@@ -316,8 +318,8 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	else {
 		newflag = EXACT;
 	}
-	 */
-	//addTTentry(&TT, hash, depthleft, newflag, bestmove, bestscore);
+	
+	addTTentry(&TT, hash, depthleft, newflag, bestmove, bestscore);
 	*pv = bestmove;
 	assert(bestmove.to >= 0 && bestmove.to <= 63 && bestmove.from >= 0 && bestmove.from <= 63);
 	return bestscore;
