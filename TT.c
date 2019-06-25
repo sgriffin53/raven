@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 #include "hash.h"
 #include "TT.h"
 #include "move.h"
@@ -13,14 +14,21 @@ void initETT(struct ETTtable *table) {
 	const int totentries = (ETTsizemb*1024*1024) / sizeof(struct PTTentry);
 	table->entries = malloc(totentries * sizeof(struct ETTentry));
 	table->totentries = totentries;
+	assert(totentries > 0);
 }
 
-struct ETTentry getETTentry(struct ETTtable *table,U64 hash) {
+struct ETTentry getETTentry(struct ETTtable *table, U64 hash) {
+	assert(table);
+	assert(table->entries);
+	assert(table->totentries > 0);
 	int index = hash % table->totentries;
 	return table->entries[index];
 }
 
-void addETTentry(struct ETTtable *table,U64 hash, int eval) {
+void addETTentry(struct ETTtable *table, U64 hash, int eval) {
+	assert(table);
+	assert(table->entries);
+	assert(table->totentries > 0);
 	int index = hash % table->totentries;
 	struct ETTentry newentry;
 	newentry.hash = hash;
@@ -36,12 +44,18 @@ void initPTT(struct PTTtable *table) {
 	table->totentries = totentries;
 }
 
-struct PTTentry getPTTentry(struct PTTtable *table,U64 hash) {
+struct PTTentry getPTTentry(struct PTTtable *table, U64 hash) {
+	assert(table);
+	assert(table->entries);
+	assert(table->totentries > 0);
 	int index = hash % table->totentries;
 	return table->entries[index];
 }
 
-void addPTTentry(struct PTTtable *table,U64 hash, int depth,U64 nodes) {
+void addPTTentry(struct PTTtable *table, U64 hash, int depth, U64 nodes) {
+	assert(table);
+	assert(table->entries);
+	assert(table->totentries > 0);
 	int index = hash % table->totentries;
 	struct PTTentry newentry;
 	newentry.hash = hash;
@@ -55,7 +69,7 @@ void addPTTentry(struct PTTtable *table,U64 hash, int depth,U64 nodes) {
 
 void initTT(struct TTtable *table) {
 	assert(table);
-	int TTsizemb = 32;
+	int TTsizemb = hashsize;
 	const int totentries = (TTsizemb*1024*1024) / sizeof(struct TTentry);
 	table->entries = malloc(totentries * sizeof(struct TTentry));
 	table->totentries = totentries;
@@ -75,7 +89,7 @@ void clearETT(struct ETTtable *table) {
 		table->entries[i].eval = 0;
 	}
 }
-void addTTentry(struct TTtable *table,U64 hash, int depth,int flag,struct move bestmove, int score) {
+void addTTentry(struct TTtable *table,U64 hash, int depth, int flag, struct move bestmove, int score) {
 	assert(table);
 	assert(table->totentries > 0);
 	int index = hash % table->totentries;
@@ -88,9 +102,10 @@ void addTTentry(struct TTtable *table,U64 hash, int depth,int flag,struct move b
 	table->entries[index] = newentry;
 }
 
-struct TTentry getTTentry(struct TTtable *table,U64 hash) {
+struct TTentry getTTentry(struct TTtable *table, U64 hash) {
 	assert(table);
 	assert(table->totentries > 0);
+	assert(table->entries);
 	int index = hash % table->totentries;
 	return table->entries[index];
 }

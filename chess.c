@@ -12,6 +12,7 @@
 #include "movegen.h"
 #include "perft.h"
 #include "globals.h"
+#include "sort.h"
 #include "search.h"
 #include "bitboards.h"
 #include <limits.h>
@@ -30,6 +31,7 @@ int main() {
 	int wtime, btime;
 	initZobrist();
 	initmagicmoves();
+	hashsize = 32;
 	initTT(&TT);
 	clearTT(&TT);
 	initETT(&ETT);
@@ -47,6 +49,20 @@ int main() {
 			strcpy(splitstr[splitstrend],token);
 			splitstrend++;
 			token = strtok(NULL, " ");
+		}
+		if (strcmp(splitstr[0],"setoption") == 0) {
+			if ((strcmp(splitstr[1],"name") == 0) && (strcmp(splitstr[3],"value") == 0))   {
+				char name[128];
+				char value[128];
+				strcpy(name,splitstr[2]);
+				strcpy(value,splitstr[4]);
+				if (strcmp(strlwr(name),"hash") == 0) {
+					hashsize = atoi(value);
+					free(TT.entries);
+					initTT(&TT);
+				}
+				
+			}
 		}
 		if (strcmp(splitstr[0],"test") == 0) {
 			runTestsAll();
@@ -117,7 +133,6 @@ int main() {
 			else {
 				if (btime != -1) movetime = btime / 25;
 			}
-
 			if (strcmp(splitstr[1],"movetime") == 0) {
 				movetime = atoi(splitstr[2]);
 			}
@@ -152,8 +167,10 @@ int main() {
 			makeMovestr(splitstr[1],&pos);
 		}
 		if (strcmp(splitstr[0],"legalmoves") == 0) {
+			struct move TTmove = {.to=-1,.from=-1,.prom=-1,.cappiece=-1};
 			struct move moves[MAX_MOVES];
 			int num_moves = genMoves(&pos,moves);
+			//sortMoves(&pos, moves, num_moves, TTmove, 0);
 			int j;
 			printf("%d num moves\n",num_moves);
 			printf("%d --\n",num_moves);
