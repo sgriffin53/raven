@@ -349,8 +349,25 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 	// Calculate hash
 	//const U64 hash = generateHash(&pos);
 	int lastscore = 0;
+	
+	// set a PV in case one doesn't get set due to threefold or 50 move rule returning without setting a pv
+	struct move pv;
+	
+	for (int i = 0;i < num_moves;i++) {
+		makeMove(&moves[i],&pos);
+		pos.tomove = !pos.tomove;
+		int incheck = isCheck(&pos);
+		if (incheck) {
+			unmakeMove(&pos);
+			continue;
+		}
+		pos.tomove = !pos.tomove;
+		unmakeMove(&pos);
+		pv = moves[i];
+		break;
+	}
+	
 	for(int d = 1; d <= searchdepth; ++d) {
-		struct move pv;
 		
 		/*
 		int score = 0;
