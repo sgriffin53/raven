@@ -205,7 +205,9 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	int bestscore = INT_MIN;
 	int legalmoves = 0;
 	int fullwindow = 1;
+	int extended = 0;
 	for (int i = 0;i < num_moves;i++) {
+		char piece = getPiece(pos,moves[i].from);
 		char cappiece = getPiece(pos,moves[i].to);
 		makeMove(&moves[i],pos);
 		pos->tomove = !pos->tomove;
@@ -251,6 +253,15 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			}
 		}
 		 */
+		extended = 0;
+		if (piece == 'p' && getrank(moves[i].to) == 1) {
+			depthleft++;
+			extended = 1;
+		}
+		else if (piece == 'P' && getrank(moves[i].to) == 6) {
+			extended = 1;
+			depthleft++;
+		}
 		// Search
 		
 		score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 - r, 0, ply + 1, pv, endtime);
@@ -259,7 +270,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		if (r > 0 && score > alpha) {
 			score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, ply + 1, pv, endtime);
 		}
-		
+		if (extended) depthleft--;
 		//score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, endtime);
 		unmakeMove(pos);
 		if (score > alpha) {
@@ -334,7 +345,10 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 
 	// Result
 	struct move bestmove;
-
+	
+	double time_spent;
+	int time_spentms;
+	
 	// Timing code
 	const clock_t begin = clock();
 	const clock_t endtime = clock() + (movetime / 1000.0 * CLOCKS_PER_SEC);
@@ -388,13 +402,23 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 		 
 		lastscore = 0;
 		*/
+		
+		time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
+		time_spentms = (int)(time_spent*1000);
+		// Predict whether we have enough time for next search and break if not
+		
+		if (d > 1 && time_spentms > 30) {
+			int expectedtime = time_spentms * 4;
+			int expectedendtime = clock() + expectedtime;
+			if (expectedendtime > endtime) break;
+		}
+		
 		const int score = alphaBeta(&pos, -MATE_SCORE, MATE_SCORE, d, 0, 0, &pv, endtime);
 		
 		// Ignore the result if we ran out of time
 		if (d > 1 && clock() >= endtime) {
 			break;
 		}
-
 		// Get our TT entry
 		//const struct TTentry TTdata = getTTentry(&TT, hash);
 		//assert(TTdata.hash == hash);
@@ -420,7 +444,8 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 		// Update results
 		//bestmove = TTdata.bestmove;
 		bestmove = pv;
-		const double time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
+		time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
+		time_spentms = (int)(time_spent*1000);
 		int nps = nodesSearched / time_spent;
 		// Info string
 		printf("info");
@@ -432,8 +457,11 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 		printf(" pv %s", movetostr(bestmove));
 		printf("\n");
 	}
-
-
+	time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
+	time_spentms = (int)(time_spent*1000);
+	
+	printf("info time %d", time_spentms);
+	printf("\n");
 	printf("bestmove %s\n", movetostr(bestmove));
 
 
