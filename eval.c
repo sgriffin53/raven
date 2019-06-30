@@ -12,13 +12,13 @@ int pieceval(const char inpiece) {
 	if (inpiece == 'p') return 100;
 	if (inpiece == 'n') return 300;
 	if (inpiece == 'b') return 300;
-	if (inpiece == 'r') return 500;
+	if (inpiece == 'r') return 525;
 	if (inpiece == 'q') return 900;
 	if (inpiece == 'k') return 9999;
 	if (inpiece == 'P') return 100;
 	if (inpiece == 'N') return 300;
 	if (inpiece == 'B') return 300;
-	if (inpiece == 'R') return 500;
+	if (inpiece == 'R') return 525;
 	if (inpiece == 'Q') return 900;
 	if (inpiece == 'K') return 9999;
 
@@ -220,6 +220,10 @@ int taperedEval(struct position *pos) {
 	 */
 	openingEval -= 10 * __builtin_popcountll(BBattackers);
 	endgameEval -= 10 * __builtin_popcountll(BBattackers);
+	
+	
+	
+	
 	
 	// passed pawns
 	
@@ -464,23 +468,23 @@ int taperedEval(struct position *pos) {
 		openingEval += 10;
 		endgameEval += 10;
 	}
-	// bonus for pieces in centre
-	/*
-	U64 BBWpiecesincentre = (pos->BBwhitepieces & BBbigcentre);
+	// bonus for pawns in centre
+	
+	U64 BBWpiecesincentre = (pos->BBwhitepieces & pos->BBpawns & BBcentre);
 	while (BBWpiecesincentre) {
 		int square = __builtin_ctzll(BBWpiecesincentre);
 		BBWpiecesincentre &= ~(1ULL << square);
-		openingEval += 10;
-		endgameEval += 10;
+		openingEval += 20;
+		endgameEval += 20;
 	}
-	U64 BBBpiecesincentre = (pos->BBblackpieces & BBbigcentre);
+	U64 BBBpiecesincentre = (pos->BBblackpieces & pos->BBpawns & BBcentre);
 	while (BBBpiecesincentre) {
 		int square = __builtin_ctzll(BBBpiecesincentre);
 		BBBpiecesincentre &= ~(1ULL << square);
-		openingEval -= 10;
-		endgameEval -= 10;
+		openingEval -= 20;
+		endgameEval -= 20;
 	}
-	 */
+	
 	// bonus for connected knights
 	// white
 	if (num_WN >= 2) {
@@ -694,6 +698,8 @@ int mobility(struct position *pos, int side) {
 	}
 	
 	int count = __builtin_popcountll(BBmoves);
+	U64 BBcentreattacks = BBmoves & BBcentre;
+	count += __builtin_popcountll(BBcentreattacks);
 	return count;
 	
 }
