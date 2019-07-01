@@ -72,7 +72,7 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 			|| (flag == UPPERBOUND && score <= alpha)) {
 				return score;
 		}
-		//TTmove = TTdata.bestmove;
+		TTmove = TTdata.bestmove;
 	}
 	//int ispawnless = isPawnless(pos);
 	const int standpat = taperedEval(pos);
@@ -109,7 +109,8 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 	
 	//struct move TTmove = {.to=-1,.from=-1,.prom=-1,.cappiece=-1};
 	//sortMoves(pos,moves,num_moves,TTmove);
-
+	struct move bestmove = {.to=-1,.from=-1,.prom=-1,.cappiece=-1};;
+	
 	for (int i = 0;(i < num_moves);i++) {
 		//clock_t end = clock();
 		//double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
@@ -138,20 +139,21 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 		unmakeMove(pos);
 
 		if (score >= beta) {
+			if (TTdata.hash != hash) addTTentry(&TT, hash, 0, LOWERBOUND, moves[i], beta);
 			return beta;
 		}
-		if (score > alpha) alpha = score;
+		if (score > alpha) {
+			alpha = score;
+			bestmove = moves[i];
+		}
 	}
-	
+	if (bestmove.from != -1 && TTdata.hash != hash) {
+		addTTentry(&TT, hash, 0, EXACT, bestmove, alpha);
+	}
 	return alpha;
 }
 
-void movcpy (struct move* pTarget, const struct move* pSource, int n) {
-   //while (n-- && (*pTarget++ = *pSource++));
-   pTarget->from = pSource->from;
-   pTarget->to = pSource->to;
-   pTarget->prom = pSource->prom;
-}
+
 
 int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int nullmove, int ply, struct move *pv, clock_t endtime) {
 	assert(pos);
@@ -159,6 +161,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	assert(beta > alpha);
 	assert(depthleft >= 0);
 	
+	if (depthleft <= 0) depthleft = 0;
 	if (clock() >= endtime) {
 		return -MATE_SCORE;
 	}
@@ -168,12 +171,10 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	if (pos->halfmoves >= 100) return 0;
 	int incheck = isCheck(pos);
 	if (incheck) depthleft++;
-	if (depthleft <= 0) {
-			return qSearch(pos, alpha, beta, ply + 1, endtime);
-	}
+	
 	struct move bestmove;
 	struct move TTmove = {.to=-1,.from=-1,.prom=-1,.cappiece=-1};
-	TTmove = *pv;
+	//TTmove = *pv;
 	int origAlpha = alpha;
 	
 	/*
@@ -217,7 +218,25 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		}
 		TTmove = TTdata.bestmove;
 	}
-	
+	if (depthleft <= 0) {
+		return qSearch(pos, alpha, beta, ply + 1, endtime);
+
+	}
+	// another attempt at null move pruning - doesn't work
+	/*
+	if (TTmove.from != -1 && !incheck && !nullmove && !isEndgame(pos) && depthleft >= 0) {
+		pos->tomove = !pos->tomove;
+		int val;
+		if (depthleft <= 4) val = qSearch(pos, alpha, beta, ply + 1, endtime);
+		else val = -alphaBeta(pos,-beta,-beta+1, depthleft - 1 - 2, 1, ply + 1, pv, endtime);
+		pos->tomove = !pos->tomove;
+		if (val >= beta) {
+			addTTentry(&TT, hash, depthleft, LOWERBOUND, TTmove, beta);
+			return beta;
+		}
+	}
+	*/
+	if (TTmove.from == -1) TTmove = *pv;
 	// razoring
 	/*
 	if (!incheck && depthleft <= 2 && taperedEval(pos) <= alpha - 300) {
