@@ -56,10 +56,29 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 	if (clock() >= endtime) {
 		return -MATE_SCORE;
 	}
+	int origAlpha = alpha;
+	struct move TTmove = {.to=-1,.from=-1,.prom=-1,.cappiece=-1};
+	U64 hash;
+	if (currenthash == 0) {
+		hash = generateHash(pos);
+	}
+	else hash = currenthash;
+	struct TTentry TTdata = getTTentry(&TT,hash);
+	if (TTdata.hash == hash) {
+		int flag = TTdata.flag;
+		int score = TTdata.score;
+		if (flag == EXACT
+			|| (flag == LOWERBOUND && score >= beta)
+			|| (flag == UPPERBOUND && score <= alpha)) {
+				return score;
+		}
+		//TTmove = TTdata.bestmove;
+	}
 	//int ispawnless = isPawnless(pos);
 	const int standpat = taperedEval(pos);
 	if (standpat >= beta) {
 		nodesSearched++;
+		//addTTentry(&TT, hash, 0, LOWERBOUND, TTmove, beta);
 		return beta;
 	}
 
@@ -72,7 +91,6 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 
 	if (alpha < standpat) alpha = standpat;
 
-	struct move TTmove = {.to=-1,.from=-1,.prom=-1,.cappiece=-1};
 	struct move moves[MAX_MOVES];
 	const int num_moves = genMoves(pos,moves);
 	
@@ -110,10 +128,13 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 			continue;
 		}
 		pos->tomove = !pos->tomove;
+		currenthash = 0;
 		const int score = -qSearch(pos,-beta,-alpha, ply + 1, endtime);
 
 		nodesSearched++;
-
+		U64 newhash;
+		if (score >= beta) newhash = generateHash(pos);
+		
 		unmakeMove(pos);
 
 		if (score >= beta) {
@@ -121,7 +142,15 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 		}
 		if (score > alpha) alpha = score;
 	}
+	
 	return alpha;
+}
+
+void movcpy (struct move* pTarget, const struct move* pSource, int n) {
+   //while (n-- && (*pTarget++ = *pSource++));
+   pTarget->from = pSource->from;
+   pTarget->to = pSource->to;
+   pTarget->prom = pSource->prom;
 }
 
 int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int nullmove, int ply, struct move *pv, clock_t endtime) {
@@ -158,7 +187,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		if (val >= beta) return beta;
 	}
 	*/
-
+	
 	U64 hash;
 	if (currenthash == 0) {
 		hash = generateHash(pos);
@@ -188,7 +217,16 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		}
 		TTmove = TTdata.bestmove;
 	}
-
+	
+	// razoring
+	/*
+	if (!incheck && depthleft <= 2 && taperedEval(pos) <= alpha - 300) {
+		if (depthleft == 1) return qSearch(pos, alpha, beta, ply + 1, endtime);
+		int rWindow = alpha - 300;
+		int value = qSearch(pos,rWindow,rWindow+1,ply + 1, endtime);
+		if (value <= rWindow) return value;
+	}
+	*/
 	//U64 hash = generateHash(pos);
 	int f_prune = 0;
 	int fmargin[4] = { 0, 200, 300, 500 };
@@ -198,6 +236,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	&&   abs(alpha) < 9000
 	&&   taperedEval(pos) + fmargin[depthleft] <= alpha)
 		 f_prune = 1;
+
 	struct move moves[MAX_MOVES];
 	const int num_moves = genMoves(pos,moves);
 	sortMoves(pos,moves,num_moves,TTmove,ply);
@@ -206,6 +245,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	int legalmoves = 0;
 	int fullwindow = 1;
 	int extended = 0;
+	
 	for (int i = 0;i < num_moves;i++) {
 		char piece = getPiece(pos,moves[i].from);
 		char cappiece = getPiece(pos,moves[i].to);
@@ -253,17 +293,19 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			}
 		}
 		 */
+		
 		extended = 0;
 		if (piece == 'p' && getrank(moves[i].to) == 1) {
-			depthleft++;
+			depthleft += 1;
 			extended = 1;
 		}
 		else if (piece == 'P' && getrank(moves[i].to) == 6) {
 			extended = 1;
-			depthleft++;
+			depthleft += 1;
 		}
+		 
 		// Search
-		
+
 		score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 - r, 0, ply + 1, pv, endtime);
 		
 		// Redo search
@@ -271,21 +313,15 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, ply + 1, pv, endtime);
 		}
 		if (extended) depthleft--;
-		//score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, endtime);
+		
 		unmakeMove(pos);
+		
 		if (score > alpha) {
 			fullwindow = 0;
 		}
-		//for (int i = 0;i < ply;i++) printf("\t");
-		//printf("depth %d - searching move: %s\n",depthleft,movetostr(moves[i]));
 		if (score > bestscore) {
-			//for (int i = 0;i < ply;i++) printf("\t");
-			//printf("score: %d - bestscore: %d\n",score,bestscore);
 			bestscore = score;
 			bestmove = moves[i];
-			//for (int i = 0;i < ply;i++) printf("\t");
-			//printf("depth %d - new best move: %s\n",depthleft,movetostr(bestmove));
-			//if (ply == 0) *pv = bestmove;
 		}
 		if (bestscore >= alpha) {
 			alpha = bestscore;
@@ -335,6 +371,42 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	assert(bestmove.to >= 0 && bestmove.to <= 63 && bestmove.from >= 0 && bestmove.from <= 63);
 	return bestscore;
 }
+struct pvline getPV(struct position *pos, int depth) {
+	struct pvline pvline;
+	U64 hash = generateHash(pos);
+	struct TTentry TTdata = getTTentry(&TT,hash);
+	pvline.moves[0] = TTdata.bestmove;
+	pvline.size = 1;
+	int movesmade = 0;
+	int movesunmade = 0;
+	for (int i = 1;i < depth;i++) {
+		struct move bestmove = TTdata.bestmove;
+		makeMove(&bestmove,pos);
+		movesmade++;
+		pos->tomove = !pos->tomove;
+		if (isCheck(pos)) {
+			pos->tomove = !pos->tomove;
+			unmakeMove(pos);
+			movesunmade++;
+			pvline.size -= 1;
+			break;
+		}
+		pos->tomove = !pos->tomove;
+		hash = generateHash(pos);
+		TTdata = getTTentry(&TT,hash);
+		if (TTdata.hash != hash) break;
+		pvline.moves[i] = TTdata.bestmove;
+		pvline.size++;
+	}
+	//printf("\n-- %d %d %d\n",movesmade,movesunmade,pvline.size);
+	for (int i = 0;i < (movesmade - movesunmade);i++) {
+		unmakeMove(pos);
+		//movesunmade++;
+	}
+	//printf("\n%d %d\n",movesmade, movesunmade);
+	
+	return pvline;
+}
 struct move search(struct position pos, int searchdepth, int movetime) {
 	assert(searchdepth >= 0);
 	assert(movetime > 0);
@@ -346,13 +418,14 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 	// Result
 	struct move bestmove;
 	
+	
 	double time_spent;
 	int time_spentms;
 	
 	// Timing code
 	const clock_t begin = clock();
 	const clock_t endtime = clock() + (movetime / 1000.0 * CLOCKS_PER_SEC);
-
+	
 	// Movegen
 	struct move moves[MAX_MOVES];
 	const int num_moves = genMoves(&pos, moves);
@@ -402,6 +475,7 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 		 
 		lastscore = 0;
 		*/
+		rootdepth = d;
 		
 		time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
 		time_spentms = (int)(time_spent*1000);
@@ -414,7 +488,6 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 		}
 		
 		const int score = alphaBeta(&pos, -MATE_SCORE, MATE_SCORE, d, 0, 0, &pv, endtime);
-		
 		// Ignore the result if we ran out of time
 		if (d > 1 && clock() >= endtime) {
 			break;
@@ -454,7 +527,12 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 		printf(" time %i", (int)(time_spent*1000));
 		printf(" nps %i", nps);
 		printf(" score cp %i", score);
-		printf(" pv %s", movetostr(bestmove));
+		//printf(" pv %s", movetostr(bestmove));
+		struct pvline pvline = getPV(&pos,d);
+		printf(" pv ");
+		for (int i = 0;i < pvline.size; i++) {
+			printf("%s ",movetostr(pvline.moves[i]));
+		}
 		printf("\n");
 	}
 	time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
