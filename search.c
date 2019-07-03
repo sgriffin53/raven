@@ -93,7 +93,7 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 
 	struct move moves[MAX_MOVES];
 	const int num_moves = genMoves(pos,moves);
-	
+	int origischeck = isCheck(pos);
 /*
 	U64 hash;
 	if (currenthash != 0) {
@@ -129,6 +129,15 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 			continue;
 		}
 		pos->tomove = !pos->tomove;
+		
+		/*
+		int delta = standpat + 120;
+		
+		if (!isCheck(pos) && delta > -MATE_SCORE && delta + pieceval(cappiece) <= alpha) {
+			continue;
+		}
+		 */
+		
 		currenthash = 0;
 		const int score = -qSearch(pos,-beta,-alpha, ply + 1, endtime);
 
@@ -222,22 +231,40 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		return qSearch(pos, alpha, beta, ply + 1, endtime);
 
 	}
+	int staticeval = taperedEval(pos);
+	if (!incheck && (ply > 0) && depthleft < 7 && staticeval - 90 * depthleft >= beta && staticeval < 9999) {
+		return staticeval;
+	}
+	
 	// another attempt at null move pruning - doesn't work
 	/*
-	if (TTmove.from != -1 && !incheck && !nullmove && !isEndgame(pos) && depthleft >= 0) {
+	if (TTmove.from == -1 && !incheck && !nullmove && !isEndgame(pos) && staticeval >= beta && (ply != 0) && depthleft >= 3) {
 		pos->tomove = !pos->tomove;
-		int val;
-		if (depthleft <= 4) val = qSearch(pos, alpha, beta, ply + 1, endtime);
-		else val = -alphaBeta(pos,-beta,-beta+1, depthleft - 1 - 2, 1, ply + 1, pv, endtime);
+		int val = -alphaBeta(pos,-beta,-beta+1, depthleft - 1 - 0, 1, ply + 1, pv, endtime);
 		pos->tomove = !pos->tomove;
 		if (val >= beta) {
-			addTTentry(&TT, hash, depthleft, LOWERBOUND, TTmove, beta);
-			return beta;
+			int verification = -alphaBeta(pos,beta - 1,-beta, depthleft - 1 - 0, 1, ply + 1, pv, endtime); // alpha_beta(p, md, beta - 1, beta, d, false, false);
+			
+			if (verification >= beta) return beta;
 		}
 	}
-	*/
-	if (TTmove.from == -1) TTmove = *pv;
+	 */
+ 	if (TTmove.from == -1) TTmove = *pv;
+	
 	// razoring
+	/*
+	const int razoring_margin[4] = {0, 333, 353, 324};
+	if (!incheck && depthleft < 3 && staticeval <= alpha - razoring_margin[depthleft] && ply != 0) {
+		if (depthleft <= 1) {
+			return qSearch(pos, alpha, beta, ply + 1, endtime);
+		}
+		int margin = alpha - razoring_margin[depthleft];
+		int qvalue = qSearch(pos, margin, margin + 1, ply + 1, endtime);
+		if (qvalue <= margin) {
+			return qvalue;
+		}
+	}
+	 */
 	/*
 	if (!incheck && depthleft <= 2 && taperedEval(pos) <= alpha - 300) {
 		if (depthleft == 1) return qSearch(pos, alpha, beta, ply + 1, endtime);
@@ -253,9 +280,21 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	if (depthleft <= 3
 	&&  !incheck
 	&&   abs(alpha) < 9000
-	&&   taperedEval(pos) + fmargin[depthleft] <= alpha)
-		 f_prune = 1;
-
+	&&   staticeval + fmargin[depthleft] <= alpha)
+		 f_prune = 1;	
+	
+	// IID
+	/*
+	int new_depth = depthleft;
+    if (TTmove.from == -1 && depthleft >= 6 && staticeval + 150 >= beta) {
+        new_depth = 3 * depthleft / 4 - 2;
+		int score = alphaBeta(pos, alpha, beta, new_depth - 1, 0, ply + 1, pv, endtime);
+        TTdata = getTTentry(&TT, hash);
+        if (TTdata.hash == hash) {
+            TTmove = TTdata.bestmove;
+        }
+    }
+*/
 	struct move moves[MAX_MOVES];
 	const int num_moves = genMoves(pos,moves);
 	sortMoves(pos,moves,num_moves,TTmove,ply);
@@ -275,9 +314,11 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			continue;
 		}
 		pos->tomove = !pos->tomove;
-
+	
+		
 		int givescheck = isCheck(pos);
 		legalmoves++;
+		
 		if (f_prune
 		&& legalmoves > 1
 		&&  cappiece == '0'
@@ -288,30 +329,8 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			unmakeMove(pos);
 			continue;
 		}
-		int r = reduction(&moves[i], depthleft, cappiece, legalmoves, incheck, givescheck, ply);
 		
-
-		// PV search - doesn't work
-		/*
-		if (fullwindow) {
-			score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 - r, 0, ply + 1, pv, endtime);
-			if (r > 0 && score > alpha) {
-				score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, ply + 1, pv, endtime);
-			}
-		}
-		else {
-			score = -alphaBeta(pos, -alpha-1, -alpha, depthleft - 1 - r, 0, ply + 1, pv, endtime);
-			if (r > 0 && score > alpha) {
-				score = -alphaBeta(pos, -alpha-1, -alpha, depthleft - 1, 0, ply + 1, pv, endtime);
-			}
-			if (score > alpha && score < beta) {
-				score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, ply + 1, pv, endtime);
-				if (r > 0 && score > alpha) {
-					score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, ply + 1, pv, endtime);
-				}
-			}
-		}
-		 */
+		int r = reduction(&moves[i], depthleft, cappiece, legalmoves, incheck, givescheck, ply);
 		
 		extended = 0;
 		if (piece == 'p' && getrank(moves[i].to) == 1) {
@@ -322,6 +341,28 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			extended = 1;
 			depthleft += 1;
 		}
+		
+		// PV search - doesn't work
+		/*
+		if (fullwindow) {
+			score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 - r, 0, ply + 1, pv, endtime);
+			if (r > 0 && score > alpha) {
+				score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, ply + 1, pv, endtime);
+			}
+		}
+		else {
+			score = -alphaBeta(pos, -alpha-1, -alpha, depthleft - 1, 0, ply + 1, pv, endtime);
+			//if (r > 0 && score > alpha) {
+			//	score = -alphaBeta(pos, -alpha-1, -alpha, depthleft - 1, 0, ply + 1, pv, endtime);
+			//}
+			if (score > alpha) {
+				score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 - r, 0, ply + 1, pv, endtime);
+				if (r > 0 && score > alpha) {
+					score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, ply + 1, pv, endtime);
+				}
+			}
+		}
+		 */
 		 
 		// Search
 
@@ -443,8 +484,10 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 	
 	// Timing code
 	const clock_t begin = clock();
-	const clock_t endtime = clock() + (movetime / 1000.0 * CLOCKS_PER_SEC);
+	clock_t endtime = clock() + (movetime / 1000.0 * CLOCKS_PER_SEC);
+	clock_t maxendtime = endtime + (movetime * 10);
 	
+	//printf("start %d end %d maxend %d\n",begin,endtime,maxendtime);
 	// Movegen
 	struct move moves[MAX_MOVES];
 	const int num_moves = genMoves(&pos, moves);
@@ -454,7 +497,6 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 	clearHistory();
 	// Calculate hash
 	//const U64 hash = generateHash(&pos);
-	int lastscore = 0;
 	
 	// set a PV in case one doesn't get set due to threefold or 50 move rule returning without setting a pv
 	struct move pv;
@@ -472,7 +514,10 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 		pv = moves[i];
 		break;
 	}
-	
+	int time_spent_prevms;
+	int score = 0;
+	int lastscore = 0;
+	struct move pvlist[128];
 	for(int d = 1; d <= searchdepth; ++d) {
 		
 		/*
@@ -494,23 +539,78 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 		 
 		lastscore = 0;
 		*/
-		rootdepth = d;
-		
+		//rootdepth = d;
+		int origendtime = endtime;
 		time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
 		time_spentms = (int)(time_spent*1000);
+		/*
+		if (abs(score - lastscore) > 100 && d > 3) {
+			int remaining_time = endtime - time_spent;
+			int remaining_timems = remaining_time*1000;
+			if (time_spent_prevms == 0) time_spent_prevms = 1;
+			double factor = time_spentms / time_spent_prevms;
+			double expectedtime = time_spentms * factor;
+			int expectedendtime = clock() + expectedtime;
+			//int newendtime = endtime + expectedtime;
+			int newendtime = origendtime + remaining_timems * 4;
+			if (newendtime > maxendtime) newendtime = maxendtime;
+			endtime = newendtime;
+			
+			//if (newendtime < maxendtime) endtime = newendtime;
+		}
+		 */
+		//printf("clock %d cur %d max %d\n",clock(),endtime,maxendtime);
+		// Check how many times the PV has changed in the last 4 depths
+		/*
+		if (d > 4 && abs(score - lastscore) > 50) {
+			int timeschanged = 0;
+			
+			for (int i = d - 1;i >= 0 && i > d - 6;i--) {
+				int issame = 0;
+				struct move lastpv = pvlist[i-1];
+				if (pvlist[i].to == lastpv.to && pvlist[i].from == lastpv.from && pvlist[i].prom == lastpv.prom) {
+					issame = 1;
+				}
+				if (!issame) timeschanged++;
+			}
+			
+			if (timeschanged >= 2) { 
+				// PV move has changed 3 times in last 3 iterations
+				// Extend search time
+				int remaining_time = endtime - time_spent;
+				int remaining_timems = remaining_time*1000;
+				if (time_spent_prevms == 0) time_spent_prevms = 1;
+				double factor = time_spentms / time_spent_prevms;
+				factor = factor * 1.6;
+				double expectedtime = time_spentms * factor;
+				int expectedendtime = clock() + expectedtime;
+				int newendtime = origendtime + remaining_timems * 0.4;
+				if (newendtime > maxendtime) newendtime = maxendtime;
+				
+				//printf("extended time from %d to %d, max %d\n",endtime,newendtime,maxendtime);
+				endtime = newendtime;
+			}
+		}
+		*/
+		lastscore = score;
 		// Predict whether we have enough time for next search and break if not
 		
 		if (d > 1 && time_spentms > 30) {
-			int expectedtime = time_spentms * 4;
+			if (time_spent_prevms == 0) time_spent_prevms = 1;
+			double factor = time_spentms / time_spent_prevms;
+			double expectedtime = time_spentms * 4;
 			int expectedendtime = clock() + expectedtime;
 			if (expectedendtime > endtime) break;
 		}
+		// Allocate more time if the score has changed drastically
 		
-		const int score = alphaBeta(&pos, -MATE_SCORE, MATE_SCORE, d, 0, 0, &pv, endtime);
+		score = alphaBeta(&pos, -MATE_SCORE, MATE_SCORE, d, 0, 0, &pv, endtime);
+		
 		// Ignore the result if we ran out of time
 		if (d > 1 && clock() >= endtime) {
 			break;
 		}
+		
 		// Get our TT entry
 		//const struct TTentry TTdata = getTTentry(&TT, hash);
 		//assert(TTdata.hash == hash);
@@ -532,10 +632,12 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 		assert(found);
 		#endif
 		 
-
+		time_spent_prevms = time_spentms;
+		
 		// Update results
 		//bestmove = TTdata.bestmove;
 		bestmove = pv;
+		pvlist[d] = pv;
 		time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
 		time_spentms = (int)(time_spent*1000);
 		int nps = nodesSearched / time_spent;
