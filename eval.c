@@ -468,6 +468,7 @@ int taperedEval(struct position *pos) {
 		openingEval += 10;
 		endgameEval += 10;
 	}
+	
 	// bonus for pawns in centre
 	
 	U64 BBWpiecesincentre = (pos->BBwhitepieces & pos->BBpawns & BBcentre);
@@ -484,6 +485,7 @@ int taperedEval(struct position *pos) {
 		openingEval -= 20;
 		endgameEval -= 20;
 	}
+	
 	
 	// bonus for connected knights
 	// white
@@ -514,6 +516,23 @@ int taperedEval(struct position *pos) {
 			//}
 		}
 	}
+	
+	// bonus for trading when ahead in material
+	
+	int whitematval = num_WN * pieceval('N') + num_WB * pieceval('B') + num_WR * pieceval('R') + num_WQ * pieceval('Q');
+	int blackmatval = num_BN * pieceval('N') + num_BB * pieceval('B') + num_BR * pieceval('R') + num_BQ * pieceval('Q');
+	if (whitematval > blackmatval) {
+		double matimb = 1.0 - (blackmatval / whitematval);
+		openingEval += matimb * 180;
+		endgameEval += matimb * 180;
+	}
+	
+	else if (blackmatval > whitematval) {
+		double matimb = 1.0 - (whitematval / blackmatval);
+		openingEval -= matimb * 180;
+		endgameEval -= matimb * 180;
+	}
+	
 	
 	// bonus for connected rooks
 	/*
