@@ -16,5 +16,9 @@ int hashsize;
 struct move killers[128][2];
 int history[2][64][64];
 int butterfly[2][64][64];
+struct move pvArray[1024];
+int rootdepth;
+int wtime, btime;
+int origwtime, origbtime;
 
 #endif

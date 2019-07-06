@@ -15,6 +15,7 @@
 #include "sort.h"
 #include "search.h"
 #include "bitboards.h"
+#include "eval.h"
 #include <limits.h>
 
 int main() {
@@ -28,7 +29,6 @@ int main() {
 	char splitstr[1000][200];
 	char * token;
 	int keeprunning = 1;
-	int wtime, btime;
 	initZobrist();
 	initmagicmoves();
 	hashsize = 32;
@@ -36,6 +36,8 @@ int main() {
 	clearTT(&TT);
 	initETT(&ETT);
 	clearETT(&ETT);
+	origwtime = -1;
+	origbtime = -1;
 	while (keeprunning) {
 		// read input from stdin
 		fgets(instr, 8192, stdin);
@@ -107,6 +109,9 @@ int main() {
 			clearTT(&TT);
 			clearETT(&ETT);
 		}
+		if (strcmp(splitstr[0],"eval") == 0) {
+			printf("%d\n",taperedEval(&pos));
+		}
 		else if (strcmp(splitstr[0],"go") == 0) {
 			int searchdepth = 100;
 			//movetime = 2147483646;
@@ -121,12 +126,13 @@ int main() {
 			for (int i = 1;i < splitstrend;i++) {
 				if (strcmp(splitstr[i],"wtime") == 0) {
 					wtime = atoi(splitstr[i+1]);
+					if (origwtime == -1) origwtime = wtime;
 				}
 				if (strcmp(splitstr[i],"btime") == 0) {
 					btime = atoi(splitstr[i+1]);
+					if (origbtime == -1) origbtime = btime;
 				}
 			}
-
 			if (pos.tomove == WHITE) {
 				if (wtime != -1) movetime = wtime / 25;
 			}

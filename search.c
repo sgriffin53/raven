@@ -236,19 +236,19 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		return staticeval;
 	}
 	
-	// another attempt at null move pruning - doesn't work
+	// another attempt at null move pruning - doesn't work - gives illegal pvs
 	/*
-	if (TTmove.from == -1 && !incheck && !nullmove && !isEndgame(pos) && staticeval >= beta && (ply != 0) && depthleft >= 3) {
+	if (TTmove.from == -1 && !incheck && !nullmove && !isEndgame(pos) && staticeval >= beta && depthleft >= 2) {
 		pos->tomove = !pos->tomove;
 		int val = -alphaBeta(pos,-beta,-beta+1, depthleft - 1 - 0, 1, ply + 1, pv, endtime);
 		pos->tomove = !pos->tomove;
 		if (val >= beta) {
-			int verification = -alphaBeta(pos,beta - 1,-beta, depthleft - 1 - 0, 1, ply + 1, pv, endtime); // alpha_beta(p, md, beta - 1, beta, d, false, false);
+			int verification = -alphaBeta(pos,beta - 1,beta, depthleft - 0 - 0, 1, ply + 1, pv, endtime); // alpha_beta(p, md, beta - 1, beta, d, false, false);
 			
 			if (verification >= beta) return beta;
 		}
 	}
-	 */
+	*/
  	if (TTmove.from == -1) TTmove = *pv;
 	
 	// razoring
@@ -485,8 +485,8 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 	// Timing code
 	const clock_t begin = clock();
 	clock_t endtime = clock() + (movetime / 1000.0 * CLOCKS_PER_SEC);
-	clock_t maxendtime = endtime + (movetime * 10);
-	
+	clock_t maxendtime = endtime + (movetime * 1 / 1000.0 * CLOCKS_PER_SEC);
+	clock_t origendtime = endtime;
 	//printf("start %d end %d maxend %d\n",begin,endtime,maxendtime);
 	// Movegen
 	struct move moves[MAX_MOVES];
@@ -561,11 +561,26 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 		 */
 		//printf("clock %d cur %d max %d\n",clock(),endtime,maxendtime);
 		// Check how many times the PV has changed in the last 4 depths
-		/*
-		if (d > 4 && abs(score - lastscore) > 50) {
+		
+		int losingontime = 0;
+		int movetimedonepercent = time_spentms * 100 / movetime;
+		if (pos.tomove == WHITE) {
+			if (wtime < btime) losingontime = 1;
+		}
+		else {
+			if (btime < wtime) losingontime = 1;
+		}
+		int timeleftpercent;
+		if (pos.tomove == WHITE) {
+			timeleftpercent = wtime * 100 / origwtime; // time left as percentage of original time
+		}
+		if (pos.tomove == BLACK) {
+			timeleftpercent = btime * 100 / origbtime; // time left as percentage of original time
+		}
+		if (d > 4 && abs(score - lastscore) >= 0 && !losingontime && timeleftpercent > 30) {
 			int timeschanged = 0;
 			
-			for (int i = d - 1;i >= 0 && i > d - 6;i--) {
+			for (int i = d - 1;i >= 0 && i > d - 5;i--) {
 				int issame = 0;
 				struct move lastpv = pvlist[i-1];
 				if (pvlist[i].to == lastpv.to && pvlist[i].from == lastpv.from && pvlist[i].prom == lastpv.prom) {
@@ -574,35 +589,36 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 				if (!issame) timeschanged++;
 			}
 			
-			if (timeschanged >= 2) { 
-				// PV move has changed 3 times in last 3 iterations
+			if (timeschanged >= 1) { 
+				// PV move has changed at least one time in last 4 iterations
 				// Extend search time
-				int remaining_time = endtime - time_spent;
-				int remaining_timems = remaining_time*1000;
+				double remaining_time = endtime - time_spent;
+				double remaining_timems = remaining_time;
+				/*
 				if (time_spent_prevms == 0) time_spent_prevms = 1;
 				double factor = time_spentms / time_spent_prevms;
-				factor = factor * 1.6;
+				factor = 4.0;
 				double expectedtime = time_spentms * factor;
 				int expectedendtime = clock() + expectedtime;
-				int newendtime = origendtime + remaining_timems * 0.4;
+				 */
+				int newendtime = clock() + + remaining_timems + remaining_timems * 0.015;
 				if (newendtime > maxendtime) newendtime = maxendtime;
-				
+				//printf("extended time: max: %d, original: %d, new: %d, expected: %.2f\n",maxendtime,origendtime,newendtime,expectedtime);
 				//printf("extended time from %d to %d, max %d\n",endtime,newendtime,maxendtime);
 				endtime = newendtime;
 			}
 		}
-		*/
+		
 		lastscore = score;
 		// Predict whether we have enough time for next search and break if not
 		
-		if (d > 1 && time_spentms > 30) {
+		if (d > 1 && time_spentms > 30 && endtime == origendtime) {
 			if (time_spent_prevms == 0) time_spent_prevms = 1;
 			double factor = time_spentms / time_spent_prevms;
 			double expectedtime = time_spentms * 4;
 			int expectedendtime = clock() + expectedtime;
 			if (expectedendtime > endtime) break;
 		}
-		// Allocate more time if the score has changed drastically
 		
 		score = alphaBeta(&pos, -MATE_SCORE, MATE_SCORE, d, 0, 0, &pv, endtime);
 		
@@ -655,6 +671,7 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 			printf("%s ",movetostr(pvline.moves[i]));
 		}
 		printf("\n");
+		if (score == MATE_SCORE || score == -MATE_SCORE) break;
 	}
 	time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
 	time_spentms = (int)(time_spent*1000);
