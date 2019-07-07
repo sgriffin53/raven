@@ -185,18 +185,10 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	struct move TTmove = {.to=-1,.from=-1,.prom=-1,.cappiece=-1};
 	//TTmove = *pv;
 	int origAlpha = alpha;
+	int origBeta = beta;
 	
-	/*
-	// null move pruning - doesn't work
-	// if (!nullmove && !isEndgame(pos) && !incheck && !(alpha != beta - 1)) {
 	
-	if (!nullmove && !isEndgame(pos) && !incheck && ply != 0) {
-		pos->tomove = !pos->tomove;
-		int val = -alphaBeta(pos,-beta,-beta+1, depthleft - 1 - 2, 1, ply + 1, pv, endtime);
-		pos->tomove = !pos->tomove;
-		if (val >= beta) return beta;
-	}
-	*/
+	
 	
 	U64 hash;
 	if (currenthash == 0) {
@@ -227,15 +219,41 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		}
 		TTmove = TTdata.bestmove;
 	}
+
 	if (depthleft <= 0) {
 		return qSearch(pos, alpha, beta, ply + 1, endtime);
 
 	}
+	
 	int staticeval = taperedEval(pos);
 	if (!incheck && (ply > 0) && depthleft < 7 && staticeval - 90 * depthleft >= beta && staticeval < 9999) {
 		return staticeval;
 	}
+	// null move pruning
 	
+	// if (!nullmove && !isEndgame(pos) && !incheck && !(alpha != beta - 1)) {
+	/*
+	if (!nullmove && !incheck && ply != 0 && depthleft >= 3 && !isEndgame(pos)) {
+		const int orighalfmoves = pos->halfmoves;
+		const int origepsquare = pos->epsquare;
+		pos->tomove = !pos->tomove;
+		pos->halfmoves = 0;
+		pos->epsquare = -1;
+		posstack[posstackend] = *pos;
+		posstackend++;
+		const int val = -alphaBeta(pos,-beta,-beta+1, depthleft - 1 - 2, 1, ply + 1, pv, endtime);
+		pos->tomove = !pos->tomove;
+		pos->halfmoves = orighalfmoves;
+		pos->epsquare = origepsquare;
+		posstackend--;
+		if (val >= beta) {
+			//int verification = alphaBeta(pos,beta - 1,beta, depthleft - 1 - 3, 1, ply + 1, pv, endtime); // alpha_beta(p, md, beta - 1, beta, d, false, false);
+			
+			//if (verification >= beta) return beta;
+			return beta;
+		}
+	}
+	 */
 	// another attempt at null move pruning - doesn't work - gives illegal pvs
 	/*
 	if (TTmove.from == -1 && !incheck && !nullmove && !isEndgame(pos) && staticeval >= beta && depthleft >= 2) {
@@ -249,7 +267,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		}
 	}
 	*/
- 	if (TTmove.from == -1) TTmove = *pv;
+ 	//if (TTmove.from == -1) TTmove = *pv;
 	
 	// razoring
 	/*
@@ -284,6 +302,18 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		 f_prune = 1;	
 	
 	// IID
+	
+	if (TTmove.from == -1 && depthleft > 2) {
+		int newdepth = depthleft - 2;
+		int val = alphaBeta(pos, alpha, beta, newdepth, 0, ply + 1, pv, endtime);
+		TTmove = *pv;
+		//TTdata = getTTentry(&TT, hash);
+        //if (TTdata.hash == hash) {
+        //    TTmove = TTdata.bestmove;
+        //}
+	}
+	 
+	if (TTmove.from == -1) TTmove = *pv;
 	/*
 	int new_depth = depthleft;
     if (TTmove.from == -1 && depthleft >= 6 && staticeval + 150 >= beta) {
