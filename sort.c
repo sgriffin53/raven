@@ -6,6 +6,9 @@
 #include "globals.h"
 #include "move.h"
 #include "sort.h"
+#include "eval.h"
+#include "attacks.h"
+#include "makemove.h"
 
 int capval(char piece) {
 	piece = tolower(piece);
@@ -28,7 +31,6 @@ void sortMoves(struct position *pos, struct move *moves, const int num_moves, st
 	assert(pos);
 	assert(num_moves < MAX_MOVES);
 	int scores[MAX_MOVES] = {0};
-
 	// Score
 	for (int i = 0; i < num_moves; ++i) {
 		char cappiece = getPiece(pos,moves[i].to);
@@ -37,12 +39,6 @@ void sortMoves(struct position *pos, struct move *moves, const int num_moves, st
 		int butterflyval = butterfly[pos->tomove][moves[i].from][moves[i].to];
 		int histscore = histval;
 		if (butterflyval != 0) histscore = histval / butterflyval;
-		scores[i] = 0;
-		if (TTmove.from != -1) {
-			if ((moves[i].from == TTmove.from) && (moves[i].to == TTmove.to) && (moves[i].prom == TTmove.prom)) {
-				scores[i] = 5000000;
-			}
-		}
 		if ((killers[ply][0].to == moves[i].to) && (killers[ply][0].from == moves[i].from) && (killers[ply][0].prom == moves[i].prom)) {
 			scores[i] = 900000;
 		}
@@ -64,6 +60,13 @@ void sortMoves(struct position *pos, struct move *moves, const int num_moves, st
 				scores[i] = mvvlva(piece,cappiece);
 			}
 		}
+		if (TTmove.from != -1) {
+			if ((moves[i].from == TTmove.from) && (moves[i].to == TTmove.to) && (moves[i].prom == TTmove.prom)) {
+				scores[i] = 5000000;
+			}
+		}
+		
+		
 	}
 	// Sort
 	// insertion sort - doesn't work
@@ -84,6 +87,7 @@ void sortMoves(struct position *pos, struct move *moves, const int num_moves, st
 	 */
 	
 	// Sort
+	
 	for (int a = 0; a < num_moves-1; ++a) {
 		// Find best move
 		int index = a;
