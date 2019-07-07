@@ -302,7 +302,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		 f_prune = 1;	
 	
 	// IID
-	
+	/*
 	if (TTmove.from == -1 && depthleft > 2) {
 		int newdepth = depthleft - 2;
 		int val = alphaBeta(pos, alpha, beta, newdepth, 0, ply + 1, pv, endtime);
@@ -312,7 +312,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
         //    TTmove = TTdata.bestmove;
         //}
 	}
-	 
+	 */
 	if (TTmove.from == -1) TTmove = *pv;
 	/*
 	int new_depth = depthleft;
@@ -375,10 +375,10 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		// PV search - doesn't work
 		/*
 		if (fullwindow) {
-			score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 - r, 0, ply + 1, pv, endtime);
-			if (r > 0 && score > alpha) {
-				score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, ply + 1, pv, endtime);
-			}
+			score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, ply + 1, pv, endtime);
+			//if (r > 0 && score > alpha) {
+			//	score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, ply + 1, pv, endtime);
+			//}
 		}
 		else {
 			score = -alphaBeta(pos, -alpha-1, -alpha, depthleft - 1, 0, ply + 1, pv, endtime);
@@ -386,13 +386,13 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			//	score = -alphaBeta(pos, -alpha-1, -alpha, depthleft - 1, 0, ply + 1, pv, endtime);
 			//}
 			if (score > alpha) {
-				score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 - r, 0, ply + 1, pv, endtime);
-				if (r > 0 && score > alpha) {
-					score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, ply + 1, pv, endtime);
-				}
+				score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, ply + 1, pv, endtime);
+				//if (r > 0 && score > alpha) {
+				//	score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, ply + 1, pv, endtime);
+				//}
 			}
 		}
-		 */
+		*/
 		 
 		// Search
 
@@ -402,6 +402,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		if (r > 0 && score > alpha) {
 			score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, ply + 1, pv, endtime);
 		}
+		
 		if (extended) depthleft--;
 		
 		unmakeMove(pos);
@@ -550,27 +551,6 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 	struct move pvlist[128];
 	for(int d = 1; d <= searchdepth; ++d) {
 		
-		/*
-		int score = 0;
-		
-		if (d <= 3) {
-			score = alphaBeta(&pos, -MATE_SCORE, MATE_SCORE, d, 0, 0, &pv, endtime);
-		}
-		else {
-			int b[6] = {50, 200, MATE_SCORE};
-			for (int i = 0;i < 3;i++) {
-				int min = lastscore -b[i];
-				int max = lastscore + b[i];
-				score = alphaBeta(&pos, min, max, d, 0, 0, &pv, endtime);
-				if (-b[i] < score && score < b[i]) break;
-				//if (score > -b[i] && score < b[i]) break;
-			}
-		}
-		 
-		lastscore = 0;
-		*/
-		//rootdepth = d;
-		int origendtime = endtime;
 		time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
 		time_spentms = (int)(time_spent*1000);
 		/*
@@ -650,6 +630,23 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 			if (expectedendtime > endtime) break;
 		}
 		
+		/*
+		if (d <= 3) {
+			score = alphaBeta(&pos, -MATE_SCORE, MATE_SCORE, d, 0, 0, &pv, endtime);
+		}
+		else {
+			int b[6] = {50, 200, MATE_SCORE};
+			//lastscore = 0;
+			for (int i = 0;i < 3;i++) {
+				int min = lastscore -b[i];
+				int max = lastscore + b[i];
+				score = alphaBeta(&pos, min, max, d, 0, 0, &pv, endtime);
+				if (-b[i] < score && score < b[i]) break;
+				//if (score > -b[i] && score < b[i]) break;
+			}
+		}
+		 */
+		//lastscore = score;
 		score = alphaBeta(&pos, -MATE_SCORE, MATE_SCORE, d, 0, 0, &pv, endtime);
 		
 		// Ignore the result if we ran out of time
