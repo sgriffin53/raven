@@ -232,7 +232,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	// null move pruning
 	
 	// if (!nullmove && !isEndgame(pos) && !incheck && !(alpha != beta - 1)) {
-	/*
+	
 	if (!nullmove && !incheck && ply != 0 && depthleft >= 3 && !isEndgame(pos)) {
 		const int orighalfmoves = pos->halfmoves;
 		const int origepsquare = pos->epsquare;
@@ -241,33 +241,17 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		pos->epsquare = -1;
 		posstack[posstackend] = *pos;
 		posstackend++;
-		const int val = -alphaBeta(pos,-beta,-beta+1, depthleft - 1 - 2, 1, ply + 1, pv, endtime);
+		const int val = -alphaBeta(pos,-beta,-beta+1, depthleft - 1 - 3, 1, ply + 1, pv, endtime);
 		pos->tomove = !pos->tomove;
 		pos->halfmoves = orighalfmoves;
 		pos->epsquare = origepsquare;
 		posstackend--;
-		if (val >= beta) {
-			//int verification = alphaBeta(pos,beta - 1,beta, depthleft - 1 - 3, 1, ply + 1, pv, endtime); // alpha_beta(p, md, beta - 1, beta, d, false, false);
-			
-			//if (verification >= beta) return beta;
-			return beta;
-		}
-	}
-	 */
-	// another attempt at null move pruning - doesn't work - gives illegal pvs
-	/*
-	if (TTmove.from == -1 && !incheck && !nullmove && !isEndgame(pos) && staticeval >= beta && depthleft >= 2) {
-		pos->tomove = !pos->tomove;
-		int val = -alphaBeta(pos,-beta,-beta+1, depthleft - 1 - 0, 1, ply + 1, pv, endtime);
-		pos->tomove = !pos->tomove;
-		if (val >= beta) {
-			int verification = -alphaBeta(pos,beta - 1,beta, depthleft - 0 - 0, 1, ply + 1, pv, endtime); // alpha_beta(p, md, beta - 1, beta, d, false, false);
+		if (val >= origBeta || val >= beta) {
+			const int verification = alphaBeta(pos,beta - 1,beta, depthleft - 1 - 3, 1, ply + 1, pv, endtime); // alpha_beta(p, md, beta - 1, beta, d, false, false);
 			
 			if (verification >= beta) return beta;
 		}
 	}
-	*/
- 	//if (TTmove.from == -1) TTmove = *pv;
 	
 	// razoring
 	/*
@@ -373,23 +357,24 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		}
 		
 		// PV search - doesn't work
+		
 		/*
-		if (fullwindow) {
-			score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, ply + 1, pv, endtime);
-			//if (r > 0 && score > alpha) {
-			//	score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, ply + 1, pv, endtime);
-			//}
+		if (legalmoves == 1) {
+			score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 - r, 0, ply + 1, pv, endtime);
+			if (r > 0 && score > alpha) {
+				score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, ply + 1, pv, endtime);
+			}
 		}
 		else {
-			score = -alphaBeta(pos, -alpha-1, -alpha, depthleft - 1, 0, ply + 1, pv, endtime);
-			//if (r > 0 && score > alpha) {
-			//	score = -alphaBeta(pos, -alpha-1, -alpha, depthleft - 1, 0, ply + 1, pv, endtime);
-			//}
+			score = -alphaBeta(pos, -alpha-1, -alpha, depthleft - 1 - r, 0, ply + 1, pv, endtime);
+			if (r > 0 && score > alpha) {
+				score = -alphaBeta(pos, -alpha-1, -alpha, depthleft - 1, 0, ply + 1, pv, endtime);
+			}
 			if (score > alpha) {
-				score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, ply + 1, pv, endtime);
-				//if (r > 0 && score > alpha) {
-				//	score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, ply + 1, pv, endtime);
-				//}
+				score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 - r, 0, ply + 1, pv, endtime);
+				if (r > 0 && score > alpha) {
+					score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, ply + 1, pv, endtime);
+				}
 			}
 		}
 		*/
@@ -399,6 +384,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 - r, 0, ply + 1, pv, endtime);
 		
 		// Redo search
+		
 		if (r > 0 && score > alpha) {
 			score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, ply + 1, pv, endtime);
 		}
