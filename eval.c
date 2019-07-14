@@ -9,6 +9,21 @@
 #include <stdlib.h>
 
 int pieceval(const char inpiece) {
+	switch (inpiece) {
+		case 'p':
+		case 'P': return 100;
+		case 'n':
+		case 'N': return 300;
+		case 'b':
+		case 'B': return 300;
+		case 'r':
+		case 'R': return 525;
+		case 'q':
+		case 'Q': return 900;
+		case 'k':
+		case 'K': return 9999;
+	}
+	/*
 	if (inpiece == 'p') return 100;
 	if (inpiece == 'n') return 300;
 	if (inpiece == 'b') return 300;
@@ -21,7 +36,7 @@ int pieceval(const char inpiece) {
 	if (inpiece == 'R') return 525;
 	if (inpiece == 'Q') return 900;
 	if (inpiece == 'K') return 9999;
-
+*/
 	assert(0);
 
 	return 0;
@@ -544,10 +559,10 @@ int taperedEval(struct position *pos) {
 		while (BBrooks) {
 			int square = __builtin_ctzll(BBrooks);
 			BBrooks &= ~(1ULL << square);
-			BBattacks = Rmagic(square,BBoccupancy);
+			int BBattacks = Rmagic(square,BBoccupancy);
 			if (BBattacks & BBrooksstart) {
-				openingEval += 30;
-				endgameEval += 30;
+				openingEval += 40;
+				endgameEval += 40;
 				break;
 			}
 		}
@@ -561,10 +576,10 @@ int taperedEval(struct position *pos) {
 		while (BBrooks) {
 			int square = __builtin_ctzll(BBrooks);
 			BBrooks &= ~(1ULL << square);
-			BBattacks = Rmagic(square,BBoccupancy);
+			int BBattacks = Rmagic(square,BBoccupancy);
 			if (BBattacks & BBrooksstart) {
-				openingEval -= 30;
-				endgameEval -= 30;
+				openingEval -= 40;
+				endgameEval -= 40;
 				break;
 			}
 		}
