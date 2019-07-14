@@ -17,7 +17,7 @@ U64 perft(struct position *pos, int depth) {
 
 	U64 nodes = 0;
 	struct move moves[MAX_MOVES];
-	const int n_moves = genMoves(pos,moves);
+	const int n_moves = genMoves(pos,moves, 0);
 
 	for (int i = 0; i < n_moves;i++) {
 		makeMove(&moves[i], pos);
@@ -47,7 +47,7 @@ U64 splitperft(struct position *pos, int depth) {
 
 	if (depth == 0) return 1;
 
-	const int n_moves = genMoves(pos,moves);
+	const int n_moves = genMoves(pos,moves, 0);
 
 	for (int i = 0; i < n_moves;i++) {
 		makeMove(&moves[i], pos);

@@ -13,7 +13,7 @@ void makeMove(const struct move *move, struct position *pos) {
 	assert(pos);
 	pos->halfmoves += 1;
 	char piece = getPiece(pos,move->from);
-	char cappiece = getPiece(pos,move->to);
+	char cappiece = move->cappiece;
 	int newepsquare = -1; // init to -1, change to ep square if there is one
 	int torank = getrank(move->to);
 	char prompiece = move->prom;
@@ -199,8 +199,8 @@ void makeMovestr(const char move[], struct position *pos) {
 
 	int startsquareidx = strsquaretoidx(startsquare);
 	int endsquareidx = strsquaretoidx(endsquare);
-
-	struct move moveobj = {.from=startsquareidx,.to=endsquareidx,.prom=prompiece[0]};
+	char cappiece = getPiece(pos, endsquareidx);
+	struct move moveobj = {.from=startsquareidx,.to=endsquareidx,.prom=prompiece[0],.cappiece=cappiece};
 
 	makeMove(&moveobj, pos);
 }

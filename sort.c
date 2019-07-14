@@ -33,7 +33,7 @@ void sortMoves(struct position *pos, struct move *moves, const int num_moves, st
 	int scores[MAX_MOVES] = {0};
 	// Score
 	for (int i = 0; i < num_moves; ++i) {
-		char cappiece = getPiece(pos,moves[i].to);
+		char cappiece = moves[i].cappiece;
 		char piece = getPiece(pos,moves[i].from);
 		int histval = history[pos->tomove][moves[i].from][moves[i].to];
 		int butterflyval = butterfly[pos->tomove][moves[i].from][moves[i].to];
