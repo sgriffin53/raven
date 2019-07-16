@@ -81,15 +81,15 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 		//addTTentry(&TT, hash, 0, LOWERBOUND, TTmove, beta);
 		return beta;
 	}
-
+	
+	if (alpha < standpat) alpha = standpat;
+	
 	// delta pruning
 	const int BIG_DELTA = 975;
 	if (standpat < alpha - BIG_DELTA) {
 		nodesSearched++;
 		return alpha;
 	}
-
-	if (alpha < standpat) alpha = standpat;
 
 	struct move moves[MAX_MOVES];
 	const int num_moves = genMoves(pos,moves, 1);
@@ -224,6 +224,15 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 
 	}
 	int staticeval = taperedEval(pos);
+	
+	// static null pruning (reverse futility pruning)
+	
+	if (beta <= MATE_SCORE) {
+		if (depthleft == 1 && staticeval - 300 > beta) return beta;
+		if (depthleft == 2 && staticeval - 525 > beta) return beta;
+		if (depthleft == 3 && staticeval - 900 > beta) depthleft--;
+	}
+	
 	// null move pruning
 	
 	// if (!nullmove && !isEndgame(pos) && !incheck && !(alpha != beta - 1)) {
@@ -270,6 +279,20 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		if (value <= rWindow) return value;
 	}
 	*/
+	/*
+	
+	if (!incheck && depthleft <= 2) {
+		const int ralpha = alpha - 250 - depthleft * 50;
+		if (staticeval < ralpha) {
+			if (depthleft == 1 && ralpha < alpha) {
+				return qSearch(pos, alpha, beta, ply + 1, endtime);
+			}
+			int value = qSearch(pos, ralpha, ralpha + 1, ply + 1, endtime);
+			if (value <= ralpha) return value;
+		}
+	}
+	*/
+	
 	//U64 hash = generateHash(pos);
 	int f_prune = 0;
 	int fmargin[4] = { 0, 200, 300, 500 };
@@ -282,14 +305,16 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	
 	// IID
 	/*
-	if (TTmove.from == -1 && depthleft > 5) {
-		int newdepth = depthleft - 3;
+	if (TTmove.from == -1 && depthleft >= 6) {
+		int newdepth = 2;
+		if (newdepth < 1) newdepth = 1;
 		int val = alphaBeta(pos, alpha, beta, newdepth, 0, ply + 1, pv, endtime);
-		//TTmove = *pv;
-		TTdata = getTTentry(&TT, hash);
-        if (TTdata.hash == hash) {
-            TTmove = TTdata.bestmove;
-        }
+		//int val = qSearch(pos, alpha, beta, ply + 1, endtime);
+		TTmove = *pv;
+		//TTdata = getTTentry(&TT, hash);
+        //if (TTdata.hash == hash) {
+        //    TTmove = TTdata.bestmove;
+        //}
 	}
 	*/
 	/*
@@ -313,6 +338,35 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	struct move moves[MAX_MOVES];
 	const int num_moves = genMoves(pos,moves, 0);
 	sortMoves(pos,moves,num_moves,TTmove,ply);
+	
+	// Prob Cut
+	/*
+	
+	if (depthleft >= 5 && abs(beta) <= MATE_SCORE) {
+		int rbeta = min(MATE_SCORE, beta + 200);
+		int probcutcount = 0;
+		for (int i = 0;i < num_moves && probcutcount < 4;i++) {
+			makeMove(&moves[i],pos);
+			pos->tomove = !pos->tomove;
+			if (isCheck(pos)) {
+				unmakeMove(pos);
+				continue;
+			}
+			pos->tomove = !pos->tomove;
+			probcutcount++;
+			int probcutscore;
+			probcutscore = -qSearch(pos, -rbeta, -rbeta + 1, ply + 1, endtime);
+			if (probcutscore >= rbeta) probcutscore = -alphaBeta(pos, -rbeta, -rbeta + 1, depthleft - 4, 0, ply + 1, pv, endtime);
+			//probcutscore = -alphaBeta(pos, -rbeta, -rbeta + 1, depthleft - 4, 0, ply + 1, pv, endtime);
+			unmakeMove(pos);
+			if (probcutscore >= rbeta) {
+				return probcutscore;
+			}
+		}
+	}
+	*/
+	
+	
 	int score;
 	int bestscore = INT_MIN;
 	int legalmoves = 0;
@@ -322,6 +376,30 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	for (int i = 0;i < num_moves;i++) {
 		char piece = getPiece(pos,moves[i].from);
 		char cappiece = moves[i].cappiece;
+		
+		int extension = 0;
+		
+		/*
+		// Singular extensions and multi-cut
+		int isTTmove = 0;
+		if ((moves[i].from == TTmove.from) && (moves[i].to == TTmove.to) && (moves[i].prom == TTmove.prom)) {
+			isTTmove = 1;
+		}
+		
+		if (depthleft >= 5 && ply != 0 && isTTmove && abs(TTdata.score) < MATE_SCORE && TTdata.flag == LOWERBOUND) {
+			int singularBeta = TTdata.score - 2 * depthleft;
+			int halfdepth = depthleft / 2;
+			int value = alphaBeta(pos, singularBeta - 1, singularBeta, halfdepth, 0, ply + 1, pv, endtime);
+			if (value < singularBeta) {
+				extension = 1;
+			}
+			else if (staticeval >= beta && singularBeta >= beta) {
+				//*pv = TTmove;
+				return singularBeta;
+			}
+		}
+		*/
+		
 		makeMove(&moves[i],pos);
 		pos->tomove = !pos->tomove;
 		if (isCheck(pos)) {
@@ -347,14 +425,11 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		
 		int r = reduction(&moves[i], depthleft, cappiece, legalmoves, incheck, givescheck, ply);
 		
-		extended = 0;
 		if (piece == 'p' && getrank(moves[i].to) == 1) {
-			depthleft += 1;
-			extended = 1;
+			extension = 1;
 		}
 		else if (piece == 'P' && getrank(moves[i].to) == 6) {
-			extended = 1;
-			depthleft += 1;
+			extension = 1;
 		}
 		
 		// PV search - doesn't work
@@ -382,15 +457,13 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		 
 		// Search
 
-		score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 - r, 0, ply + 1, pv, endtime);
+		score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 - r + extension, 0, ply + 1, pv, endtime);
 		
 		// Redo search
 		
 		if (r > 0 && score > alpha) {
-			score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, ply + 1, pv, endtime);
+			score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 + extension, 0, ply + 1, pv, endtime);
 		}
-		
-		if (extended) depthleft--;
 		
 		unmakeMove(pos);
 		
