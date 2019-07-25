@@ -37,8 +37,8 @@ void sortMoves(struct position *pos, struct move *moves, const int num_moves, st
 		char piece = getPiece(pos,moves[i].from);
 		int histval = history[pos->tomove][moves[i].from][moves[i].to];
 		int butterflyval = butterfly[pos->tomove][moves[i].from][moves[i].to];
-		int histscore = histval;
-		if (butterflyval != 0) histscore = histval / butterflyval;
+		double histscore = (double)histval;
+		if (butterflyval != 0) histscore = (double)histval / (double)butterflyval;
 		if ((killers[ply][0].to == moves[i].to) && (killers[ply][0].from == moves[i].from) && (killers[ply][0].prom == moves[i].prom)) {
 			scores[i] = 900000;
 		}
@@ -46,18 +46,19 @@ void sortMoves(struct position *pos, struct move *moves, const int num_moves, st
 		else if ((killers[ply][1].to == moves[i].to) && (killers[ply][1].from == moves[i].from) && (killers[ply][1].prom == moves[i].prom)) {
 			scores[i] = 850000;
 		}
-		else if (histscore > 0) {
-			if (histscore > 700000) {
-				histscore = 700000;
+		else if (histscore > 0.0) {
+			histscore = 1000.0 + histscore * 100.0;
+			if (histscore > 700000.0) {
+				histscore = 700000.0;
 			}
-			scores[i] = histscore;
+			scores[i] = (int)histscore;
 		}
 		if (cappiece != '0') {
 			if (capval(cappiece) >= capval(piece)) {
 				scores[i] = 1000000 + mvvlva(piece, cappiece);
 			}
 			else {
-				scores[i] = mvvlva(piece,cappiece);
+				scores[i] = 700000 + mvvlva(piece,cappiece);
 			}
 		}
 		if (TTmove.from != -1) {
