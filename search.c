@@ -186,7 +186,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	int incheck = isCheck(pos);
 	if (incheck) depthleft++;
 	
-	struct move bestmove;
+	struct move bestmove = {.to=-1,.from=-1,.prom=-1,.cappiece=-1};;
 	struct move TTmove = {.to=-1,.from=-1,.prom=-1,.cappiece=-1};
 	//TTmove = *pv;
 	int origAlpha = alpha;
@@ -252,13 +252,21 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		pos->epsquare = -1;
 		posstack[posstackend] = *pos;
 		posstackend++;
-		const int val = -alphaBeta(pos,-beta,-beta+1, depthleft - 1 - 3, 1, ply + 1, pv, endtime);
+		int R = 3;
+		int verR = 3;
+		/*
+		if (ply % 2 == 1) { 
+			R = 5;
+			verR = 4;
+		}
+		 */
+		const int val = -alphaBeta(pos,-beta,-beta+1, depthleft - 1 - R, 1, ply + 1, pv, endtime);
 		pos->tomove = !pos->tomove;
 		pos->halfmoves = orighalfmoves;
 		pos->epsquare = origepsquare;
 		posstackend--;
 		if (val >= origBeta || val >= beta) {
-			const int verification = alphaBeta(pos,beta - 1,beta, depthleft - 1 - 3, 1, ply + 1, pv, endtime); // alpha_beta(p, md, beta - 1, beta, d, false, false);
+			const int verification = alphaBeta(pos,beta - 1,beta, depthleft - 1 - verR, 1, ply + 1, pv, endtime); // alpha_beta(p, md, beta - 1, beta, d, false, false);
 			
 			if (verification >= beta) return beta;
 		}
@@ -300,9 +308,9 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	/*
 	const int razoring_margin[4] = {0, 333, 353, 324};
 	if (!incheck && depthleft < 4 && staticeval <= alpha - razoring_margin[depthleft] && ply != 0) {
-		//if (depthleft <= 1) {
-		//	return qSearch(pos, alpha, beta, ply + 1, endtime);
-		//}
+		if (depthleft <= 1) {
+			return qSearch(pos, alpha, beta, ply + 1, endtime);
+		}
 		int margin = alpha - razoring_margin[depthleft];
 		int qvalue = qSearch(pos, margin, margin + 1, ply + 1, endtime);
 		if (qvalue <= margin) {
@@ -311,7 +319,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	}
 	*/
 	/*
-	if (!incheck && depthleft <= 4 && staticeval <= alpha - 300) {
+	if (!incheck && depthleft <= 2 && staticeval <= alpha - 300) {
 		if (depthleft == 1) return qSearch(pos, alpha, beta, ply + 1, endtime);
 		int rWindow = alpha - 300;
 		int value = qSearch(pos,rWindow,rWindow+1,ply + 1, endtime);
@@ -320,7 +328,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	*/
 	
 	/*
-	if (!incheck && depthleft <= 2) {
+	if (!incheck && depthleft <= 2 && ply != 0) {
 		const int ralpha = alpha - 250 - depthleft * 50;
 		if (staticeval < ralpha) {
 			if (depthleft == 1 && ralpha < alpha) {
@@ -331,25 +339,9 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		}
 	}
 	*/
-	/*
-	int rvalue = staticeval + 125;
-	if (rvalue < beta) {
-		if (depthleft == 1) {
-			int newvalue = qSearch(pos, alpha, beta, ply + 1, endtime);
-			return max(newvalue, rvalue);
-		}
-		rvalue += 175;
-		if (rvalue < beta && depthleft <= 3) {
-			int newvalue = qSearch(pos, alpha, beta, ply + 1, endtime);
-			if (newvalue < beta) {
-				return max(newvalue, rvalue);
-			}
-		}
-	}
-	*/
 	int f_prune = 0;
 	int fmargin[4] = { 0, 200, 300, 500 };
-
+	int fhistorythreshold[4] = { 50, 50, 50, 50 };
 	if (depthleft <= 3
 	&&  !incheck
 	&&   abs(alpha) < 9000
@@ -403,7 +395,6 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	
 	// Prob Cut
 	
-	
 	if (depthleft >= 5 && abs(beta) <= MATE_SCORE && staticeval + 100 >= beta + 100) {
 		int rbeta = min(MATE_SCORE, beta + 100);
 		int probcutcount = 0;
@@ -429,7 +420,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	
 	
 	
-	int score;
+	int score = 0;
 	int bestscore = INT_MIN;
 	int legalmoves = 0;
 	int fullwindow = 1;
@@ -439,6 +430,28 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		char piece = getPiece(pos,moves[i].from);
 		char cappiece = moves[i].cappiece;
 		
+		int histval = history[pos->tomove][moves[i].from][moves[i].to];
+		int butterflyval = butterfly[pos->tomove][moves[i].from][moves[i].to];
+		//int histscore = histval;
+		//if (butterflyval != 0) histscore = histval / butterflyval;
+		
+		int isTTmove = 0;
+		if (TTmove.from == moves[i].from && TTmove.to == moves[i].to && TTmove.prom == moves[i].prom) isTTmove = 1;
+		
+		int isKiller = 0;
+		if (killers[ply][0].from == moves[i].from && killers[ply][0].to == moves[i].to && killers[ply][0].prom == moves[i].prom) isKiller = 1;
+		if (killers[ply][1].from == moves[i].from && killers[ply][1].to == moves[i].to && killers[ply][1].prom == moves[i].prom) isKiller = 1;
+		
+		int histmargins[13] = { 120, 120, 120, 120, 150, 180, 180, 350, 550, 1000, 1500, 2000, 3000 };
+		//int histmargins[13] = { 120, 80, 100, 120, 120, 140, 140, 250, 750, 1100, 1500, 2000 };
+		int histmargin = histmargins[rootdepth];
+		
+		double cutoffpercent = ((double)histval * 100.0 / (double)(histval + butterflyval));
+		
+		if (!isTTmove && moves[i].cappiece == '0' && !isKiller
+			&& bestmove.from != -1 && legalmoves >= 1 && rootdepth <= 12 && (histval + butterflyval) > histmargin && cutoffpercent < 0.25 && ply != 0) {
+			continue;
+		}
 		int extension = 0;
 		
 		/*
@@ -451,13 +464,13 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		if (depthleft >= 5 && ply != 0 && isTTmove && abs(TTdata.score) < MATE_SCORE && TTdata.flag == LOWERBOUND) {
 			int singularBeta = TTdata.score - 2 * depthleft;
 			int halfdepth = depthleft / 2;
-			int value = alphaBeta(pos, singularBeta - 1, singularBeta, halfdepth, 0, ply + 1, pv, endtime);
+			int value = alphaBeta(pos, singularBeta - 1, singularBeta, halfdepth - 2, 0, ply + 1, pv, endtime);
 			if (value < singularBeta) {
-				//extension = 1;
+				extension = 1;
 			}
 			else if (staticeval >= beta && singularBeta >= beta) {
 				//*pv = TTmove;
-				return singularBeta;
+				//return singularBeta;
 			}
 		}
 		*/
@@ -474,10 +487,14 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		int givescheck = isCheck(pos);
 		legalmoves++;
 		
+		//if (histscore > 0) {
+		//	printf("hist val: %d\n",histscore);
+		//}
 		if (f_prune
 		&& legalmoves > 1
 		&&  cappiece == '0'
 		&&  moves[i].prom == 0
+		//&&  histscore <= fhistorythreshold[depthleft]
 		&& !givescheck
 		&& ply != 0) {
 		//&&  !isAttacked(pos,kingpos,pos->tomove)) {
@@ -495,19 +512,20 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		}
 		
 		// PV search - doesn't work
-		
 		/*
-		if (legalmoves == 1) {
+		r = r - extension;
+		
+		if (fullwindow) {
 			score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 - r, 0, ply + 1, pv, endtime);
 			if (r > 0 && score > alpha) {
 				score = -alphaBeta(pos, -beta, -alpha, depthleft - 1, 0, ply + 1, pv, endtime);
 			}
 		}
 		else {
-			score = -alphaBeta(pos, -alpha-1, -alpha, depthleft - 1 - r, 0, ply + 1, pv, endtime);
-			if (r > 0 && score > alpha) {
-				score = -alphaBeta(pos, -alpha-1, -alpha, depthleft - 1, 0, ply + 1, pv, endtime);
-			}
+			score = -alphaBeta(pos, -alpha-1, -alpha, depthleft - 1, 0, ply + 1, pv, endtime);
+			//if (r > 0 && score > alpha) {
+			//	score = -alphaBeta(pos, -alpha-1, -alpha, depthleft - 1, 0, ply + 1, pv, endtime);
+			//}
 			if (score > alpha) {
 				score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 - r, 0, ply + 1, pv, endtime);
 				if (r > 0 && score > alpha) {
@@ -676,6 +694,7 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 		
 		time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
 		time_spentms = (int)(time_spent*1000);
+		rootdepth = d;
 		/*
 		if (abs(score - lastscore) > 100 && d > 3) {
 			int remaining_time = endtime - time_spent;
