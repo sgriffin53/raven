@@ -15,8 +15,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-
-#define MATE_SCORE 9999
 #define MAX_MOVES 2048
 
 int reduction(const struct move *move, const int depthleft, char cappiece, int legalmoves, int incheck, int givescheck, int ply) {
@@ -225,10 +223,20 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		TTmove = TTdata.bestmove;
 	}
 	
+	/*
+	if (!incheck && depthleft <= 0) {
+		int lazyeval = evalBoard(pos);
+		int lazyalpha = 1000;
+		int lazybeta = 400;
+		if (lazyeval - lazybeta >= beta) return beta;
+		if (lazyeval + lazyalpha < alpha) return alpha;
+	}
+	*/
 	if (depthleft <= 0) {
 		return qSearch(pos, alpha, beta, ply + 1, endtime);
 
 	}
+	
 	int staticeval = taperedEval(pos);
 	
 	// static null pruning (reverse futility pruning)
@@ -444,12 +452,15 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		
 		int histmargins[13] = { 120, 120, 120, 120, 150, 180, 180, 350, 550, 1000, 1500, 2000, 3000 };
 		//int histmargins[13] = { 120, 80, 100, 120, 120, 140, 140, 250, 750, 1100, 1500, 2000 };
-		int histmargin = histmargins[rootdepth];
+		int histmargin;
+		if (rootdepth <= 12) histmargin = histmargins[rootdepth];
+		else histmargin = 3000;
+		
 		
 		double cutoffpercent = ((double)histval * 100.0 / (double)(histval + butterflyval));
 		
 		if (!isTTmove && moves[i].cappiece == '0' && !isKiller
-			&& bestmove.from != -1 && legalmoves >= 1 && rootdepth <= 12 && (histval + butterflyval) > histmargin && cutoffpercent < 0.25 && ply != 0) {
+			&& bestmove.from != -1 && legalmoves >= 1 && (histval + butterflyval) > histmargin && cutoffpercent < 1.25 && ply != 0) {
 			continue;
 		}
 		int extension = 0;
@@ -544,7 +555,9 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		if (r > 0 && score > alpha) {
 			score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 + extension, 0, ply + 1, pv, endtime);
 		}
-		
+		if (ply == 0) {
+			//printf("ab: depth: %d, move: %s, score: %d\n", depthleft, movetostr(moves[i]), score);
+		}
 		unmakeMove(pos);
 		
 		if (score > alpha) {
