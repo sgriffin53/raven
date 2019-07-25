@@ -29,3 +29,5 @@ Reverse Futility Pruning
 ProbCut
 
 Null Move Pruning
+
+History Pruning
