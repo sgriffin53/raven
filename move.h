@@ -10,6 +10,7 @@ struct move {
 	int from;
 	int to;
 	char prom;
+	char piece;
 	char cappiece;
 };
 

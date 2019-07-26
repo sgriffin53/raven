@@ -12,6 +12,8 @@ const int WPdirs[2][2] = {{-1,+1},{+1,+1}};
 int genKingMoves(struct position *pos, int square, struct move *moves, int forqsearch) {
 	U64 BBattacks = 0ULL;
 	int num_moves = 0;
+	char piece = 'K';
+	if (pos->tomove == BLACK) piece = 'k';
 	if (pos->tomove == WHITE) {
 		U64 BBking = (pos->BBkings & pos->BBwhitepieces);
 		BBattacks = BBkingattacks(BBking);
@@ -32,6 +34,7 @@ int genKingMoves(struct position *pos, int square, struct move *moves, int forqs
 			moves[num_moves].to = movesquare;
 			moves[num_moves].prom = 0;
 			moves[num_moves].cappiece = cappiece;
+			moves[num_moves].piece = piece;
 			num_moves++;
 		}
 	}
@@ -51,6 +54,7 @@ int genKingMoves(struct position *pos, int square, struct move *moves, int forqs
 					moves[num_moves].to = G1;
 					moves[num_moves].prom = 0;
 					moves[num_moves].cappiece = '0';
+					moves[num_moves].piece = piece;
 					num_moves += 1;
 				}
 		}
@@ -68,6 +72,7 @@ int genKingMoves(struct position *pos, int square, struct move *moves, int forqs
 					moves[num_moves].to = C1;
 					moves[num_moves].prom = 0;
 					moves[num_moves].cappiece = '0';
+					moves[num_moves].piece = piece;
 					num_moves += 1;
 				}
 		}
@@ -87,6 +92,7 @@ int genKingMoves(struct position *pos, int square, struct move *moves, int forqs
 					moves[num_moves].to = G8;
 					moves[num_moves].prom = 0;
 					moves[num_moves].cappiece = '0';
+					moves[num_moves].piece = piece;
 					num_moves += 1;
 				}
 		}
@@ -104,6 +110,7 @@ int genKingMoves(struct position *pos, int square, struct move *moves, int forqs
 					moves[num_moves].to = C8;
 					moves[num_moves].prom = 0;
 					moves[num_moves].cappiece = '0';
+					moves[num_moves].piece = piece;
 					num_moves += 1;
 				}
 		}
@@ -113,6 +120,8 @@ int genKingMoves(struct position *pos, int square, struct move *moves, int forqs
 int genKnightMoves(struct position *pos, int square, struct move *moves, int forqsearch) {
 	U64 BBattacks = 0ULL;
 	int num_moves = 0;
+	char piece = 'N';
+	if (pos->tomove == BLACK) piece = 'n';
 	if (pos->tomove == WHITE) {
 		U64 BBknight = (1ULL << square);
 		BBattacks = BBknightattacks(BBknight);
@@ -126,13 +135,15 @@ int genKnightMoves(struct position *pos, int square, struct move *moves, int for
 	//dspBB(BBattacks);
 	while (BBattacks != 0) {
 		int movesquare = __builtin_ctzll(BBattacks);
-		BBattacks &= ~(1ULL << movesquare);
+		//BBattacks &= ~(1ULL << movesquare);
+		BBattacks &= BBattacks - 1;
 		char cappiece = getPiece(pos,movesquare);
 		if (!forqsearch || (forqsearch && cappiece != '0')) {
 			moves[num_moves].from = square;
 			moves[num_moves].to = movesquare;
 			moves[num_moves].prom = 0;
 			moves[num_moves].cappiece = cappiece;
+			moves[num_moves].piece = piece;
 			num_moves++;
 		}
 	}
@@ -141,6 +152,8 @@ int genKnightMoves(struct position *pos, int square, struct move *moves, int for
 int genBishopMoves(struct position *pos, int square, struct move *moves, int forqsearch) {
 	U64 BBattacks = 0ULL;
 	int num_moves = 0;
+	char piece = 'B';
+	if (pos->tomove == BLACK) piece = 'b';
 	if (pos->tomove == WHITE) {
 		U64 BBoccupancy = (pos->BBwhitepieces | pos->BBblackpieces);
 		BBattacks = Bmagic(square,BBoccupancy);
@@ -153,13 +166,15 @@ int genBishopMoves(struct position *pos, int square, struct move *moves, int for
 	}
 	while (BBattacks != 0) {
 		int movesquare = __builtin_ctzll(BBattacks);
-		BBattacks &= ~(1ULL << movesquare);
+		//BBattacks &= ~(1ULL << movesquare);
+		BBattacks &= BBattacks - 1;
 		char cappiece = getPiece(pos,movesquare);
 		if (!forqsearch || (forqsearch && cappiece != '0')) {
 			moves[num_moves].from = square;
 			moves[num_moves].to = movesquare;
 			moves[num_moves].prom = 0;
 			moves[num_moves].cappiece = cappiece;
+			moves[num_moves].piece = piece;
 			num_moves++;
 		}
 	}
@@ -168,6 +183,8 @@ int genBishopMoves(struct position *pos, int square, struct move *moves, int for
 int genRookMoves(struct position *pos, int square, struct move *moves, int forqsearch) {
 	U64 BBattacks = 0ULL;
 	int num_moves = 0;
+	char piece = 'R';
+	if (pos->tomove == BLACK) piece = 'r';
 	if (pos->tomove == WHITE) {
 		U64 BBoccupancy = (pos->BBwhitepieces | pos->BBblackpieces);
 		BBattacks = Rmagic(square,BBoccupancy);
@@ -180,13 +197,15 @@ int genRookMoves(struct position *pos, int square, struct move *moves, int forqs
 	}
 	while (BBattacks != 0) {
 		int movesquare = __builtin_ctzll(BBattacks);
-		BBattacks &= ~(1ULL << movesquare);
+		//BBattacks &= ~(1ULL << movesquare);
+		BBattacks &= BBattacks - 1;
 		char cappiece = getPiece(pos,movesquare);
 		if (!forqsearch || (forqsearch && cappiece != '0')) {
 			moves[num_moves].from = square;
 			moves[num_moves].to = movesquare;
 			moves[num_moves].prom = 0;
 			moves[num_moves].cappiece = cappiece;
+			moves[num_moves].piece = piece;
 			num_moves++;
 		}
 	}
@@ -195,6 +214,8 @@ int genRookMoves(struct position *pos, int square, struct move *moves, int forqs
 int genQueenMoves(struct position *pos, int square, struct move *moves, int forqsearch) {
 	U64 BBattacks = 0ULL;
 	int num_moves = 0;
+	char piece = 'Q';
+	if (pos->tomove == BLACK) piece = 'q';
 	if (pos->tomove == WHITE) {
 		U64 BBoccupancy = (pos->BBwhitepieces | pos->BBblackpieces);
 		BBattacks = Rmagic(square,BBoccupancy) | Bmagic(square,BBoccupancy);
@@ -207,13 +228,15 @@ int genQueenMoves(struct position *pos, int square, struct move *moves, int forq
 	}
 	while (BBattacks != 0) {
 		int movesquare = __builtin_ctzll(BBattacks);
-		BBattacks &= ~(1ULL << movesquare);
+		//BBattacks &= ~(1ULL << movesquare);
+		BBattacks &= BBattacks - 1;
 		char cappiece = getPiece(pos,movesquare);
 		if (!forqsearch || (forqsearch && cappiece != '0')) {
 			moves[num_moves].from = square;
 			moves[num_moves].to = movesquare;
 			moves[num_moves].prom = 0;
 			moves[num_moves].cappiece = cappiece;
+			moves[num_moves].piece = piece;
 			num_moves++;
 		}
 	}
@@ -225,6 +248,9 @@ int genPawnMoves(struct position *pos, int square, struct move *moves, int forqs
 	int num_moves = 0;
 	U64 BBpawn = (1ULL << square);
 	U64 BBmove;
+	
+	char piece = 'P';
+	if (pos->tomove == BLACK) piece = 'p';
 	// white pawns
 	if (pos->tomove == WHITE) {
 		// double pawn pushe
@@ -238,6 +264,7 @@ int genPawnMoves(struct position *pos, int square, struct move *moves, int forqs
 					moves[num_moves].to = movesquare;
 					moves[num_moves].prom = 0;
 					moves[num_moves].cappiece = '0';
+					moves[num_moves].piece = piece;
 					num_moves++;
 				}
 			}
@@ -251,21 +278,25 @@ int genPawnMoves(struct position *pos, int square, struct move *moves, int forqs
 					moves[num_moves].to = movesquare;
 					moves[num_moves].prom = 'q';
 					moves[num_moves].cappiece = '0';
+					moves[num_moves].piece = piece;
 					num_moves++;
 					moves[num_moves].from = square;
 					moves[num_moves].to = movesquare;
 					moves[num_moves].prom = 'r';
 					moves[num_moves].cappiece = '0';
+					moves[num_moves].piece = piece;
 					num_moves++;
 					moves[num_moves].from = square;
 					moves[num_moves].to = movesquare;
 					moves[num_moves].prom = 'b';
 					moves[num_moves].cappiece = '0';
+					moves[num_moves].piece = piece;
 					num_moves++;
 					moves[num_moves].from = square;
 					moves[num_moves].to = movesquare;
 					moves[num_moves].prom = 'n';
 					moves[num_moves].cappiece = '0';
+					moves[num_moves].piece = piece;
 					num_moves++;
 			}
 			else {
@@ -274,6 +305,7 @@ int genPawnMoves(struct position *pos, int square, struct move *moves, int forqs
 					moves[num_moves].to = movesquare;
 					moves[num_moves].prom = 0;
 					moves[num_moves].cappiece = '0';
+					moves[num_moves].piece = piece;
 					num_moves++;
 				}
 			}
@@ -289,21 +321,25 @@ int genPawnMoves(struct position *pos, int square, struct move *moves, int forqs
 				moves[num_moves].to = movesquare;
 				moves[num_moves].prom = 'q';
 				moves[num_moves].cappiece = cappiece;
+				moves[num_moves].piece = piece;
 				num_moves++;
 				moves[num_moves].from = square;
 				moves[num_moves].to = movesquare;
 				moves[num_moves].prom = 'r';
 				moves[num_moves].cappiece = cappiece;
+				moves[num_moves].piece = piece;
 				num_moves++;
 				moves[num_moves].from = square;
 				moves[num_moves].to = movesquare;
 				moves[num_moves].prom = 'b';
 				moves[num_moves].cappiece = cappiece;
+				moves[num_moves].piece = piece;
 				num_moves++;
 				moves[num_moves].from = square;
 				moves[num_moves].to = movesquare;
 				moves[num_moves].prom = 'n';
 				moves[num_moves].cappiece = cappiece;
+				moves[num_moves].piece = piece;
 				num_moves++;
 			}
 			else {
@@ -312,9 +348,11 @@ int genPawnMoves(struct position *pos, int square, struct move *moves, int forqs
 				moves[num_moves].to = movesquare;
 				moves[num_moves].prom = 0;
 				moves[num_moves].cappiece = cappiece;
+				moves[num_moves].piece = piece;
 				num_moves++;
 			}
-			BBmove &= ~(1ULL << movesquare);
+			//BBmove &= ~(1ULL << movesquare);
+			BBmove &= BBmove - 1;
 		}
 	}
 	// black pawns
@@ -329,6 +367,7 @@ int genPawnMoves(struct position *pos, int square, struct move *moves, int forqs
 					moves[num_moves].to = movesquare;
 					moves[num_moves].prom = 0;
 					moves[num_moves].cappiece = '0';
+					moves[num_moves].piece = piece;
 					num_moves++;
 				}
 			}
@@ -342,21 +381,25 @@ int genPawnMoves(struct position *pos, int square, struct move *moves, int forqs
 					moves[num_moves].to = movesquare;
 					moves[num_moves].prom = 'q';
 					moves[num_moves].cappiece = '0';
+					moves[num_moves].piece = piece;
 					num_moves++;
 					moves[num_moves].from = square;
 					moves[num_moves].to = movesquare;
 					moves[num_moves].prom = 'r';
 					moves[num_moves].cappiece = '0';
+					moves[num_moves].piece = piece;
 					num_moves++;
 					moves[num_moves].from = square;
 					moves[num_moves].to = movesquare;
 					moves[num_moves].prom = 'b';
 					moves[num_moves].cappiece = '0';
+					moves[num_moves].piece = piece;
 					num_moves++;
 					moves[num_moves].from = square;
 					moves[num_moves].to = movesquare;
 					moves[num_moves].prom = 'n';
 					moves[num_moves].cappiece = '0';
+					moves[num_moves].piece = piece;
 					num_moves++;
 			}
 			else {
@@ -365,6 +408,7 @@ int genPawnMoves(struct position *pos, int square, struct move *moves, int forqs
 					moves[num_moves].to = movesquare;
 					moves[num_moves].prom = 0;
 					moves[num_moves].cappiece = '0';
+					moves[num_moves].piece = piece;
 					num_moves++;
 				}
 			}
@@ -380,21 +424,25 @@ int genPawnMoves(struct position *pos, int square, struct move *moves, int forqs
 				moves[num_moves].to = movesquare;
 				moves[num_moves].prom = 'q';
 				moves[num_moves].cappiece = cappiece;
+				moves[num_moves].piece = piece;
 				num_moves++;
 				moves[num_moves].from = square;
 				moves[num_moves].to = movesquare;
 				moves[num_moves].prom = 'r';
 				moves[num_moves].cappiece = cappiece;
+				moves[num_moves].piece = piece;
 				num_moves++;
 				moves[num_moves].from = square;
 				moves[num_moves].to = movesquare;
 				moves[num_moves].prom = 'b';
 				moves[num_moves].cappiece = cappiece;
+				moves[num_moves].piece = piece;
 				num_moves++;
 				moves[num_moves].from = square;
 				moves[num_moves].to = movesquare;
 				moves[num_moves].prom = 'n';
 				moves[num_moves].cappiece = cappiece;
+				moves[num_moves].piece = piece;
 				num_moves++;
 			}
 			else {
@@ -403,9 +451,11 @@ int genPawnMoves(struct position *pos, int square, struct move *moves, int forqs
 				moves[num_moves].to = movesquare;
 				moves[num_moves].prom = 0;
 				moves[num_moves].cappiece = cappiece;
+				moves[num_moves].piece = piece;
 				num_moves++;
 			}
-			BBmove &= ~(1ULL << movesquare);
+			//BBmove &= ~(1ULL << movesquare);
+			BBmove &= BBmove - 1;
 		}
 	}
 	return num_moves;
@@ -441,6 +491,7 @@ int genMoves(struct position *pos, struct move *moves, int forqsearch) {
 						moves[num_moves].to = pos->epsquare;
 						moves[num_moves].prom = 0;
 						moves[num_moves].cappiece = '0';
+						moves[num_moves].piece = piece;
 						num_moves++;
 					}
 				}
@@ -463,6 +514,7 @@ int genMoves(struct position *pos, struct move *moves, int forqsearch) {
 						moves[num_moves].to = pos->epsquare;
 						moves[num_moves].prom = 0;
 						moves[num_moves].cappiece = '0';
+						moves[num_moves].piece = piece;
 						num_moves++;
 					}
 				}
@@ -511,7 +563,8 @@ int genMoves(struct position *pos, struct move *moves, int forqsearch) {
 			num_moves += genQueenMoves(pos,square,&moves[num_moves]);
 		}
 		*/
-		BBallpieces &= ~(1ULL << square);
+		//BBallpieces &= ~(1ULL << square);
+		BBallpieces &= BBallpieces - 1;
 	}
 	return num_moves;
 }

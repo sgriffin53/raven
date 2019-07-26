@@ -435,7 +435,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	int extended = 0;
 	
 	for (int i = 0;i < num_moves;i++) {
-		char piece = getPiece(pos,moves[i].from);
+		char piece = moves[i].piece;
 		char cappiece = moves[i].cappiece;
 		
 		int histval = history[pos->tomove][moves[i].from][moves[i].to];
