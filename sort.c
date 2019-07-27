@@ -1,6 +1,7 @@
 
 #include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "position.h"
 #include "globals.h"
@@ -9,6 +10,24 @@
 #include "eval.h"
 #include "attacks.h"
 #include "makemove.h"
+#include "PST.h"
+
+struct movescore {
+	struct move move;
+	int score;
+};
+int compar(const void *aa, const void *bb) { const struct movescore *a = aa, *b = bb; return b->score - a->score; }
+
+const int arrCenterManhattanDistancesort[64] = { // char is sufficient as well, also unsigned
+  3, 3, 3, 3, 3, 3, 3, 3,
+  3, 2, 2, 2, 2, 2, 2, 3,
+  3, 2, 1, 1, 1, 1, 2, 3,
+  3, 2, 1, 0, 0, 1, 2, 3,
+  3, 2, 1, 0, 0, 1, 2, 3,
+  3, 2, 1, 1, 1, 1, 2, 3,
+  3, 2, 2, 2, 2, 2, 2, 3,
+  3, 3, 3, 3, 3, 3, 3, 3
+};
 
 int capval(char piece) {
 	piece = tolower(piece);
@@ -30,21 +49,42 @@ void sortMoves(struct position *pos, struct move *moves, const int num_moves, st
 	assert(moves);
 	assert(pos);
 	assert(num_moves < MAX_MOVES);
-	int scores[MAX_MOVES] = {0};
+	int scores[num_moves];
+	//struct movescore movescores[num_moves];
 	// Score
-	for (int i = 0; i < num_moves; ++i) {
+	for (int i = 0; i < num_moves; i++) {
+
+		scores[i] = 0;
 		char cappiece = moves[i].cappiece;
-		char piece = getPiece(pos,moves[i].from);
+		//char piece = getPiece(pos,moves[i].from);
+		char piece = moves[i].piece;
 		int histval = history[pos->tomove][moves[i].from][moves[i].to];
 		int butterflyval = butterfly[pos->tomove][moves[i].from][moves[i].to];
 		double histscore = (double)histval;
 		if (butterflyval != 0) histscore = (double)histval / (double)butterflyval;
-		if ((killers[ply][0].to == moves[i].to) && (killers[ply][0].from == moves[i].from) && (killers[ply][0].prom == moves[i].prom)) {
+		if (TTmove.from != -1
+			&& (moves[i].from == TTmove.from) && (moves[i].to == TTmove.to) && (moves[i].prom == TTmove.prom)) {
+				scores[i] = 5000000;
+				continue;
+		}
+		else if (cappiece != '0'
+			&& (capval(cappiece) >= capval(piece))) {
+				scores[i] = 1000000 + mvvlva(piece, cappiece);
+				continue;
+		}
+		else if (cappiece != '0'
+			&& capval(cappiece) < capval(piece)) {
+				scores[i] = 700000 + mvvlva(piece,cappiece);
+				continue;
+		}
+		else if ((killers[ply][0].to == moves[i].to) && (killers[ply][0].from == moves[i].from) && (killers[ply][0].prom == moves[i].prom)) {
 			scores[i] = 900000;
+			continue;
 		}
 		
 		else if ((killers[ply][1].to == moves[i].to) && (killers[ply][1].from == moves[i].from) && (killers[ply][1].prom == moves[i].prom)) {
 			scores[i] = 850000;
+			continue;
 		}
 		else if (histscore > 0.0) {
 			histscore = 1000.0 + histscore * 100.0;
@@ -52,41 +92,68 @@ void sortMoves(struct position *pos, struct move *moves, const int num_moves, st
 				histscore = 700000.0;
 			}
 			scores[i] = (int)histscore;
+			continue;
 		}
-		if (cappiece != '0') {
-			if (capval(cappiece) >= capval(piece)) {
-				scores[i] = 1000000 + mvvlva(piece, cappiece);
-			}
-			else {
-				scores[i] = 700000 + mvvlva(piece,cappiece);
-			}
-		}
-		if (TTmove.from != -1) {
-			if ((moves[i].from == TTmove.from) && (moves[i].to == TTmove.to) && (moves[i].prom == TTmove.prom)) {
-				scores[i] = 5000000;
-			}
-		}
-		
-		
 	}
-	// Sort
-	// insertion sort - doesn't work
+	//qsort(movescores, sizeof(movescores)/sizeof(movescores[0]), sizeof(movescores[0]), compar);
+	//for (int i = 0; i < num_moves;i++) {
+	//	moves[i] = movescores[i].move;
+	//}
+	
 	/*
-	for (int a = 1; a < num_moves; a++) {
-		int j = a;
-		while (j > 0 && scores[j-1] > scores[j]) {
-			int scorecopy = scores[j];
-			scores[j] = scores[j-1];
-			scores[j-1] = scorecopy;
+	// selection sort - slower than bubble sort
+	int i, j;
+	for (i = 0;i < num_moves - 1;i++) {
+		int position = i;
+		for (j = i+1;j < num_moves - 1;j++) {
+			if (scores[position] < scores[j]) {
+				position = j;
+			}
+		}
+		if (position != i) {
+			int scorecopy = scores[i];
+			scores[i] = scores[position];
+			scores[position] = scorecopy;
 			
-			struct move movecopy = moves[j];
-			moves[j] = moves[j-1];
-			moves[j-1] = movecopy;
-			j = j - 1;
+			struct move movecopy = moves[i];
+			moves[i] = moves[position];
+			moves[position] = movecopy;
 		}
 	}
 	 */
-	
+	// Sort
+	// insertion sort - doesn't work
+	/*
+	for (int i = 1;i < num_moves;i++) {
+		int j = i;
+		while (j > 0 && scores[j] >= scores[j - 1]) {
+			int temp = scores[j];
+			scores[j] = scores[j-1];
+			scores[j-1] = temp;
+			
+			struct move tempmove = moves[j];
+			moves[j] = moves[j-1];
+			moves[j-1] = tempmove;
+			
+			j--;
+		}
+	}
+	*/
+	/*
+	for (int a = 1; a < num_moves; a++) {
+		int temp = scores[a];
+		struct move tempmove = moves[a];
+		int j = a - 1;
+		while (j >= 0 && scores[j] < temp) {
+			scores[j+1] = scores[j];
+			moves[j+1] = moves[j];
+			
+			j = j - 1;
+		}
+		scores[j+1] = temp;
+		moves[j+1] = tempmove;
+	}
+	 */
 	// Sort
 	
 	for (int a = 0; a < num_moves-1; ++a) {
