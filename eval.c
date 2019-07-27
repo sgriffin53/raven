@@ -5,8 +5,20 @@
 #include "bitboards.h"
 #include "magicmoves.h"
 #include "globals.h"
+#include "misc.h"
 #include <stdio.h>
 #include <stdlib.h>
+
+const int arrCenterManhattanDistance[64] = { // char is sufficient as well, also unsigned
+  6, 5, 4, 3, 3, 4, 5, 6,
+  5, 4, 3, 2, 2, 3, 4, 5,
+  4, 3, 2, 1, 1, 2, 3, 4,
+  3, 2, 1, 0, 0, 1, 2, 3,
+  3, 2, 1, 0, 0, 1, 2, 3,
+  4, 3, 2, 1, 1, 2, 3, 4,
+  5, 4, 3, 2, 2, 3, 4, 5,
+  6, 5, 4, 3, 3, 4, 5, 6
+};
 
 int pieceval(const char inpiece) {
 	switch (inpiece) {
@@ -90,10 +102,12 @@ int taperedEval(struct position *pos) {
     openingEval += white_pieces - black_pieces;
 	endgameEval += white_pieces - black_pieces;
 	material += white_pieces - black_pieces;
+	
 
 	while (BBoccupied != 0) {
 		int square = __builtin_ctzll(BBoccupied);
-		BBoccupied &= ~(1ULL << square);
+		//BBoccupied &= ~(1ULL << square);
+		BBoccupied &= BBoccupied - 1;
 		char piece = getPiece(pos,square);
 		//int piececol;
 		//if ((piece >= 'a') && (piece <= 'z')) {
@@ -127,6 +141,18 @@ int taperedEval(struct position *pos) {
 		}
 		*/
 	}
+	
+	// side to move bonus
+	
+	if (pos->tomove == WHITE) {
+		openingEval += 20;
+		endgameEval += 20;
+	}
+	else {
+		openingEval -= 20;
+		endgameEval -= 20;
+	}
+	
 	// bonus for pieces being near enemy king
 	
 	// white pieces attacking black king
@@ -249,13 +275,17 @@ int taperedEval(struct position *pos) {
 	int WpassedRankBonus[8] = {0, 10, 10, 15, 25, 80, 120, 0};
 	int BpassedRankBonus[8] = {0, 120, 80, 25, 15, 10, 10, 0};
 	
+	U64 BBwhitePP = 0ULL;
+	U64 BBblackPP = 0ULL;
+	
 	U64 BBwhitepawns = (pos->BBwhitepieces & pos->BBpawns);
 	while (BBwhitepawns) {
 		
 		// passed pawns
 		
 		int square = __builtin_ctzll(BBwhitepawns);
-		BBwhitepawns &= ~(1ULL << square);
+		//BBwhitepawns &= ~(1ULL << square);
+		BBwhitepawns &= BBwhitepawns - 1;
 		U64 BBpiece = (1ULL << square);
 		U64 BBmidsquare = BBpiece;
 		U64 BBchecksquares = 0ULL;
@@ -271,6 +301,7 @@ int taperedEval(struct position *pos) {
 		}
 		U64 BBenemypawns = (BBchecksquares & (pos->BBblackpieces & pos->BBpawns));
 		if (BBenemypawns == 0) {
+			BBwhitePP |= square;
 			int bonus = WpassedRankBonus[startrank];
 			openingEval += 0.5 * bonus;
 			endgameEval += 1 * bonus;
@@ -288,7 +319,8 @@ int taperedEval(struct position *pos) {
 	while (BBblackpawns) {
 		// passed pawns
 		int square = __builtin_ctzll(BBblackpawns);
-		BBblackpawns &= ~(1ULL << square);
+		//BBblackpawns &= ~(1ULL << square);
+		BBblackpawns &= BBblackpawns - 1;
 		U64 BBpiece = (1ULL << square);
 		U64 BBmidsquare = BBpiece;
 		U64 BBchecksquares = 0ULL;
@@ -304,6 +336,7 @@ int taperedEval(struct position *pos) {
 		}
 		U64 BBenemypawns = (BBchecksquares & (pos->BBwhitepieces & pos->BBpawns));
 		if (BBenemypawns == 0) {
+			BBblackPP |= square;
 			int bonus = BpassedRankBonus[startrank];
 			openingEval -= 0.5 * bonus;
 			endgameEval -= 1 * bonus;
@@ -318,14 +351,351 @@ int taperedEval(struct position *pos) {
 			endgameEval -= 20;
 		}
 	}
-
+	
+	// penalty for passed pawns being blocked
+	/*
+	// white
+	openingEval -= 10 * __builtin_popcountll((BBwhitePP<<8) & (pos->BBwhitepieces | pos->BBblackpieces));
+	endgameEval -= 20 * __builtin_popcountll((BBwhitePP<<8) & (pos->BBwhitepieces | pos->BBblackpieces));
+	
+	// black
+	openingEval += 10 * __builtin_popcountll((BBblackPP>>8) & (pos->BBwhitepieces | pos->BBblackpieces));
+	endgameEval += 20 * __builtin_popcountll((BBblackPP>>8) & (pos->BBwhitepieces | pos->BBblackpieces));
+	*/
+	// king gets a bonus for how close it is to enemy passed pawns in the endgame
+	/*
+	if (isEndgame(pos)) {
+		if (pos->tomove == BLACK) {
+			while (BBwhitePP) {
+				int square = __builtin_ctzll(BBwhitePP);
+				BBwhitePP &= ~(1ULL << square);
+				int kingpos = pos->Bkingpos;
+				int xdist = abs(getfile(kingpos) - getfile(square));
+				int ydist = abs(getrank(kingpos) - getrank(square));
+				int dist = max(xdist, ydist);
+				int movestopromote = 7 - getrank(square);
+				if (dist > movestopromote) {
+					endgameEval += 20;
+				}
+				else {
+					//endgameEval -= 40;
+				}
+				//endgameEval -= (10 * (6 - dist));
+			}
+		}	
+		else if (pos->tomove == WHITE) {
+			while (BBblackPP) {
+				int square = __builtin_ctzll(BBblackPP);
+				BBblackPP &= ~(1ULL << square);
+				int kingpos = pos->Wkingpos;
+				int xdist = abs(getfile(kingpos) - getfile(square));
+				int ydist = abs(getrank(kingpos) - getrank(square));
+				int dist = max(xdist, ydist);
+				int movestopromote = getrank(square);
+				if (dist > movestopromote) {
+					endgameEval -= 20;	
+				}
+				else {
+				//	endgameEval += 40;
+				}
+				//endgameEval += (10 * (6 - dist));
+			}
+		}
+	}
+	*/
+	
+	// king gets a bonus for being next to a friendly passed pawn
+	/*
+	if (isEndgame(pos)) {
+		if (pos->tomove == BLACK) {
+			while (BBblackPP) {
+				int square = __builtin_ctzll(BBblackPP);
+				BBblackPP &= ~(1ULL << square);
+				int kingpos = pos->Bkingpos;
+				int xdist = abs(getfile(kingpos) - getfile(square));
+				int ydist = abs(getrank(kingpos) - getrank(square));
+				int dist = max(xdist, ydist);
+				if (dist == 1) {
+					endgameEval -= 40;
+				}
+				//endgameEval -= (10 * (6 - dist));
+			}
+		}	
+		else if (pos->tomove == WHITE) {
+			while (BBwhitePP) {
+				int square = __builtin_ctzll(BBwhitePP);
+				BBwhitePP &= ~(1ULL << square);
+				int kingpos = pos->Wkingpos;
+				int xdist = abs(getfile(kingpos) - getfile(square));
+				int ydist = abs(getrank(kingpos) - getrank(square));
+				int dist = max(xdist, ydist);
+				if (dist == 1) {
+					endgameEval += 40;
+				}
+				//endgameEval -= (10 * (6 - dist));
+			}
+		}
+	}
+	*/
+	// bonus for king being near opponent's king in endgame
+	/*
+	int winningside = 2;
+	if (isEndgame(pos)) {
+		if (material > 0) {
+			winningside = WHITE;
+		}
+		else if (material < 0) winningside = BLACK;
+		if (pos->tomove == WHITE && winningside == WHITE) {
+			int xdist = abs(getfile(pos->Wkingpos) - getfile(pos->Bkingpos));
+			int ydist = abs(getrank(pos->Wkingpos) - getrank(pos->Bkingpos));
+			int dist = max(xdist, ydist);
+			endgameEval += (6 - dist) * 20;
+		}
+		if (pos->tomove == BLACK && winningside == BLACK) {
+			int xdist = abs(getfile(pos->Wkingpos) - getfile(pos->Bkingpos));
+			int ydist = abs(getrank(pos->Wkingpos) - getrank(pos->Bkingpos));
+			int dist = max(xdist, ydist);
+			endgameEval -= (6 - dist) * 20;
+		}
+	}
+	 */
+	// give bonus for kings being close to the winning side in endgames
+	
+	int winningside;
+	if (isEndgame(pos)) {
+		if (material > 0) {
+			winningside = WHITE;
+		}
+		else if (material < 0) winningside = BLACK;
+		if (winningside == WHITE) {
+			endgameEval += arrCenterManhattanDistance[pos->Bkingpos] * 10;
+			int xdist = abs(getfile(pos->Wkingpos) - getfile(pos->Bkingpos));
+			int ydist = abs(getrank(pos->Wkingpos) - getrank(pos->Bkingpos));
+			int dist = max(xdist, ydist);
+			endgameEval += (6 - dist) * 10;
+		}
+		else if (winningside == BLACK) {
+			endgameEval -= arrCenterManhattanDistance[pos->Wkingpos] * 10;
+			int xdist = abs(getfile(pos->Wkingpos) - getfile(pos->Bkingpos));
+			int ydist = abs(getrank(pos->Wkingpos) - getrank(pos->Bkingpos));
+			int dist = max(xdist, ydist);
+			endgameEval -= (6 - dist) * 10;
+		}
+	}
+	
+	// bishop and knight mate
+	/*
+	U64 BBwhitenonBNmaterial = (pos->BBpawns | pos->BBqueens | pos->BBrooks) & pos->BBwhitepieces;
+	U64 BBblackmaterial = (pos->BBpawns | pos->BBqueens | pos->BBbishops | pos->BBknights | pos->BBrooks) & pos->BBblackpieces;
+	
+	if (!BBwhitenonBNmaterial && !BBblackmaterial && num_WB == 1 && num_WN == 1) {
+		// KBN vs K endgame, white has the B+N
+		// penalty for king going into wrong corner, bonus for king going into right corner
+		int islight = pos->BBbishops & pos->BBwhitepieces & BBlightsquares;
+		int distx = abs(getfile(pos->Bkingpos) - getfile(A1));
+		int disty = abs(getrank(pos->Bkingpos) - getrank(A1));
+		int distfromA1 = max(distx, disty);
+		distx = abs(getfile(pos->Bkingpos) - getfile(H8));
+		disty = abs(getrank(pos->Bkingpos) - getrank(H8));
+		int distfromH8 = max(distx, disty);
+		distx = abs(getfile(pos->Bkingpos) - getfile(A8));
+		disty = abs(getrank(pos->Bkingpos) - getrank(A8));
+		int distfromA8 = max(distx, disty);
+		distx = abs(getfile(pos->Bkingpos) - getfile(H1));
+		disty = abs(getrank(pos->Bkingpos) - getrank(H1));
+		int distfromH1 = max(distx, disty);
+		int closestcorner;
+		int closestdist = 10;
+		int corners[4] = { A1, A8, H1, H8 };
+		int cornerscores[4] = { distfromA1, distfromA8, distfromH1, distfromH8 };
+		for (int i = 0;i < 4;i++) {
+			int cdist = cornerscores[i];
+			if (cdist < closestdist) {
+				closestdist = cdist;
+				closestcorner = corners[i];
+			}
+		}
+		if (closestcorner == H8 || closestcorner == A1) { // enemy king is on a dark corner square
+			if (islight) endgameEval -= 60 * (4 - closestdist);
+			else endgameEval += 60 * (4 - closestdist);
+		}
+		if (closestcorner == A8 || closestcorner == H1) { // enemy king is on a light corner square
+			if (islight) endgameEval += 60 * (4 - closestdist);
+			else endgameEval -= 60 * (4 - closestdist);
+		}
+	}
+	U64 BBblacknonBNmaterial = (pos->BBpawns | pos->BBqueens | pos->BBrooks) & pos->BBblackpieces;
+	U64 BBwhitematerial = (pos->BBpawns | pos->BBqueens | pos->BBbishops | pos->BBknights | pos->BBrooks) & pos->BBwhitepieces;
+	if (!BBblacknonBNmaterial && !BBwhitematerial && num_BB == 1 && num_BN == 1) {
+		// KBN vs K endgame, white has the B+N
+		// penalty for king going into wrong corner, bonus for king going into right corner
+		int islight = pos->BBbishops & pos->BBblackpieces & BBlightsquares;
+		int distfromA1, distfromH8, distfromA8, distfromH1;
+		int distx = abs(getfile(pos->Wkingpos) - getfile(A1));
+		int disty = abs(getrank(pos->Wkingpos) - getrank(A1));
+		distfromA1 = max(distx, disty);
+		distx = abs(getfile(pos->Wkingpos) - getfile(H8));
+		disty = abs(getrank(pos->Wkingpos) - getrank(H8));
+		distfromH8 = max(distx, disty);
+		distx = abs(getfile(pos->Wkingpos) - getfile(A8));
+		disty = abs(getrank(pos->Wkingpos) - getrank(A8));
+		distfromA8 = max(distx, disty);
+		distx = abs(getfile(pos->Wkingpos) - getfile(H1));
+		disty = abs(getrank(pos->Wkingpos) - getrank(H1));
+		distfromH1 = max(distx, disty);
+		int closestcorner;
+		int closestdist = 10;
+		int corners[4] = { A1, A8, H1, H8 };
+		int cornerscores[4] = { distfromA1, distfromA8, distfromH1, distfromH8 };
+		for (int i = 0;i < 4;i++) {
+			int cdist = cornerscores[i];
+			if (cdist < closestdist) {
+				closestdist = cdist;
+				closestcorner = corners[i];
+			}
+		}
+		if (closestcorner == H8 || closestcorner == A1) { // enemy king is on a dark corner square
+			if (islight) endgameEval += 30 * (6 - closestdist);
+			else endgameEval -= 30 * (6 - closestdist);
+		}
+		if (closestcorner == A8 || closestcorner == H1) { // enemy king is on a light corner square
+			if (islight) endgameEval -= 30 * (6 - closestdist);
+			else endgameEval += 30 * (6 - closestdist);
+		}
+	}
+	 */
+	 
+	// king and rook mate
+	
+	U64 BBwhitenonrookmaterial = (pos->BBpawns | pos->BBqueens | pos->BBbishops | pos->BBknights) & pos->BBwhitepieces;
+	U64 BBblackmaterial = (pos->BBpawns | pos->BBqueens | pos->BBbishops | pos->BBknights | pos->BBrooks) & pos->BBblackpieces;
+	if  (!BBwhitenonrookmaterial && !BBblackmaterial && num_WR == 1) {
+		// KR vs K endgame, white has the rook
+		// give a bonus for the enemy king's centre manhattan distance
+		//endgameEval += arrCenterManhattanDistance[pos->Bkingpos] * 10;
+		int xdist = abs(getfile(pos->Wkingpos) - getfile(pos->Bkingpos));
+		int ydist = abs(getrank(pos->Wkingpos) - getrank(pos->Bkingpos));
+		
+		if (xdist == 2 && ydist == 0) {
+			// king is opposing enemy king two files away
+			endgameEval += 200;
+			// check if enemy king is on same file as rook
+			int square = __builtin_ctzll(pos->BBwhitepieces & pos->BBrooks);
+			if (getfile(pos->Bkingpos) == getfile(square)) {
+				endgameEval += 300;
+			}
+		}
+		if (ydist == 2 && xdist == 0) {
+			// king is opposing enemy king two ranks away
+			endgameEval += 200;
+			// check if enemy king is on same rank as rook
+			int square = __builtin_ctzll(pos->BBwhitepieces & pos->BBrooks);
+			if (getrank(pos->Bkingpos) == getrank(square)) {
+				endgameEval += 300;
+			}
+		}
+	} 
+	U64 BBblacknonrookmaterial = (pos->BBpawns | pos->BBqueens | pos->BBbishops | pos->BBknights) & pos->BBblackpieces;
+	U64 BBwhitematerial = (pos->BBpawns | pos->BBqueens | pos->BBbishops | pos->BBknights | pos->BBrooks) & pos->BBwhitepieces;
+	//printf("%d\n",num_BR);
+	if  (!BBblacknonrookmaterial == 1 && !BBwhitematerial && num_BR == 1) {
+		// KR vs K endgame, black has the rook
+		
+		// give a bonus for the enemy king's centre manhattan distance
+		//endgameEval += arrCenterManhattanDistance[pos->Wkingpos] * 10;
+		
+		int xdist = abs(getfile(pos->Wkingpos) - getfile(pos->Bkingpos));
+		int ydist = abs(getrank(pos->Wkingpos) - getrank(pos->Bkingpos));
+		
+		if (xdist == 2 && ydist == 0) {
+			// king is opposing enemy king two files away
+			endgameEval -= 200;
+			// check if enemy king is on same file as rook
+			int square = __builtin_ctzll(pos->BBblackpieces & pos->BBrooks);
+			if (getfile(pos->Wkingpos) == getfile(square)) {
+				endgameEval -= 300;
+			}
+		}
+		if (ydist == 2 && xdist == 0) {
+			// king is opposing enemy king two ranks away
+			endgameEval -= 200;
+			// check if enemy king is on same rank as rook
+			int square = __builtin_ctzll(pos->BBblackpieces & pos->BBrooks);
+			if (getrank(pos->Wkingpos) == getrank(square)) {
+				endgameEval -= 300;
+			}
+		}
+	} 
+	
+	// bonus for rooks trapping kings on the edge
+	/*
+	int kingonedgebonus = 15;
+	if (pos->tomove == WHITE) {
+		int enemykingpos = pos->Bkingpos;
+		int rank = getrank(enemykingpos);
+		int file = getfile(enemykingpos);
+		if (rank == 7) { // 8th rank
+			if (!(pos->BBpawns & BBrank7) && (pos->BBrooks & pos->BBwhitepieces & BBrank7)) { // no pawns on 7th rank, white rook(s) on 7th rank
+				endgameEval += kingonedgebonus;
+			}
+		}
+		else if (rank == 0) { // 1st rank
+			if (!(pos->BBpawns & BBrank1) && (pos->BBrooks & pos->BBwhitepieces & BBrank1)) { // no pawns on 1st rank, white rook(s) on 1st rank
+				endgameEval += kingonedgebonus;
+			}
+		}
+		if (file == 0) { // A file
+			if ((!pos->BBpawns & BBfileB) && (pos->BBrooks & pos->BBwhitepieces & BBfileB)) {
+				endgameEval += kingonedgebonus;
+			}
+		}
+		else if (file == 7) { // H file
+			if ((!pos->BBpawns & BBfileG) && (pos->BBrooks & pos->BBwhitepieces & BBfileG)) {
+				endgameEval += kingonedgebonus;
+			}
+		}
+	}
+	 
+	else if (pos->tomove == BLACK) {
+		int enemykingpos = pos->Wkingpos;
+		int rank = getrank(enemykingpos);
+		int file = getfile(enemykingpos);
+		if (rank == 7) { // 8th rank
+			if (!(pos->BBpawns & BBrank7) && (pos->BBrooks & pos->BBblackpieces & BBrank7)) { // no pawns on 7th rank, black rook(s) on 7th rank
+				endgameEval -= kingonedgebonus;
+			}
+		}
+		else if (rank == 0) { // 1st rank
+			if (!(pos->BBpawns & BBrank1) && (pos->BBrooks & pos->BBblackpieces & BBrank1)) { // no pawns on 1st rank, black rook(s) on 1st rank
+				endgameEval -= kingonedgebonus;
+			}
+		}
+		if (file == 0) { // A file
+			if ((!pos->BBpawns & BBfileB) && (pos->BBrooks & pos->BBblackpieces & BBfileB)) {
+				endgameEval -= kingonedgebonus;
+			}
+		}
+		else if (file == 7) { // H file
+			if ((!pos->BBpawns & BBfileG) && (pos->BBrooks & pos->BBblackpieces & BBfileG)) {
+				endgameEval -= kingonedgebonus;
+			}
+		}
+	}
+	*/
+	 
 	// loop to check for doubled pawns and rooks on open files
 	
 	for (int i = 0;i < 8;i++) {
 		// doubled pawns
 		// white pawns
 		U64 BBfilemask = BBfileA << i;
+		
+		U64 BBallpawnsonfile = BBfilemask & pos->BBpawns;
+		U64 BBallrooksonfile = BBfilemask & pos->BBrooks;
+		if (!BBallpawnsonfile && !BBallrooksonfile) continue;
+		
 		U64 BBWpawnsonfile = BBfilemask & (pos->BBwhitepieces & pos->BBpawns);
+		
 		U64 BBisdoubled = BBWpawnsonfile & (BBWpawnsonfile-1);
 		if (BBisdoubled) {
 			openingEval -= 16;
@@ -450,7 +820,22 @@ int taperedEval(struct position *pos) {
 	}
 	 */
 	openingEval -= 30 * __builtin_popcountll(BBpawnshield);
-
+	
+	// king safety - bonus for friendly pieces around the king
+	/*
+	// white
+	
+	BBkingdist1 = BBkingattacks(1ULL << pos->Wkingpos); // fill 1 square away
+	U64 BBfriendlypieces = (BBkingdist1 & (pos->BBwhitepieces & ~pos->BBpawns));
+	openingEval += 5 * __builtin_popcountll(BBfriendlypieces);
+	
+	// black
+	
+	BBkingdist1 = BBkingattacks(1ULL << pos->Bkingpos); // fill 1 square away
+	BBfriendlypieces = (BBkingdist1 & (pos->BBblackpieces & ~pos->BBpawns));
+	openingEval -= 5 * __builtin_popcountll(BBfriendlypieces);
+	*/
+	
 	/*
 	if (pos->tomove == WHITE) {
 		openingEval += 25;
@@ -461,7 +846,37 @@ int taperedEval(struct position *pos) {
 		endgameEval -= 5;
 	}
 	*/
-
+	// penalty for bishops having pawns of same colour
+	/*
+	// white 
+	U64 BBbishops = pos->BBbishops & pos->BBwhitepieces;
+	while (BBbishops) {
+		int square = __builtin_ctzll(BBbishops);
+		BBbishops &= BBbishops - 1;
+		int islight = 0;
+		if ((1ULL << square) & BBlightsquares) islight = 1;
+		else islight = 0;
+		U64 BBsamecolpawns;
+		if (islight) BBsamecolpawns = pos->BBpawns & pos->BBwhitepieces & BBlightsquares;
+		else BBsamecolpawns = pos->BBpawns & pos->BBwhitepieces & BBdarksquares;
+		endgameEval -= 20 * __builtin_popcountll(BBsamecolpawns);
+	}
+	
+	// black
+	BBbishops = pos->BBbishops & pos->BBblackpieces;
+	while (BBbishops) {
+		int square = __builtin_ctzll(BBbishops);
+		BBbishops &= BBbishops - 1;
+		int islight = 0;
+		if ((1ULL << square) & BBlightsquares) islight = 1;
+		else islight = 0;
+		U64 BBsamecolpawns;
+		if (islight) BBsamecolpawns = pos->BBpawns & pos->BBblackpieces & BBlightsquares;
+		else BBsamecolpawns = pos->BBpawns & pos->BBblackpieces & BBdarksquares;
+		endgameEval += 20 * __builtin_popcountll(BBsamecolpawns);
+	}
+	*/
+	
 	// bishop pair bonus
 	
 	if (num_BB >= 2) {
@@ -489,14 +904,16 @@ int taperedEval(struct position *pos) {
 	U64 BBWpiecesincentre = (pos->BBwhitepieces & pos->BBpawns & BBcentre);
 	while (BBWpiecesincentre) {
 		int square = __builtin_ctzll(BBWpiecesincentre);
-		BBWpiecesincentre &= ~(1ULL << square);
+		//BBWpiecesincentre &= ~(1ULL << square);
+		BBWpiecesincentre &= BBWpiecesincentre - 1;
 		openingEval += 20;
 		endgameEval += 20;
 	}
 	U64 BBBpiecesincentre = (pos->BBblackpieces & pos->BBpawns & BBcentre);
 	while (BBBpiecesincentre) {
 		int square = __builtin_ctzll(BBBpiecesincentre);
-		BBBpiecesincentre &= ~(1ULL << square);
+		//BBBpiecesincentre &= ~(1ULL << square);
+		BBBpiecesincentre &= BBBpiecesincentre - 1;
 		openingEval -= 20;
 		endgameEval -= 20;
 	}
@@ -593,7 +1010,8 @@ int taperedEval(struct position *pos) {
 	U64 BBwhiteknights = (pos->BBwhitepieces & pos->BBknights);
 	while (BBwhiteknights) {
 		int square = __builtin_ctzll(BBwhiteknights);
-		BBwhiteknights &= ~(1ULL << square);
+		//BBwhiteknights &= ~(1ULL << square);
+		BBwhiteknights &= BBwhiteknights - 1;
 		if ((BBpawnWestAttacksB(1ULL << square) & BBwhitepawns) || (BBpawnEastAttacksB(1ULL << square) & BBwhitepawns)) {
 			openingEval += 20;
 			endgameEval += 20;
@@ -606,7 +1024,8 @@ int taperedEval(struct position *pos) {
 	U64 BBblackknights = (pos->BBblackpieces & pos->BBknights);
 	while (BBblackknights) {
 		int square = __builtin_ctzll(BBblackknights);
-		BBblackknights &= ~(1ULL << square);
+		//BBblackknights &= ~(1ULL << square);
+		BBblackknights &= BBblackknights - 1;
 		if ((BBpawnWestAttacksW(1ULL << square) & BBblackpawns) || (BBpawnEastAttacksW(1ULL << square) & BBblackpawns)) {
 			openingEval -= 20;
 			endgameEval -= 20;
@@ -620,7 +1039,8 @@ int taperedEval(struct position *pos) {
 	U64 BBwhitebishops = (pos->BBwhitepieces & pos->BBbishops);
 	while (BBwhitebishops) {
 		int square = __builtin_ctzll(BBwhitebishops);
-		BBwhitebishops &= ~(1ULL << square);
+		//BBwhitebishops &= ~(1ULL << square);
+		BBwhitebishops &= BBwhitebishops - 1;
 		if ((BBpawnWestAttacksB(1ULL << square) & BBwhitepawns) || (BBpawnEastAttacksB(1ULL << square) & BBwhitepawns)) {
 			openingEval += 20;
 			endgameEval += 20;
@@ -632,7 +1052,8 @@ int taperedEval(struct position *pos) {
 	U64 BBblackbishops = (pos->BBblackpieces & pos->BBbishops);
 	while (BBblackbishops) {
 		int square = __builtin_ctzll(BBblackbishops);
-		BBblackbishops &= ~(1ULL << square);
+		//BBblackbishops &= ~(1ULL << square);
+		BBblackbishops &= BBblackbishops - 1;
 		if ((BBpawnWestAttacksW(1ULL << square) & BBblackpawns) || (BBpawnEastAttacksW(1ULL << square) & BBblackpawns)) {
 			openingEval -= 20;
 			endgameEval -= 20;
@@ -759,7 +1180,53 @@ int isEndgame(struct position *pos) {
 	if (numpieces <= 3) return 1;
 	return 0;
 }
+int evalBoard(struct position *pos) {
+	
+	int num_BP = __builtin_popcountll(pos->BBblackpieces & pos->BBpawns);
+	int num_BN = __builtin_popcountll(pos->BBblackpieces & pos->BBknights);
+	int num_BB = __builtin_popcountll(pos->BBblackpieces & pos->BBbishops);
+	int num_BR = __builtin_popcountll(pos->BBblackpieces & pos->BBrooks);
+	int num_BQ = __builtin_popcountll(pos->BBblackpieces & pos->BBqueens);
+	int num_WP = __builtin_popcountll(pos->BBwhitepieces & pos->BBpawns);
+	int num_WN = __builtin_popcountll(pos->BBwhitepieces & pos->BBknights);
+	int num_WB = __builtin_popcountll(pos->BBwhitepieces & pos->BBbishops);
+	int num_WR = __builtin_popcountll(pos->BBwhitepieces & pos->BBrooks);
+	int num_WQ = __builtin_popcountll(pos->BBwhitepieces & pos->BBqueens);
+	
+	// Piece values
+    int white_pieces = num_WP*pieceval('P')   +
+                       num_WN*pieceval('N') +
+                       num_WB*pieceval('B') +
+                       num_WR*pieceval('R')   +
+                       num_WQ*pieceval('Q');
 
+    int black_pieces = num_BP*pieceval('p')   +
+                       num_BN*pieceval('n') +
+                       num_BB*pieceval('b') +
+                       num_BR*pieceval('r')   +
+                       num_BQ*pieceval('q');
+
+	int material = white_pieces - black_pieces;
+	int score = material;
+	U64 BBoccupied = (pos->BBwhitepieces | pos->BBblackpieces);
+	while (BBoccupied != 0) {
+		int square = __builtin_ctzll(BBoccupied);
+		char piece = getPiece(pos,square);
+		//BBoccupied &= ~(1ULL << square);
+		BBoccupied &= BBoccupied - 1;
+		int pstscoreO = PSTval(piece,square,'O');
+		int pstscoreE = PSTval(piece,square,'E');
+		int pval = (pstscoreO + pstscoreE) / 2;
+		//if ((piece >= 'a') && (piece <= 'z')) {
+		//	pval = -pval;
+		//}
+		score += pval;
+	}
+	if (pos->tomove == BLACK) return -score;
+	else return score;
+	
+}
+/*
 int evalBoard(struct position *pos) {
 	assert(pos);
 	int score = 0;
@@ -767,7 +1234,8 @@ int evalBoard(struct position *pos) {
 	U64 BBoccupied = (pos->BBwhitepieces | pos->BBblackpieces);
 	while (BBoccupied != 0) {
 		int square = __builtin_ctzll(BBoccupied);
-		BBoccupied &= ~(1ULL << square);
+		//BBoccupied &= ~(1ULL << square);
+		BBoccupied &= BBoccupied - 1;
 		char piece = getPiece(pos,square);
 		pval = pieceval(piece);
 		if ((piece >= 'a') && (piece <= 'z')) {
@@ -781,3 +1249,4 @@ int evalBoard(struct position *pos) {
 	if (pos->tomove == BLACK) return -score;
 	return score;
 }
+*/
