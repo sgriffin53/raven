@@ -169,12 +169,16 @@ void makeMove(const struct move *move, struct position *pos) {
 	pos->epsquare = newepsquare;
 	posstack[posstackend] = *pos;
 	posstackend++;
+	movestack[movestackend] = *move;
+	movestackend++;
 }
 void unmakeMove(struct position *pos) {
 	assert(pos);
 	posstackend--;
+	movestackend--;
 	if (posstackend <= 0) {
 		posstackend = 1;
+		movestackend = 1;
 		*pos = posstack[0];
 	}
 	else {

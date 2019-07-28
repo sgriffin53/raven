@@ -20,5 +20,9 @@ struct move pvArray[1024];
 int rootdepth;
 int wtime, btime;
 int origwtime, origbtime;
+int lastsearchdepth;
+struct move movestack[1024];
+int movestackend;
+struct move countermoves[64][64];
 
 #endif

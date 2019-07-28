@@ -160,6 +160,7 @@ void parsefen(struct position *pos, const char *ofen) {
 	if (splitstr[4][0] == '-') pos->halfmoves = 0;
 	posstack[0] = *pos;
 	posstackend = 1;
+	movestackend = 0;
 }
 int fileranktosquareidx(int file,int rank) {
 	return (rank) * 8 + file;
