@@ -171,14 +171,17 @@ void makeMove(const struct move *move, struct position *pos) {
 	posstackend++;
 	movestack[movestackend] = *move;
 	movestackend++;
+	hashstackend = posstackend;
 }
 void unmakeMove(struct position *pos) {
 	assert(pos);
 	posstackend--;
 	movestackend--;
+	hashstackend--;
 	if (posstackend <= 0) {
 		posstackend = 1;
 		movestackend = 1;
+		hashstackend = 1;
 		*pos = posstack[0];
 	}
 	else {

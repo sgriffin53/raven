@@ -16,7 +16,9 @@
 #include "search.h"
 #include "bitboards.h"
 #include "eval.h"
+#include "search.h"
 #include <limits.h>
+
 
 int main() {
 	setbuf(stdout, NULL);
@@ -38,6 +40,11 @@ int main() {
 	clearETT(&ETT);
 	origwtime = -1;
 	origbtime = -1;
+	movestackend = 0;
+	hashstackend = 0;
+	for (int i = 0;i < 1024;i++) {
+		hashstack[i] = 0;
+	}
 	while (keeprunning) {
 		// read input from stdin
 		fgets(instr, 8192, stdin);
@@ -108,6 +115,8 @@ int main() {
 		if (strcmp(splitstr[0],"ucinewgame") == 0) {
 			clearTT(&TT);
 			clearETT(&ETT);
+			clearKillers(128);
+			clearHistory();
 		}
 		if (strcmp(splitstr[0],"eval") == 0) {
 			printf("%d\n",taperedEval(&pos));
@@ -216,6 +225,10 @@ int main() {
 			parsefen(&pos, "startpos"); // set start position
 			//posstack[0] = pos;
 			//posstackend = 1;
+			movestackend = 0;
+			U64 hash = generateHash(&pos);
+			hashstack[0] = hash;
+			hashstackend = 1;
 			if (strcmp(splitstr[2],"moves") == 0) {
 				// make all moves given by position command
 				for (int i = 3;i < splitstrend;i++) {
