@@ -207,7 +207,7 @@ void setPiece(struct position *pos, int sq, char piece) {
 	U64 BBsquare = (1ULL << sq);
 	//clear bitboard of old square
 	char oldpiece = getPiece(pos,sq);
-
+	/*
 	if ((oldpiece == 'p') || (oldpiece == 'P')) {
 		pos->BBpawns &= ~BBsquare;
 	}
@@ -226,61 +226,100 @@ void setPiece(struct position *pos, int sq, char piece) {
 	else if ((oldpiece == 'k') || (oldpiece == 'K')) {
 		pos->BBkings &= ~BBsquare;
 	}
+	 */
+	switch (oldpiece) {
+		case 'p':
+		case 'P': pos->BBpawns &= ~BBsquare; break;
+		case 'n':
+		case 'N': pos->BBknights &= ~BBsquare; break;
+		case 'b':
+		case 'B': pos->BBbishops &= ~BBsquare; break;
+		case 'r':
+		case 'R': pos->BBrooks &= ~BBsquare; break;
+		case 'q':
+		case 'Q': pos->BBqueens &= ~BBsquare; break;
+		case 'k':
+		case 'K': pos->BBkings &= ~BBsquare; break;
+	}
 	//clear white and black piece bitboards of that square
 	pos->BBwhitepieces &= ~BBsquare;
 	pos->BBblackpieces &= ~BBsquare;
 	//white pieces
+	/*
 	if (piece == 'P') {
 		pos->BBpawns |= BBsquare;
-		pos->BBwhitepieces |= BBsquare;
+		//pos->BBwhitepieces |= BBsquare;
 	}
 	else if (piece == 'N') {
 		pos->BBknights |= BBsquare;
-		pos->BBwhitepieces |= BBsquare;
+		//pos->BBwhitepieces |= BBsquare;
 	}
 	else if (piece == 'B') {
 		pos->BBbishops |= BBsquare;
-		pos->BBwhitepieces |= BBsquare;
+		//pos->BBwhitepieces |= BBsquare;
 	}
 	else if (piece == 'R') {
 		pos->BBrooks |= BBsquare;
-		pos->BBwhitepieces |= BBsquare;
+		//pos->BBwhitepieces |= BBsquare;
 	}
 	else if (piece == 'Q') {
 		pos->BBqueens |= BBsquare;
-		pos->BBwhitepieces |= BBsquare;
+		//pos->BBwhitepieces |= BBsquare;
 	}
 	else if (piece == 'K') {
 		pos->BBkings |= BBsquare;
-		pos->BBwhitepieces |= BBsquare;
-		pos->Wkingpos = sq;
+		//pos->BBwhitepieces |= BBsquare;
+		//pos->Wkingpos = sq;
 	}
+	 */
 	//black pieces
-	else if (piece == 'p') {
+	/*
+	char lpiece = tolower(piece);
+	if (lpiece == 'p') {
 		pos->BBpawns |= BBsquare;
-		pos->BBblackpieces |= BBsquare;
+		//pos->BBblackpieces |= BBsquare;
 	}
-	else if (piece == 'n') {
+	else if (lpiece == 'n') {
 		pos->BBknights |= BBsquare;
-		pos->BBblackpieces |= BBsquare;
+		//pos->BBblackpieces |= BBsquare;
 	}
-	else if (piece == 'b') {
+	else if (lpiece == 'b') {
 		pos->BBbishops |= BBsquare;
-		pos->BBblackpieces |= BBsquare;
+		//pos->BBblackpieces |= BBsquare;
 	}
-	else if (piece == 'r') {
+	else if (lpiece == 'r') {
 		pos->BBrooks |= BBsquare;
-		pos->BBblackpieces |= BBsquare;
+		//pos->BBblackpieces |= BBsquare;
 	}
-	else if (piece == 'q') {
+	else if (lpiece == 'q') {
 		pos->BBqueens |= BBsquare;
-		pos->BBblackpieces |= BBsquare;
+		//pos->BBblackpieces |= BBsquare;
 	}
-	else if (piece == 'k') {
+	else if (lpiece == 'k') {
 		pos->BBkings |= BBsquare;
-		pos->BBblackpieces |= BBsquare;
-		pos->Bkingpos = sq;
+		//pos->BBblackpieces |= BBsquare;
+		if (piece == 'k') pos->Bkingpos = sq;
+		else pos->Wkingpos = sq;
 	}
+	 */
+	switch (piece) {
+		case 'p':
+		case 'P': pos->BBpawns |= BBsquare; break;
+		case 'n':
+		case 'N': pos->BBknights |= BBsquare; break;
+		case 'b':
+		case 'B': pos->BBbishops |= BBsquare; break;
+		case 'r':
+		case 'R': pos->BBrooks |= BBsquare; break;
+		case 'q':
+		case 'Q': pos->BBqueens |= BBsquare; break;
+		case 'k': pos->BBkings |= BBsquare; pos->Bkingpos = sq; break;
+		case 'K': pos->BBkings |= BBsquare; pos->Wkingpos = sq; break;
+	}
+	if (piece >= 'A' && piece <= 'Z') {
+		pos->BBwhitepieces |= BBsquare;
+	}
+	else if (piece >= 'a' && piece <= 'z') pos->BBblackpieces |= BBsquare;
 	//empty square
 	/*
 	else if (piece == '0') {
