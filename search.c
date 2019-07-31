@@ -15,7 +15,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#define MAX_MOVES 2048
+#include "move.h"
 
 int reduction(const struct move *move, const int depthleft, char cappiece, int legalmoves, int incheck, int givescheck, int ply) {
 	assert(move);
@@ -236,10 +236,13 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	
 	
 	U64 hash;
-	if (currenthash == 0) {
-		hash = generateHash(pos);
+	if (currenthash != 0) {
+		hash = currenthash;
 	}
-	else hash = currenthash;
+	else if (hashstack[hashstackend - 1] != 0) {
+		hash = hashstack[hashstackend - 1];
+	}
+	else hash = generateHash(pos);
 	struct TTentry TTdata = getTTentry(&TT,hash);
 	if (TTdata.hash == hash) {
 		if (TTdata.depth == origdepthleft) {
@@ -718,6 +721,10 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 	numbetacutoffs = 0;
 	numinstantbetacutoffs = 0;
 
+	//for (int i = 0;i < 1024;i++) {
+	//	hashstack[i] = 0;
+	//}
+	
 	// Result
 	struct move bestmove;
 	
@@ -864,7 +871,7 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 		
 		lastlastscore = lastscore;
 		lastscore = score;
-		 */
+		*/
 		 /*
 		int windowSize = 16;
 		int alpha, beta, delta = windowSize;
@@ -899,13 +906,13 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 			//printf("delta %d\n",delta);
 		}
 		*/
-		lastlastscore = lastscore;
-		lastscore = score;
+		//lastlastscore = lastscore;
+		//lastscore = score;
 		
 
 		score = alphaBeta(&pos, -MATE_SCORE, MATE_SCORE, d, 0, 0, &pv, endtime);
 		
-		// Ignore the result if we ran out of time
+		//Ignore the result if we ran out of time
 		if (d > 1 && clock() >= endtime) {
 			break;
 		}
