@@ -301,10 +301,23 @@ int taperedEval(struct position *pos) {
 		}
 		U64 BBenemypawns = (BBchecksquares & (pos->BBblackpieces & pos->BBpawns));
 		if (BBenemypawns == 0) {
-			BBwhitePP |= square;
+			// pawn is passed
+			
+			BBwhitePP |= square; // add square to bb of white passed pawns
 			int bonus = WpassedRankBonus[startrank];
 			openingEval += 0.5 * bonus;
 			endgameEval += 1 * bonus;
+			
+			// bonus for bishop on same colour square as promotion square
+			/*
+			int promsquare = fileranktosquareidx(getfile(square),7);
+			U64 BBpromsquare = 1ULL << promsquare;
+			U64 BBislight = BBpromsquare & BBlightsquares; // if prom square is light
+			U64 BBsamecolbishops;
+			if (BBislight) BBsamecolbishops = pos->BBbishops & pos->BBwhitepieces & BBlightsquares;
+			else BBsamecolbishops = pos->BBbishops & pos->BBwhitepieces & BBdarksquares;
+			if (BBsamecolbishops) endgameEval += 50;
+			 */
 		}
 		
 		// pawn chain bonus
@@ -340,6 +353,17 @@ int taperedEval(struct position *pos) {
 			int bonus = BpassedRankBonus[startrank];
 			openingEval -= 0.5 * bonus;
 			endgameEval -= 1 * bonus;
+			
+			// bonus for bishop on same colour square as promotion square
+			/*
+			int promsquare = fileranktosquareidx(getfile(square),0);
+			U64 BBpromsquare = 1ULL << promsquare;
+			U64 islight = BBpromsquare & BBlightsquares; // if prom square is light
+			U64 BBsamecolbishops;
+			if (islight) BBsamecolbishops = pos->BBbishops & pos->BBblackpieces & BBlightsquares;
+			else BBsamecolbishops = pos->BBbishops & pos->BBblackpieces & BBdarksquares;
+			if (BBsamecolbishops) endgameEval -= 50;
+			 */
 		}
 		
 		// pawn chain bonus
@@ -375,7 +399,7 @@ int taperedEval(struct position *pos) {
 				int dist = max(xdist, ydist);
 				int movestopromote = 7 - getrank(square);
 				if (dist > movestopromote) {
-					endgameEval += 20;
+					endgameEval += 100;
 				}
 				else {
 					//endgameEval -= 40;
@@ -393,7 +417,7 @@ int taperedEval(struct position *pos) {
 				int dist = max(xdist, ydist);
 				int movestopromote = getrank(square);
 				if (dist > movestopromote) {
-					endgameEval -= 20;	
+					endgameEval -= 100;	
 				}
 				else {
 				//	endgameEval += 40;
@@ -859,7 +883,7 @@ int taperedEval(struct position *pos) {
 		U64 BBsamecolpawns;
 		if (islight) BBsamecolpawns = pos->BBpawns & pos->BBwhitepieces & BBlightsquares;
 		else BBsamecolpawns = pos->BBpawns & pos->BBwhitepieces & BBdarksquares;
-		endgameEval -= 20 * __builtin_popcountll(BBsamecolpawns);
+		endgameEval -= 3 * __builtin_popcountll(BBsamecolpawns);
 	}
 	
 	// black
@@ -873,7 +897,7 @@ int taperedEval(struct position *pos) {
 		U64 BBsamecolpawns;
 		if (islight) BBsamecolpawns = pos->BBpawns & pos->BBblackpieces & BBlightsquares;
 		else BBsamecolpawns = pos->BBpawns & pos->BBblackpieces & BBdarksquares;
-		endgameEval += 20 * __builtin_popcountll(BBsamecolpawns);
+		endgameEval += 3 * __builtin_popcountll(BBsamecolpawns);
 	}
 	*/
 	
@@ -1074,12 +1098,12 @@ int taperedEval(struct position *pos) {
 	
 
 	// knight value decreases as pawns disappear
-	/*
-	openingEval -= num_WN * (16 - (num_WP + num_BP)) * 16;
-	endgameEval -= num_WN * (16 - (num_WP + num_BP)) * 16;
-	openingEval += num_BN * (16 - (num_WP + num_BP)) * 16;
-	endgameEval += num_BN * (16 - (num_WP + num_BP)) * 16;
-	*/
+	
+	openingEval -= num_WN * (16 - (num_WP + num_BP)) * 4;
+	endgameEval -= num_WN * (16 - (num_WP + num_BP)) * 4;
+	openingEval += num_BN * (16 - (num_WP + num_BP)) * 4;
+	endgameEval += num_BN * (16 - (num_WP + num_BP)) * 4;
+	
 	//bishop value increases as pawns disappear
 	//openingEval += num_WB * (16 - (num_WP + num_BP)) * 16;
 	//endgameEval += num_WB * (16 - (num_WP + num_BP)) * 16;
