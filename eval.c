@@ -125,7 +125,6 @@ int taperedEval(struct position *pos) {
 		//endgameEval += pval;
 		//openingEval += pval;
 		//material += pval;
-		// bonus for N being near king
 		/*
 		switch (piece) {
 			case 'p': num_BP += 1; break;
@@ -292,14 +291,16 @@ int taperedEval(struct position *pos) {
 		int startrank = getrank(square);
 		int rank = startrank;
 		//printf("\n%d\n",rank);
+		U64 BBenemypawns = 0ULL;
 		while (rank < 6) {
 			BBchecksquares |= noWeOne(BBmidsquare);
 			BBchecksquares |= northOne(BBmidsquare);
 			BBchecksquares |= noEaOne(BBmidsquare);
 			BBmidsquare = northOne(BBmidsquare);
+			BBenemypawns = (BBchecksquares & (pos->BBblackpieces & pos->BBpawns));
+			if (BBenemypawns) break;
 			rank++;
 		}
-		U64 BBenemypawns = (BBchecksquares & (pos->BBblackpieces & pos->BBpawns));
 		if (BBenemypawns == 0) {
 			// pawn is passed
 			
@@ -340,14 +341,16 @@ int taperedEval(struct position *pos) {
 		int startrank = getrank(square);
 		int rank = startrank;
 		//printf("\n%d\n",rank);
+		U64 BBenemypawns = 0ULL;
 		while (rank > 1) {
 			BBchecksquares |= soWeOne(BBmidsquare);
 			BBchecksquares |= southOne(BBmidsquare);
 			BBchecksquares |= soEaOne(BBmidsquare);
 			BBmidsquare = southOne(BBmidsquare);
+			BBenemypawns = (BBchecksquares & (pos->BBwhitepieces & pos->BBpawns));
+			if (BBenemypawns) break;
 			rank--;
 		}
-		U64 BBenemypawns = (BBchecksquares & (pos->BBwhitepieces & pos->BBpawns));
 		if (BBenemypawns == 0) {
 			BBblackPP |= square;
 			int bonus = BpassedRankBonus[startrank];
@@ -926,6 +929,7 @@ int taperedEval(struct position *pos) {
 	// bonus for pawns in centre
 	
 	U64 BBWpiecesincentre = (pos->BBwhitepieces & pos->BBpawns & BBcentre);
+	/*
 	while (BBWpiecesincentre) {
 		int square = __builtin_ctzll(BBWpiecesincentre);
 		//BBWpiecesincentre &= ~(1ULL << square);
@@ -933,7 +937,12 @@ int taperedEval(struct position *pos) {
 		openingEval += 20;
 		endgameEval += 20;
 	}
+	 */
+	openingEval += 20 * __builtin_popcountll(BBWpiecesincentre);
+	endgameEval += 20 * __builtin_popcountll(BBWpiecesincentre);
+	
 	U64 BBBpiecesincentre = (pos->BBblackpieces & pos->BBpawns & BBcentre);
+	/*
 	while (BBBpiecesincentre) {
 		int square = __builtin_ctzll(BBBpiecesincentre);
 		//BBBpiecesincentre &= ~(1ULL << square);
@@ -941,7 +950,9 @@ int taperedEval(struct position *pos) {
 		openingEval -= 20;
 		endgameEval -= 20;
 	}
-	
+	 */
+	openingEval -= 20 * __builtin_popcountll(BBBpiecesincentre);
+	endgameEval -= 20 * __builtin_popcountll(BBBpiecesincentre);
 	
 	// bonus for connected knights
 	// white
@@ -1184,6 +1195,28 @@ int mobility(struct position *pos, int side) {
 }
 int isEndgame(struct position *pos) {
 	int numpieces = 1;
+	//BBoccupied = pos->BBwhitepieces | pos->BBblackpieces;
+	U64 BBoccupied = pos->BBwhitepieces;
+	if (pos->tomove == BLACK) BBoccupied = pos->BBblackpieces;
+	while (BBoccupied != 0) {
+		int square = __builtin_ctzll(BBoccupied);
+		//BBoccupied &= ~(1ULL << square);
+		BBoccupied &= BBoccupied - 1;
+		char piece = getPiece(pos,square);
+		if (pos->tomove == WHITE) {
+			if ((piece == 'N') || (piece == 'B') || (piece == 'R') || (piece == 'Q')) {
+				numpieces++;
+				if (numpieces > 3) return 0;
+			}
+		}
+		else {
+			if ((piece == 'n') || (piece == 'b') || (piece == 'r') || (piece == 'q')) {
+				numpieces++;
+				if (numpieces > 3) return 0;
+			}
+		}
+	}
+	/*
 	for (int i=0;i<64;i++) {
 		char piece = getPiece(pos,i);
 		if (piece != '0') {
@@ -1201,6 +1234,7 @@ int isEndgame(struct position *pos) {
 			}
 		}
 	}
+	 */
 	if (numpieces <= 3) return 1;
 	return 0;
 }

@@ -65,7 +65,15 @@ int pieceintval(char inpiece) {
 U64 generateHash(struct position *pos) {
 	assert(pos);
 	U64 zobrist = 0;
-
+	U64 BBoccupied = pos->BBblackpieces | pos->BBwhitepieces;
+	while (BBoccupied != 0) {
+		int square = __builtin_ctzll(BBoccupied);
+		BBoccupied &= BBoccupied - 1;
+		char sqpiece = getPiece(pos,square);
+		int piece = pieceintval(sqpiece);
+		zobrist ^= pieceHash[piece][square];
+	}
+	/*
 	for(int square = 0; square < 64; square++) {
 		char sqpiece = getPiece(pos,square);
 		if(sqpiece != '0') {
@@ -76,7 +84,7 @@ U64 generateHash(struct position *pos) {
 			//printf("piece hash: %s %c %" PRIu64 "\n",squareidxtostr(square),pos->board[square],pieceHash[piece][square]);
 		}
 	}
-
+	*/
 	if(pos->tomove == WHITE) {
 		zobrist ^= turnHash;
 	}
