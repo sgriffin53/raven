@@ -7,6 +7,7 @@ typedef unsigned long long U64;
 
 #define WHITE 1
 #define BLACK 0
+#define MATE_SCORE 9999
 
 struct position {
 	U64 BBwhitepieces;
