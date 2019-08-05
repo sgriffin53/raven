@@ -65,7 +65,7 @@ int main() {
 				char value[128];
 				strcpy(name,splitstr[2]);
 				strcpy(value,splitstr[4]);
-				if (strcmp(strlwr(name),"hash") == 0) {
+				if (strcmp(name,"hash") == 0) {
 					hashsize = atoi(value);
 					free(TT.entries);
 					initTT(&TT);
