@@ -280,9 +280,8 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	// null move pruning
 	
 	// if (!nullmove && !isEndgame(pos) && !incheck && !(alpha != beta - 1)) {
-	int isendgame = isEndgame(pos);
 	
-	if (!nullmove && !incheck && ply != 0 && depthleft >= 3 && !isendgame) {
+	if (!nullmove && !incheck && ply != 0 && depthleft >= 3 && !isEndgame(pos)) {
 		const int orighalfmoves = pos->halfmoves;
 		const int origepsquare = pos->epsquare;
 		pos->tomove = !pos->tomove;
@@ -380,7 +379,6 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	*/
 	int f_prune = 0;
 	int fmargin[4] = { 0, 200, 300, 500 };
-	int fhistorythreshold[4] = { 50, 50, 50, 50 };
 	if (depthleft <= 3
 	&&  !incheck
 	&&   abs(alpha) < 9000
