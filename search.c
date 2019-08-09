@@ -201,7 +201,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	assert(pos);
 	assert(alpha >= -MATE_SCORE && beta <= MATE_SCORE);
 	assert(beta > alpha);
-	assert(depthleft >= 0);
+	//assert(depthleft >= 0);
 	int origdepthleft = depthleft;
 	if (depthleft <= 0) depthleft = 0;
 	if (clock() >= endtime) {
@@ -735,6 +735,8 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 	clock_t endtime = clock() + (movetime / 1000.0 * CLOCKS_PER_SEC);
 	clock_t maxendtime = endtime + (movetime * 1 / 1000.0 * CLOCKS_PER_SEC);
 	clock_t origendtime = endtime;
+	
+	assert(maxendtime > endtime);
 	//printf("start %d end %d maxend %d\n",begin,endtime,maxendtime);
 	// Movegen
 	struct move moves[MAX_MOVES];
@@ -830,7 +832,7 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 				double expectedtime = time_spentms * factor;
 				int expectedendtime = clock() + expectedtime;
 				 */
-				int newendtime = clock() + + remaining_timems + remaining_timems * 0.015;
+				clock_t newendtime = clock() + + remaining_timems + remaining_timems * 0.015;
 				if (newendtime > maxendtime) newendtime = maxendtime;
 				//printf("extended time: max: %d, original: %d, new: %d, expected: %.2f\n",maxendtime,origendtime,newendtime,expectedtime);
 				//printf("extended time from %d to %d, max %d\n",endtime,newendtime,maxendtime);
