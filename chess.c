@@ -117,6 +117,9 @@ int main() {
 			clearETT(&ETT);
 			clearKillers(128);
 			clearHistory();
+			for (int i = 0;i < 1024;i++) {
+				hashstack[i] = 0;
+			}
 		}
 		if (strcmp(splitstr[0],"eval") == 0) {
 			printf("%d\n",taperedEval(&pos));
