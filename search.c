@@ -801,14 +801,14 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 		else {
 			if (btime < wtime) losingontime = 1;
 		}
-		int timeleftpercent;
+		double timeleftpercent;
 		if (pos.tomove == WHITE) {
-			timeleftpercent = wtime * 100 / origwtime; // time left as percentage of original time
+			timeleftpercent = (double)wtime * 100.0 / (double)origwtime; // time left as percentage of original time
 		}
 		if (pos.tomove == BLACK) {
-			timeleftpercent = btime * 100 / origbtime; // time left as percentage of original time
+			timeleftpercent = (double)btime * 100.0 / (double)origbtime; // time left as percentage of original time
 		}
-		if (d > 4 && abs(score - lastscore) >= 0 && !losingontime && timeleftpercent > 30) {
+		if (d > 4 && abs(score - lastscore) >= 0 && !losingontime && timeleftpercent > 30.0) {
 			int timeschanged = 0;
 			
 			for (int i = d - 1;i >= 0 && i > d - 5;i--) {
