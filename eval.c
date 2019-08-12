@@ -859,8 +859,11 @@ int taperedEval(struct position *pos) {
 	// white pawn shield
 	
 	int Wkingpos = pos->Wkingpos;
-	BBkingdist1 = BBkingattacks((1ULL << Wkingpos)); // fill 1 square away
-	U64 BBpawnshield = BBkingdist1 & (pos->BBwhitepieces & pos->BBpawns);
+	//BBkingdist1 = BBkingattacks((1ULL << Wkingpos)); // fill 1 square away
+	//BBkingdist2 = BBkingattacks((1ULL << Wkingpos << 8)); // fill 3 squares nw, n, ne of king zone
+	U64 BBpawnshield = noWeOne(1ULL << Wkingpos) | northOne(1ULL << Wkingpos) | noEaOne(1ULL << Wkingpos);
+	BBpawnshield |= northOne(BBpawnshield);
+	BBpawnshield &= (pos->BBwhitepieces & pos->BBpawns);
 	/*
 	while (BBpawnshield) {
 		int square = __builtin_ctzll(BBpawnshield);
@@ -874,8 +877,12 @@ int taperedEval(struct position *pos) {
 	// black pawn shield
 	
 	int Bkingpos = pos->Bkingpos;
-	BBkingdist1 = BBkingattacks((1ULL << Bkingpos)); // fill 1 square away
-	BBpawnshield = BBkingdist1 & (pos->BBblackpieces & pos->BBpawns);
+	//BBkingdist1 = BBkingattacks((1ULL << Bkingpos)); // fill 1 square away
+	//BBkingdist2 = BBkingattacks((1ULL << Bkingpos >> 8)); // fill 3 squares sw, s, se of king zone
+	//BBpawnshield = BBkingdist2 & (pos->BBblackpieces & pos->BBpawns);
+	BBpawnshield = soWeOne(1ULL << Bkingpos) | southOne(1ULL << Bkingpos) | soEaOne(1ULL << Bkingpos);
+	BBpawnshield |= southOne(BBpawnshield);
+	BBpawnshield &= (pos->BBblackpieces & pos->BBpawns);
 	/*
 	while (BBpawnshield) {
 		int square = __builtin_ctzll(BBpawnshield);
@@ -1038,6 +1045,23 @@ int taperedEval(struct position *pos) {
 		endgameEval -= matimb * 180;
 	}
 	
+	// penalty for pieces being attacked by enemy pawns
+	
+	// white
+	/*
+	U64 BBBpawns = pos->BBblackpieces & pos->BBpawns;
+	U64 BBBpawnattacks = soEaOne(BBBpawns) | soWeOne(BBBpawns);
+	U64 BBWpiecesattacked = (pos->BBwhitepieces & ~pos->BBpawns) & BBBpawnattacks;
+	openingEval -= 10 * __builtin_popcountll(BBWpiecesattacked);
+	endgameEval -= 10 * __builtin_popcountll(BBWpiecesattacked);
+	// black
+	
+	U64 BBWpawns = pos->BBwhitepieces & pos->BBpawns;
+	U64 BBWpawnattacks = noEaOne(BBWpawns) | noWeOne(BBWpawns);
+	U64 BBBpiecesattacked = (pos->BBblackpieces & ~pos->BBpawns) & BBWpawnattacks;
+	openingEval += 10 * __builtin_popcountll(BBBpiecesattacked);
+	endgameEval += 10 * __builtin_popcountll(BBBpiecesattacked);
+	*/
 	
 	// bonus for connected rooks
 	/*
@@ -1080,6 +1104,8 @@ int taperedEval(struct position *pos) {
 	// white
 	
 	BBwhitepawns = (pos->BBwhitepieces & pos->BBpawns);
+	BBblackpawns = (pos->BBblackpieces & pos->BBpawns);
+	
 	U64 BBwhiteknights = (pos->BBwhitepieces & pos->BBknights);
 	while (BBwhiteknights) {
 		int square = __builtin_ctzll(BBwhiteknights);
@@ -1088,12 +1114,30 @@ int taperedEval(struct position *pos) {
 		if ((BBpawnWestAttacksB(1ULL << square) & BBwhitepawns) || (BBpawnEastAttacksB(1ULL << square) & BBwhitepawns)) {
 			openingEval += 20;
 			endgameEval += 20;
+			/*
+			int opppawns = 0;
+			U64 BBsq = 1ULL << square;
+			for (int rank = getrank(square);rank < 8;rank++) {
+				U64 BBnewsquare = northOne(BBsq);
+				U64 BBnwsq = noWeOne(BBsq);
+				U64 BBnesq = noEaOne(BBsq);
+				BBsq = BBnewsquare;
+				if ((BBnwsq | BBnesq) & BBblackpawns) {
+					opppawns = 1;
+					break;
+				}
+			}
+			if (!opppawns) {
+				// no opposing black pawns, it's an outpost
+				openingEval += 30;
+				endgameEval += 30;
+			}
+			 */
 		}
 	}
 	
 	// black
 	
-	BBblackpawns = (pos->BBblackpieces & pos->BBpawns);
 	U64 BBblackknights = (pos->BBblackpieces & pos->BBknights);
 	while (BBblackknights) {
 		int square = __builtin_ctzll(BBblackknights);
@@ -1102,6 +1146,25 @@ int taperedEval(struct position *pos) {
 		if ((BBpawnWestAttacksW(1ULL << square) & BBblackpawns) || (BBpawnEastAttacksW(1ULL << square) & BBblackpawns)) {
 			openingEval -= 20;
 			endgameEval -= 20;
+			/*
+			int opppawns = 0;
+			U64 BBsq = 1ULL << square;
+			for (int rank = getrank(square);rank > 0;rank--) {
+				U64 BBnewsquare = southOne(BBsq);
+				U64 BBswsq = soWeOne(BBsq);
+				U64 BBsesq = soEaOne(BBsq);
+				BBsq = BBnewsquare;
+				if ((BBswsq | BBsesq) & BBwhitepawns) {
+					opppawns = 1;
+					break;
+				}
+			}
+			if (!opppawns) {
+				// no opposing white pawns, it's an outpost
+				openingEval -= 30;
+				endgameEval -= 30;
+			}
+			 */
 		}
 	}
 	
