@@ -103,8 +103,26 @@ void sortMoves(struct position *pos, struct move *moves, const int num_moves, st
 	//	moves[i] = movescores[i].move;
 	//}
 	
+	
+	// selection sort
+	
+	int i, j;
+	for (i = 0;i < num_moves - 1;i++) {
+		int min_idx = i;
+		for (j = i+1; j < num_moves;j++) {
+			if (scores[j] > scores[min_idx]) min_idx = j;
+		}
+		int scorecopy = scores[i];
+		scores[i] = scores[min_idx];
+		scores[min_idx] = scorecopy;
+		
+		struct move movecopy = moves[i];
+		moves[i] = moves[min_idx];
+		moves[min_idx] = movecopy;
+	}
+	
 	/*
-	// selection sort - slower than bubble sort
+	// wrong node count
 	int i, j;
 	for (i = 0;i < num_moves - 1;i++) {
 		int position = i;
@@ -123,7 +141,7 @@ void sortMoves(struct position *pos, struct move *moves, const int num_moves, st
 			moves[position] = movecopy;
 		}
 	}
-	 */
+	*/
 	// Sort
 	// insertion sort - doesn't work
 	/*
@@ -158,7 +176,8 @@ void sortMoves(struct position *pos, struct move *moves, const int num_moves, st
 	}
 	 */
 	// Sort
-	
+	// bubble sort
+	/*
 	for (int a = 0; a < num_moves-1; ++a) {
 		// Find best move
 		int index = a;
@@ -178,5 +197,5 @@ void sortMoves(struct position *pos, struct move *moves, const int num_moves, st
 		scores[index] = scores[a];
 		scores[a] = copy2;
 	}
-	 
+	*/
 }
