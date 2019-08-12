@@ -34,6 +34,7 @@ int main() {
 	initZobrist();
 	initmagicmoves();
 	hashsize = 32;
+	clearHistory();
 	initTT(&TT);
 	clearTT(&TT);
 	initETT(&ETT);
@@ -78,7 +79,6 @@ int main() {
 		}
 		if (strcmp(splitstr[0],"test2") == 0) {
 			parsefen(&pos,"8/8/8/8/6k1/K7/8/8 b - -");
-			int kingpos = pos.Bkingpos;
 			printf("%d\n",isAttacked(&pos, H3, !pos.tomove));
 			
 		}
@@ -99,7 +99,6 @@ int main() {
 					BBmidsquare = northOne(BBmidsquare);
 					rank++;
 				}
-				U64 BBenemypawns = (BBchecksquares & (pos.BBblackpieces & pos.BBpawns));
 			}
 		}
 		if (strcmp(splitstr[0],"magic") == 0) {
@@ -185,7 +184,7 @@ int main() {
 			makeMovestr(splitstr[1],&pos);
 		}
 		if (strcmp(splitstr[0],"legalmoves") == 0) {
-			struct move TTmove = {.to=-1,.from=-1,.prom=-1,.cappiece=-1};
+			//struct move TTmove = {.to=-1,.from=-1,.prom=-1,.cappiece=-1};
 			struct move moves[MAX_MOVES];
 			int num_moves = genMoves(&pos,moves, 1);
 			//sortMoves(&pos, moves, num_moves, TTmove, 0);

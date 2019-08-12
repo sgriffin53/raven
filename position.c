@@ -475,9 +475,6 @@ void dspBoard(struct position *pos) {
 	printf("\n");
 	printf("Hash: %"PRIu64,generateHash(pos));
 	printf("\n");
-	int kingpos;
-	if (pos->tomove == WHITE) kingpos = pos->Wkingpos;
-	else kingpos = pos->Bkingpos;
 	printf("In check: %d",isCheck(pos));
 	printf("\n");
 }

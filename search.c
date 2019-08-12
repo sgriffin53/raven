@@ -56,7 +56,7 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 	if (clock() >= endtime) {
 		return -MATE_SCORE;
 	}
-	int origAlpha = alpha;
+	//int origAlpha = alpha;
 	struct move TTmove = {.to=-1,.from=-1,.prom=-1,.cappiece=-1};
 	U64 hash;
 	if (currenthash == 0) {
@@ -115,7 +115,7 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 		//double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 		//int time_spentms = (int)(time_spent * 1000);
 		//char cappiece = getPiece(pos,moves[i].to);
-		char cappiece = moves[i].cappiece;
+		//char cappiece = moves[i].cappiece;
 
 		//futility pruning in qsearch
 		/*
@@ -459,7 +459,6 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	int bestscore = INT_MIN;
 	int legalmoves = 0;
 	int fullwindow = 1;
-	int extended = 0;
 	
 	for (int i = 0;i < num_moves;i++) {
 		char piece = moves[i].piece;
@@ -794,7 +793,7 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 		// Check how many times the PV has changed in the last 4 depths
 		
 		int losingontime = 0;
-		int movetimedonepercent = time_spentms * 100 / movetime;
+		//int movetimedonepercent = time_spentms * 100 / movetime;
 		if (pos.tomove == WHITE) {
 			if (wtime < btime) losingontime = 1;
 		}
@@ -844,7 +843,7 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 		
 		if (d > 1 && time_spentms > 30 && endtime == origendtime) {
 			if (time_spent_prevms == 0) time_spent_prevms = 1;
-			double factor = time_spentms / time_spent_prevms;
+			//double factor = time_spentms / time_spent_prevms;
 			double expectedtime = time_spentms * 4;
 			int expectedendtime = clock() + expectedtime;
 			if (expectedendtime > endtime) break;

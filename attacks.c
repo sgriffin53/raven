@@ -6,7 +6,6 @@
 #include "magicmoves.h"
 
 int isCheck(struct position *pos) {
-	int kingpos;
 	if (pos->tomove == WHITE) return isAttacked(pos, pos->Wkingpos, !pos->tomove);
 	else return isAttacked(pos, pos->Bkingpos, !pos->tomove);
 }

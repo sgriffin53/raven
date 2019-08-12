@@ -712,14 +712,20 @@ int taperedEval(struct position *pos) {
 	 
 	// loop to check for doubled pawns and rooks on open files
 	
+	//U64 BBWlastpawnsonfile = 0ULL;
+	//U64 BBBlastpawnsonfile = 0ULL;
+	
+	//int Wislands = 0;
+	//int Bislands = 0;
+	
 	for (int i = 0;i < 8;i++) {
 		// doubled pawns
 		// white pawns
 		U64 BBfilemask = BBfileA << i;
 		
-		U64 BBallpawnsonfile = BBfilemask & pos->BBpawns;
-		U64 BBallrooksonfile = BBfilemask & pos->BBrooks;
-		if (!BBallpawnsonfile && !BBallrooksonfile) continue;
+		//U64 BBallpawnsonfile = BBfilemask & pos->BBpawns;
+		//U64 BBallrooksonfile = BBfilemask & pos->BBrooks;
+		//if (!BBallpawnsonfile && !BBallrooksonfile) continue;
 		
 		U64 BBWpawnsonfile = BBfilemask & (pos->BBwhitepieces & pos->BBpawns);
 		
@@ -736,6 +742,26 @@ int taperedEval(struct position *pos) {
 			endgameEval += 16;
 		}
 		
+		// count pawn islands
+		/*
+		if (BBWpawnsonfile) {
+			if (BBWlastpawnsonfile == 0) {
+				// start of new island
+				Wislands++;
+			}
+		}
+		
+		if (BBBpawnsonfile) {
+			if (BBBlastpawnsonfile == 0) {
+				// start of new island
+				Bislands++;
+			}
+		}
+		
+		BBWlastpawnsonfile = BBWpawnsonfile;
+		BBBlastpawnsonfile = BBBpawnsonfile;
+		*/
+				
 		// isolated pawns
 
 		if (BBWpawnsonfile) {
@@ -754,6 +780,7 @@ int taperedEval(struct position *pos) {
 				endgameEval += 6;
 			}
 		}
+		//if (!BBallrooksonfile) continue;
 		// rooks on open files
 		U64 BBpawnsonfile = BBfilemask & pos->BBpawns;
 		// white rook on open file
@@ -815,7 +842,18 @@ int taperedEval(struct position *pos) {
 			}
 		}
 	}
-
+	
+	// give a penalty for 2+ pawn islands
+	/*
+	if (Wislands > 0) {
+		openingEval -= (Wislands - 1) * 35;
+		endgameEval -= (Wislands - 1) * 15;
+	}
+	if (Bislands > 0) {
+		openingEval += (Bislands - 1) * 35;
+		endgameEval += (Bislands - 1) * 15;
+	}
+	*/
 	// pawn shield
 	
 	// white pawn shield
@@ -1095,6 +1133,27 @@ int taperedEval(struct position *pos) {
 		}
 	}
 	
+	// rook on the 7th
+	
+	// white
+	/*
+	U64 BBWrookson7th = BBrank7 & pos->BBrooks & pos->BBwhitepieces;
+	U64 BBBkingon8th = BBrank8 & pos->BBkings & pos->BBblackpieces;
+	if (BBWrookson7th & BBBkingon8th) {
+		openingEval += 30 * __builtin_popcountll(BBWrookson7th);
+		endgameEval += 30 * __builtin_popcountll(BBWrookson7th);
+	}
+	
+	// black
+	
+	U64 BBBrookson7th = BBrank2 & pos->BBrooks & pos->BBblackpieces;
+	U64 BBWkingon8th = BBrank1 & pos->BBkings & pos->BBwhitepieces;
+	if (BBBrookson7th & BBWkingon8th) {
+		openingEval -= 30 * __builtin_popcountll(BBBrookson7th);
+		endgameEval -= 30 * __builtin_popcountll(BBBrookson7th);
+	}
+	*/
+	
 	
 	// mobility bonuses
 	
@@ -1190,12 +1249,36 @@ int mobility(struct position *pos, int side) {
 	int count = __builtin_popcountll(BBmoves);
 	U64 BBcentreattacks = BBmoves & BBcentre;
 	count += __builtin_popcountll(BBcentreattacks);
+	
+	// count squares in enemy half more
+	
+	
+	//U64 BBblackhalf = BBrank5 | BBrank6 | BBrank7 | BBrank8;
+	//U64 BBwhitehalf = BBrank1 | BBrank2 | BBrank3 | BBrank4;
+	/*
+	U64 BBblackhalf = BBrank7 | BBrank8;
+	U64 BBwhitehalf = BBrank1 | BBrank2;
+	
+	if (side == WHITE) {
+		count += 0.75 * __builtin_popcountll(BBmoves & BBblackhalf);
+	}
+	else if (side == BLACK) {
+		count += 0.75 * __builtin_popcountll(BBmoves & BBwhitehalf);
+	}
+	 */
 	return count;
 	
 }
 int isEndgame(struct position *pos) {
 	int numpieces = 1;
+	U64 BBpieces = pos->BBknights | pos->BBbishops | pos->BBrooks | pos->BBqueens;
+	if (pos->tomove == WHITE) BBpieces = BBpieces & pos->BBwhitepieces;
+	else BBpieces = BBpieces & pos->BBblackpieces;
+	numpieces = __builtin_popcountll(BBpieces);
+	if (numpieces > 3) return 0;
+	return 1;
 	//BBoccupied = pos->BBwhitepieces | pos->BBblackpieces;
+	/*
 	U64 BBoccupied = pos->BBwhitepieces;
 	if (pos->tomove == BLACK) BBoccupied = pos->BBblackpieces;
 	while (BBoccupied != 0) {
@@ -1216,6 +1299,7 @@ int isEndgame(struct position *pos) {
 			}
 		}
 	}
+	 */
 	/*
 	for (int i=0;i<64;i++) {
 		char piece = getPiece(pos,i);
