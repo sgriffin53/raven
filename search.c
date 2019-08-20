@@ -16,6 +16,8 @@
 #include <stdlib.h>
 #include <math.h>
 #include "move.h"
+#include "bitboards.h"
+#include "magicmoves.h"
 
 int reduction(const struct move *move, const int depthleft, char cappiece, int legalmoves, int incheck, int givescheck, int ply) {
 	assert(move);
@@ -50,6 +52,7 @@ void clearHistory() {
 int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime) {
 	assert(pos);
 	assert(alpha >= -MATE_SCORE && beta <= MATE_SCORE);
+	if (ply > seldepth) seldepth = ply;
 	//int incheck;
 	//int score;
 	//int kingpos;
@@ -82,14 +85,13 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 		return beta;
 	}
 	
-	if (alpha < standpat) alpha = standpat;
-	
 	// delta pruning
 	const int BIG_DELTA = 975;
 	if (standpat < alpha - BIG_DELTA) {
 		nodesSearched++;
 		return alpha;
 	}
+	if (alpha < standpat) alpha = standpat;
 
 	struct move moves[MAX_MOVES];
 	const int num_moves = genMoves(pos,moves, 1);
@@ -124,6 +126,8 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 		}
 		*/
 		
+		int SEEvalue = SEEcapture(pos, moves[i].from, moves[i].to, pos->tomove);
+		if (SEEvalue < 0) continue;
 		makeMove(&moves[i],pos);
 
 		// check if move is legal (doesn't put in check)
@@ -202,6 +206,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	assert(alpha >= -MATE_SCORE && beta <= MATE_SCORE);
 	assert(beta > alpha);
 	//assert(depthleft >= 0);
+	if (ply > seldepth) seldepth = ply;
 	int origdepthleft = depthleft;
 	if (depthleft <= 0) depthleft = 0;
 	if (clock() >= endtime) {
@@ -378,6 +383,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	}
 	*/
 	int f_prune = 0;
+	
 	int fmargin[4] = { 0, 200, 300, 500 };
 	if (depthleft <= 3
 	&&  !incheck
@@ -506,8 +512,8 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		/*
 		//if (depthleft >= 5 && ply != 0 && isTTmove && abs(TTdata.score) < MATE_SCORE && TTdata.flag == LOWERBOUND) {
 		if (legalmoves == 1 && num_moves > 1 && depthleft >= 5 && isTTmove && abs(TTdata.score) < MATE_SCORE && TTdata.depth >= depthleft - 3 && TTdata.flag != UPPERBOUND) {
-		 */
-			/*
+		 
+			
 			int singularBeta = TTdata.score - 2 * depthleft;
 			int halfdepth = depthleft / 2;
 			int value = alphaBeta(pos, singularBeta - 1, singularBeta, halfdepth - 2, 0, ply + 1, pv, endtime);
@@ -518,8 +524,8 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 				//*pv = TTmove;
 				//return singularBeta;
 			}
-			 */
-			 /*
+			 
+			 
 			struct move newmoves[MAX_MOVES];
 			const int num_moves = genMoves(pos,newmoves, 0);
 			struct move newTTmove = {.from=-1,.to=-1, .prom='0', .piece='0', .cappiece='0'};
@@ -540,8 +546,8 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		
 			
 		}
-		
 		*/
+		
 		makeMove(&moves[i],pos);
 		pos->tomove = !pos->tomove;
 		if (isCheck(pos)) {
@@ -725,6 +731,7 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 	// Result
 	struct move bestmove;
 	
+	seldepth = 0;
 	
 	double time_spent;
 	int time_spentms;
@@ -908,6 +915,7 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 		//lastlastscore = lastscore;
 		//lastscore = score;
 		
+		
 
 		score = alphaBeta(&pos, -MATE_SCORE, MATE_SCORE, d, 0, 0, &pv, endtime);
 		
@@ -949,6 +957,7 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 		// Info string
 		printf("info");
 		printf(" depth %i", d);
+		printf(" seldepth %i", seldepth);
 		printf(" nodes %" PRIu64, nodesSearched);
 		printf(" time %i", (int)(time_spent*1000));
 		printf(" nps %i", nps);
@@ -971,6 +980,131 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 	printf("bestmove %s\n", movetostr(bestmove));
 
 	return bestmove;
+}
+int SEEcapture(struct position *pos, int from, int to, int side) {
+	int value = 0;
+	char piece = getPiece(pos,from);
+	char cappiece = getPiece(pos,to);
+	struct move capmove = {.from=from, .to=to, .prom=0, .piece=piece, .cappiece=cappiece};
+	makeMove(&capmove, pos);
+	value = pieceval(cappiece) - SEE(pos, to, !side);
+	unmakeMove(pos);
+	return value;
+}
+int SEE(struct position *pos, int square, int side) {
+	int value = 0;
+	struct move capmove = get_smallest_attacker(pos, square, side);
+	int cappiece = getPiece(pos, square);
+	//printf("%c\n",capmove.piece);
+	//dspBoard(pos);
+	if (capmove.piece != -1) {
+		//dspBoard(pos);
+		makeMove(&capmove, pos);
+		//printf("made move %s\n", movetostr(capmove));
+		//dspBoard(pos);
+		value = max(0, pieceval(cappiece) - SEE(pos, square, !side));
+		unmakeMove(pos);
+	}
+	return value;
+}
+struct move get_smallest_attacker(struct position *pos, int square, int side) {
+	U64 BBmypieces;
+	U64 BBopppieces;
+	U64 BBsquare = 1ULL << square;
+	U64 BBoccupied = pos->BBwhitepieces | pos->BBblackpieces;
+	if (side == WHITE) BBmypieces = pos->BBwhitepieces;
+	else BBmypieces = pos->BBblackpieces;
+	if (side == BLACK) BBopppieces = pos->BBwhitepieces;
+	else BBopppieces = pos->BBblackpieces;
+	struct move blankmove = {.to=-1, .from=-1, .prom=-1, .piece=-1, .cappiece=-1};
+	struct move returnmove = {.to=square, .from=-1, .prom=0, .piece=-1, .cappiece=getPiece(pos,square)};
+	// pawns
+	if (side == WHITE) {
+		U64 BBattacks = soWeOne(BBsquare) | soEaOne(BBsquare);
+		if (BBattacks & pos->BBpawns & BBmypieces) {
+			returnmove.from = __builtin_ctzll(BBattacks & pos->BBpawns & BBmypieces);
+			returnmove.piece = 'P';
+			return returnmove;
+		}
+	}
+	else { // black
+		U64 BBattacks = noWeOne(BBsquare) | noEaOne(BBsquare);
+		if (BBattacks & pos->BBpawns & BBmypieces) {
+			returnmove.from = __builtin_ctzll(BBattacks & pos->BBpawns & BBmypieces);
+			returnmove.piece = 'p';
+			return returnmove;
+		}
+	}
+	// Knights
+	U64 BBattacks = BBknightattacks(BBsquare);
+	if (BBattacks & BBmypieces & pos->BBknights) {
+		if (side == WHITE) {
+			returnmove.from = __builtin_ctzll(BBattacks & pos->BBknights & BBmypieces);
+			returnmove.piece = 'N';
+			return returnmove;
+		}
+		else {
+			returnmove.from = __builtin_ctzll(BBattacks & pos->BBknights & BBmypieces);
+			returnmove.piece = 'n';
+			return returnmove;
+		}
+	}
+	// Bishops
+	BBattacks = Bmagic(square, BBoccupied);
+	if (BBattacks & BBmypieces & pos->BBbishops) {
+		if (side == WHITE) {
+			returnmove.from = __builtin_ctzll(BBattacks & pos->BBbishops & BBmypieces);
+			returnmove.piece = 'B';
+			return returnmove;
+		}
+		else {
+			returnmove.from = __builtin_ctzll(BBattacks & pos->BBbishops & BBmypieces);
+			returnmove.piece = 'b';
+			return returnmove;
+		}
+	}
+	// Rooks
+	BBattacks = Rmagic(square, BBoccupied);
+	if (BBattacks & BBmypieces & pos->BBrooks) {
+		if (side == WHITE) {
+			returnmove.from = __builtin_ctzll(BBattacks & pos->BBrooks & BBmypieces);
+			returnmove.piece = 'R';
+			return returnmove;
+		}
+		else {
+			returnmove.from = __builtin_ctzll(BBattacks & pos->BBrooks & BBmypieces);
+			returnmove.piece = 'r';
+			return returnmove;
+		}
+	}
+	// Queens
+	BBattacks = Rmagic(square, BBoccupied) | Bmagic(square, BBoccupied);
+	if (BBattacks & BBmypieces & pos->BBqueens) {
+		if (side == WHITE) {
+			returnmove.from = __builtin_ctzll(BBattacks & pos->BBqueens & BBmypieces);
+			returnmove.piece = 'Q';
+			return returnmove;
+		}
+		else {
+			returnmove.from = __builtin_ctzll(BBattacks & pos->BBqueens & BBmypieces);
+			returnmove.piece = 'q';
+			return returnmove;
+		}
+	}
+	BBattacks = BBkingattacks(BBsquare);
+	if (BBattacks & BBmypieces & pos->BBkings) {
+		if (side == WHITE) {
+			returnmove.from = __builtin_ctzll(BBattacks & pos->BBkings & BBmypieces);
+			returnmove.piece = 'K';
+			return returnmove;
+		}
+		else {
+			returnmove.from = __builtin_ctzll(BBattacks & pos->BBkings & BBmypieces);
+			returnmove.piece = 'k';
+			return returnmove;
+		}
+	}
+	return blankmove;
 }
 /*
 // old unrolled root search
