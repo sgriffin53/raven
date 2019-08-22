@@ -26,5 +26,6 @@ int movestackend;
 struct move countermoves[64][64];
 U64 hashstack[1024];
 int hashstackend;
+int seldepth;
 
 #endif
