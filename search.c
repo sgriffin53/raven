@@ -19,12 +19,33 @@
 #include "bitboards.h"
 #include "magicmoves.h"
 
+
 int reduction(const struct move *move, const int depthleft, char cappiece, int legalmoves, int incheck, int givescheck, int ply) {
 	assert(move);
 	assert(depthleft >= 0);
-	if ((!incheck) && (legalmoves > 4) && (cappiece == '0') && (depthleft >= 3) && (move->prom == 0) && (!givescheck)) {
-		if (depthleft >= 6) return 2;
-		return 1;
+	int tomove;
+	if (move->piece >= 'a' && move->piece <= 'z') tomove = BLACK;
+	else tomove = WHITE;
+	/*
+	if (!incheck && depthleft >= 3 && move->prom == 0 && !givescheck && cappiece != '0') {
+		struct position lastpos = posstack[posstackend - 2];
+		int SEEvalue = SEEcapture(&lastpos, move->from, move->to, lastpos.tomove);
+		if (SEEvalue < -300) return 1;
+	}
+	 */
+	if ((!incheck) && (legalmoves > 4) && (depthleft >= 3) && (move->prom == 0) && (!givescheck)) {
+		//int histval = history[tomove][move->from][move->to];
+		//int r = 1 + (legalmoves - 4) / 9 + (depthleft - 3)  / 4;
+		//r = r + histval / -5000;
+		//if (r < 0) r = 0;
+		//if (r > 6) r = 6;
+		//return r;
+		
+		//return 1 + (legalmoves - 4) / 9 + (depthleft - 3)  / 4;
+		if (cappiece == '0') {
+			if (depthleft >= 6) return 2;
+			return 1;
+		}
 	}
 
 	return 0;
@@ -125,9 +146,10 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 			if (!isCheck(pos)) continue;
 		}
 		*/
-		
-		int SEEvalue = SEEcapture(pos, moves[i].from, moves[i].to, pos->tomove);
-		if (SEEvalue < 0) continue;
+		if (moves[i].cappiece != '0') {
+			int SEEvalue = SEEcapture(pos, moves[i].from, moves[i].to, pos->tomove);
+			if (SEEvalue < 0) continue;
+		}
 		makeMove(&moves[i],pos);
 
 		// check if move is legal (doesn't put in check)
@@ -274,6 +296,11 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	
 	int staticeval = taperedEval(pos);
 	
+	if (depthleft < 3 && !incheck && abs(beta) - 1 > -MATE_SCORE + 100) {
+		int eval_margin = 120 * depthleft;
+		if (staticeval - eval_margin >= beta) return staticeval - eval_margin;
+	}
+	
 	// static null pruning (reverse futility pruning)
 	
 	if (beta <= MATE_SCORE) {
@@ -294,8 +321,14 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		pos->epsquare = -1;
 		posstack[posstackend] = *pos;
 		posstackend++;
-		int R = 3;
 		int verR = 3;
+		int R = 3;
+		//int R = 3 + min(3, (staticeval - beta) / 128);
+		//if (R < 2) R = 2;
+		//int R = 4 + depthleft / 6 + min(3, (staticeval + beta) / 200);
+		//if (R < 1) R = 1;
+		//int verR = 3;
+		//printf("%d\n",R);
 		/*
 		if (ply % 2 == 1) { 
 			R = 5;
@@ -404,6 +437,30 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
             TTmove = TTdata.bestmove;
         }
 	}
+	
+	// trapped piece extensions
+	/*
+	struct move prevmove = movestack[movestackend - 1];
+	if (pos->tomove == WHITE) {
+		int square = prevmove.to;
+		if (((1ULL << square) & (BBrank1 | BBrank2 | BBrank3 | BBrank4)  & ~BBfileD & ~BBfileE) && (prevmove.piece == 'n' || prevmove.piece == 'b' || prevmove.piece == 'q')) {
+			if (isTrappedPiece(pos, BLACK) == prevmove.to) {
+				depthleft += 1;
+			//	printf("trapped piece!");
+			}
+		}
+	}
+	if (pos->tomove == BLACK) {
+		int square = prevmove.to;
+		if (((1ULL << square) & (BBrank5 | BBrank6 | BBrank7 | BBrank8)  & ~BBfileD & ~BBfileE) && (prevmove.piece == 'N' || prevmove.piece == 'B' || prevmove.piece == 'Q')) {
+			if (isTrappedPiece(pos, WHITE) == prevmove.to) {
+				
+			//	printf("trapped piece!");
+				depthleft += 1;
+			}
+		}
+	}
+	*/
 	/*
 	//if (TTmove.from == -1 && depthleft >= 6 && staticeval + 150 >= beta) {
 	if (TTmove.from == -1 && depthleft >= 6 && staticeval > alpha - 200) {
@@ -421,6 +478,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		
 	}
 	*/
+	
 	if (TTmove.from == -1) TTmove = *pv;
 	struct move moves[MAX_MOVES];
 	const int num_moves = genMoves(pos,moves, 0);
@@ -467,6 +525,8 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	int fullwindow = 1;
 	
 	for (int i = 0;i < num_moves;i++) {
+		depthleft = allorigdepthleft;
+		
 		char piece = moves[i].piece;
 		char cappiece = moves[i].cappiece;
 		
@@ -499,9 +559,22 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			&& bestmove.from != -1 && legalmoves >= 1 && (histval + butterflyval) > histmargin && cutoffpercent < 1.25 && ply != 0) {
 			continue;
 		}
+		
+		// SEE pruning
+		/*
+		if (legalmoves >= 0 && cappiece != '0' && staticeval < 100 && depthleft <= 6 && ply != 0) {
+			//struct position lastpos = posstack[posstackend - 2];
+			int SEEvalue = SEEcapture(pos, moves[i].from, moves[i].to, pos->tomove);
+			//int SEEmargin[7] = { 0, -20, -80, -180, -320, -500, -720 };
+			//int SEEmargin[7] = { 0, -100, -100, -200, -525, -525, -900 };
+			//int SEEmargin[7] = { 0, -100, -200, -200, -300, -525, -900 };
+			if (SEEvalue <= -20 * depthleft * depthleft) {
+				continue;
+			} 
+		}
+		*/
 		int extension = 0;
-		
-		
+
 		// Singular extensions and multi-cut
 		/*
 		int isTTmove = 0;
@@ -547,34 +620,45 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			
 		}
 		*/
-		
 		makeMove(&moves[i],pos);
 		pos->tomove = !pos->tomove;
 		if (isCheck(pos)) {
 			unmakeMove(pos);
 			continue;
 		}
-		pos->tomove = !pos->tomove;
-	
 		
+		pos->tomove = !pos->tomove;
+		 
 		int givescheck = isCheck(pos);
 		legalmoves++;
+		
+		// futility pruning
 		
 		//if (histscore > 0) {
 		//	printf("hist val: %d\n",histscore);
 		//}
 		if (f_prune
 		&& legalmoves > 1
-		&&  cappiece == '0'
 		&&  moves[i].prom == 0
 		//&&  histscore <= fhistorythreshold[depthleft]
 		&& !givescheck
 		&& ply != 0) {
 		//&&  !isAttacked(pos,kingpos,pos->tomove)) {
+			if (cappiece == '0') {
 			unmakeMove(pos);
 			continue;
+			}
+			/*
+			if (depthleft <= 1) {
+				struct position lastpos = posstack[posstackend - 2];
+				int SEEvalue = SEEcapture(&lastpos, moves[i].from, moves[i].to, lastpos.tomove);
+				if (SEEvalue < 0) { 
+					unmakeMove(pos);
+					continue;
+				}
+			}
+			 */
 		}
-		
 		int r = reduction(&moves[i], depthleft, cappiece, legalmoves, incheck, givescheck, ply);
 		
 		if (piece == 'p' && getrank(moves[i].to) == 1) {
@@ -583,7 +667,6 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		else if (piece == 'P' && getrank(moves[i].to) == 6) {
 			extension = 1;
 		}
-		
 		// PV search - doesn't work
 		
 		//r = r - extension;
