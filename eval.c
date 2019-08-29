@@ -524,7 +524,7 @@ int taperedEval(struct position *pos) {
 		else lastblackpawn = 0;
 	}
 	 */
-	 
+	
 	// Candidate passed pawns
 	
 	// white
@@ -1592,6 +1592,75 @@ int taperedEval(struct position *pos) {
 		}
 	}
 	
+	// bonus for bishops on long diagonal that attack both centre squares
+	// untested
+	/*
+	BBwhitebishops = pos->BBwhitepieces & pos->BBbishops;
+	BBblackbishops = pos->BBblackpieces & pos->BBbishops;
+	while (BBwhitebishops) {
+		int square = __builtin_ctzll(BBwhitebishops);
+		BBwhitebishops &= BBwhitebishops - 1;
+		if ((1ULL << square) & (BBdiagA1H8 | BBdiagA8H1)) {
+			// bishop is on long diagonal
+			U64 BBmoves = Bmagic(square, pos->BBwhitepieces | pos->BBblackpieces) & ~pos->BBwhitepieces;
+			if (__builtin_popcountll(BBmoves & BBcentre) == 2) {
+				// bishop can see both centre squares on diagonal
+				openingEval += 45;
+			}
+		}
+	}
+	while (BBblackbishops) {
+		int square = __builtin_ctzll(BBblackbishops);
+		BBblackbishops &= BBblackbishops - 1;
+		if ((1ULL << square) & (BBdiagA1H8 | BBdiagA8H1)) {
+			// bishop is on long diagonal
+			U64 BBmoves = Bmagic(square, pos->BBwhitepieces | pos->BBblackpieces) & ~pos->BBblackpieces;
+			if (__builtin_popcountll(BBmoves & BBcentre) == 2) {
+				// bishop can see both centre squares on diagonal
+				openingEval -= 45;
+			}
+		}
+	}
+	*/
+	
+	// penalty for king on pawnless flank
+	
+	// white
+	
+	if (getfile(pos->Wkingpos) != 3 && getfile(pos->Wkingpos) != 4) {
+		// king is on a flank
+		
+		U64 BBflank;
+		if (getfile(pos->Wkingpos) <= 3) {
+			BBflank = BBfileA | BBfileB | BBfileC;
+		}
+		else if (getfile(pos->Wkingpos) >= 5) {
+			BBflank = BBfileF | BBfileG | BBfileH;
+		}
+		if (!(BBflank & pos->BBpawns)) {
+			openingEval -= 17;
+			endgameEval -= 95;
+		}
+	}
+	
+	// black
+	
+	if (getfile(pos->Bkingpos) != 3 && getfile(pos->Bkingpos) != 4) {
+		// king is on a flank
+		
+		U64 BBflank;
+		if (getfile(pos->Bkingpos) <= 3) {
+			BBflank = BBfileA | BBfileB | BBfileC;
+		}
+		else if (getfile(pos->Bkingpos) >= 5) {
+			BBflank = BBfileF | BBfileG | BBfileH;
+		}
+		if (!(BBflank & pos->BBpawns)) {
+			openingEval += 17;
+			endgameEval += 95;
+		}
+	}
+	
 	// rook on the 7th
 	
 	// white
@@ -1739,7 +1808,6 @@ int taperedEval(struct position *pos) {
 	attackscore = (attacksvalue * attackweight[numattackers]) / 100;
 	openingEval += attackscore * 1.5;
 	endgameEval += attackscore * 1.5;
-	
 	*/
 	// adjust knight value based on number of our pawns
 	/*
