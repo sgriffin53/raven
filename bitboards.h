@@ -26,6 +26,12 @@ const U64 BBrank8;
 const U64 BBcentre;
 const U64 BBbigcentre;
 
+const U64 BBdiagA8H1;
+const U64 BBdiagA1H8;
+
+const U64 BBdarksquares;
+const U64 BBlightsquares;
+
 U64 arrFiles[8];
 
 
@@ -51,5 +57,7 @@ U64 soEaOne(U64 BB);
 U64 soWeOne(U64 BB);
 U64 noEaOne(U64 BB);
 U64 noWeOne(U64 BB);
+
+void genLookups();
 
 #endif

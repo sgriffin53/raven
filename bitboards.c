@@ -1,6 +1,8 @@
 #include "bitboards.h"
 #include "hash.h"
 #include "position.h"
+#include "attacks.h"
+#include "globals.h"
 
 typedef unsigned long long U64;
 
@@ -61,6 +63,35 @@ const U64 BBbigcentre = 0b00000000\
 00000000\
 00000000;
 
+const U64 BBdiagA8H1 = 0b10000000\
+01000000\
+00100000\
+00010000\
+00001000\
+00000100\
+00000010\
+00000001;
+
+const U64 BBdiagA1H8 = 0b00000001\
+00000010\
+00000100\
+00001000\
+00010000\
+00100000\
+01000000\
+10000000;
+
+const U64 BBlightsquares = 0b10101010\
+01010101\
+10101010\
+01010101\
+10101010\
+01010101\
+10101010\
+01010101;
+
+const U64 BBdarksquares = ~BBlightsquares;
+
 U64 northOne(U64 BB) {
 	return BB << 8;
 }
@@ -95,4 +126,10 @@ U64 noEaOne(U64 BB) {
 }
 U64 noWeOne(U64 BB) {
 	return (BB << 7) & ~BBfileH;
+}
+void genLookups() {
+	for (int i = 0; i < 64;i++) {
+		BBkingLookup[i] = BBkingattacks(1ULL << i);
+		BBknightLookup[i] = BBknightattacks(1ULL << i);
+	}
 }

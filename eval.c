@@ -74,24 +74,9 @@ int pieceval(const char inpiece) {
 		case 'k':
 		case 'K': return 9999;
 	}
-	/*
-	if (inpiece == 'p') return 100;
-	if (inpiece == 'n') return 300;
-	if (inpiece == 'b') return 300;
-	if (inpiece == 'r') return 525;
-	if (inpiece == 'q') return 900;
-	if (inpiece == 'k') return 9999;
-	if (inpiece == 'P') return 100;
-	if (inpiece == 'N') return 300;
-	if (inpiece == 'B') return 300;
-	if (inpiece == 'R') return 525;
-	if (inpiece == 'Q') return 900;
-	if (inpiece == 'K') return 9999;
-*/
-	assert(0);
-
 	return 0;
 }
+
 
 int taperedEval(struct position *pos) {
 	assert(pos);
@@ -196,7 +181,8 @@ int taperedEval(struct position *pos) {
 	// white pieces attacking black king
 
 	int enemykingpos = pos->Bkingpos;
-	U64 BBkingdist1 = BBkingattacks(pos->BBkings & (1ULL << enemykingpos)); // fill 1 square away
+	//U64 BBkingdist1 = BBkingattacks(pos->BBkings & (1ULL << enemykingpos)); // fill 1 square away
+	U64 BBkingdist1 = BBkingLookup[enemykingpos];
 	U64 BBattackers = BBkingdist1 & (pos->BBwhitepieces & (pos->BBqueens | pos->BBrooks | pos->BBknights | pos->BBpawns));
 	/*
 	while (BBattackers) {
@@ -248,7 +234,8 @@ int taperedEval(struct position *pos) {
 	endgameEval += 10 * __builtin_popcountll(BBattackers);
 	// black pieces attacking white king
 	enemykingpos = pos->Wkingpos;
-	BBkingdist1 = BBkingattacks(pos->BBkings & (1ULL << enemykingpos)); // fill 1 square away
+	//BBkingdist1 = BBkingattacks(pos->BBkings & (1ULL << enemykingpos)); // fill 1 square away
+	BBkingdist1 = BBkingLookup[enemykingpos];
 	BBattackers = BBkingdist1 & (pos->BBblackpieces & (pos->BBqueens | pos->BBrooks | pos->BBknights | pos->BBpawns));
 	/*
 	while (BBattackers) {
@@ -1335,33 +1322,42 @@ int taperedEval(struct position *pos) {
 	// penalty for bishops having pawns of same colour
 	/*
 	// white 
-	U64 BBbishops = pos->BBbishops & pos->BBwhitepieces;
-	while (BBbishops) {
-		int square = __builtin_ctzll(BBbishops);
-		BBbishops &= BBbishops - 1;
-		int islight = 0;
-		if ((1ULL << square) & BBlightsquares) islight = 1;
-		else islight = 0;
-		U64 BBsamecolpawns;
-		if (islight) BBsamecolpawns = pos->BBpawns & pos->BBwhitepieces & BBlightsquares;
-		else BBsamecolpawns = pos->BBpawns & pos->BBwhitepieces & BBdarksquares;
-		endgameEval -= 3 * __builtin_popcountll(BBsamecolpawns);
+	if (num_WB == 1) {
+		U64 BBbishops = pos->BBbishops & pos->BBwhitepieces;
+		while (BBbishops) {
+			int square = __builtin_ctzll(BBbishops);
+			BBbishops &= BBbishops - 1;
+			int islight = 0;
+			if ((1ULL << square) & BBlightsquares) islight = 1;
+			else islight = 0;
+			U64 BBsamecolpawns;
+			if (islight) BBsamecolpawns = pos->BBpawns & pos->BBwhitepieces & BBlightsquares;
+			else BBsamecolpawns = pos->BBpawns & pos->BBwhitepieces & BBdarksquares;
+			openingEval -= 4 * __builtin_popcountll(BBsamecolpawns);
+			endgameEval -= 6 * __builtin_popcountll(BBsamecolpawns);
+		}
 	}
 	
 	// black
-	BBbishops = pos->BBbishops & pos->BBblackpieces;
-	while (BBbishops) {
-		int square = __builtin_ctzll(BBbishops);
-		BBbishops &= BBbishops - 1;
-		int islight = 0;
-		if ((1ULL << square) & BBlightsquares) islight = 1;
-		else islight = 0;
-		U64 BBsamecolpawns;
-		if (islight) BBsamecolpawns = pos->BBpawns & pos->BBblackpieces & BBlightsquares;
-		else BBsamecolpawns = pos->BBpawns & pos->BBblackpieces & BBdarksquares;
-		endgameEval += 3 * __builtin_popcountll(BBsamecolpawns);
+	
+	if (num_BB == 1) {
+		U64 BBbishops = pos->BBbishops & pos->BBblackpieces;
+		while (BBbishops) {
+			int square = __builtin_ctzll(BBbishops);
+			BBbishops &= BBbishops - 1;
+			int islight = 0;
+			if ((1ULL << square) & BBlightsquares) islight = 1;
+			else islight = 0;
+			U64 BBsamecolpawns;
+			if (islight) BBsamecolpawns = pos->BBpawns & pos->BBblackpieces & BBlightsquares;
+			else BBsamecolpawns = pos->BBpawns & pos->BBblackpieces & BBdarksquares;
+			openingEval += 4 * __builtin_popcountll(BBsamecolpawns);
+			endgameEval += 6 * __builtin_popcountll(BBsamecolpawns);
+		}
 	}
 	*/
+	
+	
 	
 	// bishop pair bonus
 	
@@ -1593,7 +1589,6 @@ int taperedEval(struct position *pos) {
 	}
 	
 	// bonus for bishops on long diagonal that attack both centre squares
-	// untested
 	/*
 	BBwhitebishops = pos->BBwhitepieces & pos->BBbishops;
 	BBblackbishops = pos->BBblackpieces & pos->BBbishops;
@@ -1620,6 +1615,54 @@ int taperedEval(struct position *pos) {
 				openingEval -= 45;
 			}
 		}
+	}
+	*/
+	
+	// colour weaknesses
+	
+	// white
+	/*
+	if ((pos->BBblackpieces & pos->BBbishops & BBlightsquares)
+		&& !(pos->BBwhitepieces & pos->BBbishops & BBlightsquares)) {
+		// black has a light square bishop
+		// white doesn't have a light square bishop
+		U64 BBWdarkpawns = pos->BBwhitepieces & pos->BBpawns & BBdarksquares;
+		int numbadpawns = __builtin_popcountll(BBWdarkpawns);
+		// penalty for each pawn on a dark square
+		openingEval -= numbadpawns * 4;
+		endgameEval -= numbadpawns * 2;
+	}
+	if ((pos->BBblackpieces & pos->BBbishops & BBdarksquares) 
+		&& !(pos->BBwhitepieces & pos->BBbishops & BBdarksquares)) {
+		// black has a dark square bishop
+		// white doesn't have a dark square bishop
+		U64 BBWlightpawns = pos->BBwhitepieces & pos->BBpawns & BBlightsquares;
+		int numbadpawns = __builtin_popcountll(BBWlightpawns);
+		// penalty for each pawn on a light square
+		openingEval -= numbadpawns * 4;
+		endgameEval -= numbadpawns * 2;
+	}
+	
+	// black
+	if ((pos->BBwhitepieces & pos->BBbishops & BBlightsquares) 
+		&& !(pos->BBblackpieces & pos->BBbishops & BBlightsquares)) {
+		// white has a light square bishop
+		// black doesn't have a light square bishop
+		U64 BBBdarkpawns = pos->BBblackpieces & pos->BBpawns & BBdarksquares;
+		int numbadpawns = __builtin_popcountll(BBBdarkpawns);
+		// penalty for each pawn on a dark square
+		openingEval += numbadpawns * 4;
+		endgameEval += numbadpawns * 2;
+	}
+	if ((pos->BBwhitepieces & pos->BBbishops & BBdarksquares) 
+		&& !(pos->BBblackpieces & pos->BBbishops & BBdarksquares)) {
+		// white has a dark square bishop
+		// black doesn't have a dark square bishop
+		U64 BBBlightpawns = pos->BBblackpieces & pos->BBpawns & BBlightsquares;
+		int numbadpawns = __builtin_popcountll(BBBlightpawns);
+		// penalty for each pawn on a light square
+		openingEval += numbadpawns * 4;
+		endgameEval += numbadpawns * 2;
 	}
 	*/
 	
@@ -1660,6 +1703,7 @@ int taperedEval(struct position *pos) {
 			endgameEval += 95;
 		}
 	}
+	
 	
 	// rook on the 7th
 	
@@ -2016,7 +2060,8 @@ int Nmobility(struct position *pos, int side) {
 	while(BBcopy)
 	{
 		from = __builtin_ctzll(BBcopy);
-		BBmoves |= BBknightattacks(1ULL << from) & BBallowed;
+		//BBmoves |= BBknightattacks(1ULL << from) & BBallowed;
+		BBmoves |= BBknightLookup[from] & BBallowed;
 		BBcopy &= BBcopy-1;
 	}
 	

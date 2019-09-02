@@ -5,6 +5,8 @@
 #include "position.h"
 #include "move.h"
 #include "magicmoves.h"
+#include "globals.h"
+#include "bitboards.h"
 
 const int BPdirs[2][2] = {{-1,-1},{+1,-1}};
 const int WPdirs[2][2] = {{-1,+1},{+1,+1}};
@@ -16,12 +18,14 @@ int genKingMoves(struct position *pos, int square, struct move *moves, int forqs
 	if (pos->tomove == BLACK) piece = 'k';
 	if (pos->tomove == WHITE) {
 		U64 BBking = (pos->BBkings & pos->BBwhitepieces);
-		BBattacks = BBkingattacks(BBking);
+		//BBattacks = BBkingattacks(BBking);
+		BBattacks = BBkingLookup[square];
 		BBattacks = BBattacks & ~pos->BBwhitepieces;
 	}
 	else if (pos->tomove == BLACK) {
 		U64 BBking = (pos->BBkings & pos->BBblackpieces);
-		BBattacks = BBkingattacks(BBking);
+		//BBattacks = BBkingattacks(BBking);
+		BBattacks = BBkingLookup[square];
 		BBattacks = BBattacks & ~pos->BBblackpieces;
 	}
 	//dspBB(BBattacks);
@@ -124,12 +128,14 @@ int genKnightMoves(struct position *pos, int square, struct move *moves, int for
 	if (pos->tomove == BLACK) piece = 'n';
 	if (pos->tomove == WHITE) {
 		U64 BBknight = (1ULL << square);
-		BBattacks = BBknightattacks(BBknight);
+		//BBattacks = BBknightattacks(BBknight);
+		BBattacks = BBknightLookup[square];
 		BBattacks = BBattacks & ~pos->BBwhitepieces;
 	}
 	else if (pos->tomove == BLACK) {
 		U64 BBknight = (1ULL << square);
-		BBattacks = BBknightattacks(BBknight);
+		//BBattacks = BBknightattacks(BBknight);
+		BBattacks = BBknightLookup[square];
 		BBattacks = BBattacks & ~pos->BBblackpieces;
 	}
 	//dspBB(BBattacks);

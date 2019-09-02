@@ -17,6 +17,7 @@
 #include "bitboards.h"
 #include "eval.h"
 #include "search.h"
+#include "bitboards.h"
 #include <limits.h>
 
 
@@ -43,6 +44,9 @@ int main() {
 	origbtime = -1;
 	movestackend = 0;
 	hashstackend = 0;
+	
+	genLookups(); // generate king and knight lookup tables
+	
 	for (int i = 0;i < 1024;i++) {
 		hashstack[i] = 0;
 	}

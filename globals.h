@@ -27,5 +27,9 @@ struct move countermoves[64][64];
 U64 hashstack[1024];
 int hashstackend;
 int seldepth;
+int lastreduce;
+U64 BBkingLookup[64];
+U64 BBknightLookup[64];
+
 
 #endif
