@@ -101,7 +101,7 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 	//int ispawnless = isPawnless(pos);
 	const int standpat = taperedEval(pos);
 	if (standpat >= beta) {
-		nodesSearched++;
+		//nodesSearched++;
 		//addTTentry(&TT, hash, 0, LOWERBOUND, TTmove, beta);
 		return beta;
 	}
@@ -109,7 +109,7 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 	// delta pruning
 	const int BIG_DELTA = 975;
 	if (standpat < alpha - BIG_DELTA) {
-		nodesSearched++;
+		//nodesSearched++;
 		return alpha;
 	}
 	if (alpha < standpat) alpha = standpat;
@@ -160,7 +160,7 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 			continue;
 		}
 		pos->tomove = !pos->tomove;
-		
+		nodesSearched++;
 		/*
 		int delta = standpat + 120;
 		
@@ -171,8 +171,7 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 		
 		currenthash = 0;
 		const int score = -qSearch(pos,-beta,-alpha, ply + 1, endtime);
-
-		nodesSearched++;
+		
 		//U64 newhash;
 		//if (score >= beta) newhash = generateHash(pos);
 		
@@ -252,7 +251,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		return qSearch(pos, alpha, beta, ply + 1, endtime);
 
 	}
-	nodesSearched += 1;
+	//nodesSearched += 1;
 	struct move bestmove = {.to=-1,.from=-1,.prom=-1,.cappiece=-1};;
 	struct move TTmove = {.to=-1,.from=-1,.prom=-1,.cappiece=-1};
 	//TTmove = *pv;
@@ -479,6 +478,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	}
 	*/
 	
+	
 	if (TTmove.from == -1) TTmove = *pv;
 	struct move moves[MAX_MOVES];
 	const int num_moves = genMoves(pos,moves, 0);
@@ -573,6 +573,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			} 
 		}
 		*/
+		
 		int extension = 0;
 
 		// Singular extensions and multi-cut
@@ -628,7 +629,8 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		}
 		
 		pos->tomove = !pos->tomove;
-		 
+		
+		nodesSearched++;
 		int givescheck = isCheck(pos);
 		legalmoves++;
 		
@@ -667,6 +669,13 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		else if (piece == 'P' && getrank(moves[i].to) == 6) {
 			extension = 1;
 		}
+		// castling extensions
+		/*
+		if ((moves[i].piece == 'K' && moves[i].from == E1 && (moves[i].to == G1 || moves[i].to == C1))
+			|| (moves[i].piece == 'k' && moves[i].from == E8 && (moves[i].to == G8 || moves[i].to == C8))) {
+				depthleft += 2;
+		}
+		*/
 		// PV search - doesn't work
 		
 		//r = r - extension;
