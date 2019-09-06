@@ -477,12 +477,88 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		
 	}
 	*/
-	
-	
-	if (TTmove.from == -1) TTmove = *pv;
+	int bestscore = INT_MIN;
+	int searchedKiller0 = 0;
+	int searchedKiller1 = 0;
+	int searchedCM = 0;
+	int searchedTTmove = 0;
+	int beatsbeta = 0;
+	int legalmoves = 0;
+	int extension = 0;
+	struct move premoves[4];
+	int num_premoves = 0;
+	if (TTmove.from != -1) {
+		searchedTTmove = 1;
+		premoves[num_premoves] = TTmove;
+		num_premoves++;
+	}
+	//if (killers[ply][0].from != -1) {
+	//	searchedKiller0 = 1;
+	//	premoves[num_premoves] = killers[ply][0];
+	//	num_premoves++;
+	//}
+	//if (killers[ply][1].from != -1) {
+	//	searchedKiller1 = 1;
+	//	premoves[num_premoves] = killers[ply][1];
+	//	num_premoves++;
+	//}
+	struct move prevmove = movestack[movestackend - 1];
+	struct move countermove = countermoves[prevmove.from][prevmove.to];
+	//if (countermove.from != -1) {
+	//	searchedCM = 1;
+	//	premoves[num_premoves] = countermove;
+	//	num_premoves++;
+	//}
+	struct move curmove;
+	for (int i = 0;i < num_premoves;i++) {
+		curmove = premoves[i];
+		extension = 0;
+		
+		if (curmove.piece == 'p' && getrank(curmove.to) == 1) {
+			extension = 1;
+		}
+		else if (curmove.piece == 'P' && getrank(curmove.to) == 6) {
+			extension = 1;
+		}
+		 
+		makeMove(&curmove,pos);
+		int score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 + extension, 0, ply + 1, pv, endtime);
+		unmakeMove(pos);
+		legalmoves++;
+		if (score > bestscore) {
+			bestscore = score;
+			bestmove = curmove;
+		}
+		if (bestscore >= alpha) {
+			alpha = score;
+		}
+		if (alpha >= beta) {
+			beatsbeta = 1;
+			if (curmove.cappiece == '0') {
+				killers[ply][1] = killers[ply][0];
+				killers[ply][0] = curmove;
+				history[pos->tomove][curmove.from][curmove.to] += pow(2,depthleft);
+				countermoves[prevmove.from][prevmove.to] = curmove;
+			}
+			addTTentry(&TT, hash, origdepthleft, LOWERBOUND, bestmove, bestscore);
+			*pv = curmove;
+			return score;
+		}
+		else {
+			// no beta cut off
+			if (curmove.cappiece == '0') {
+				butterfly[pos->tomove][curmove.from][curmove.to] += pow(2,depthleft);
+			}
+		}
+	}
+	extension = 0;
+	//if (TTmove.from == -1) TTmove = *pv;
 	struct move moves[MAX_MOVES];
-	const int num_moves = genMoves(pos,moves, 0);
-	sortMoves(pos,moves,num_moves,TTmove,ply);
+	int num_moves = 0;
+	if (!beatsbeta) {
+		num_moves = genMoves(pos,moves, 0);
+		sortMoves(pos,moves,num_moves,TTmove,ply);
+	}
 	
 	// single reply extensions
 	
@@ -494,7 +570,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	
 	// Prob Cut
 	
-	if (depthleft >= 5 && abs(beta) <= MATE_SCORE && staticeval + 100 >= beta + 100) {
+	if (!beatsbeta && depthleft >= 5 && abs(beta) <= MATE_SCORE && staticeval + 100 >= beta + 100) {
 		int rbeta = min(MATE_SCORE, beta + 100);
 		int probcutcount = 0;
 		for (int i = 0;i < num_moves;i++) {
@@ -520,11 +596,9 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	int allorigdepthleft = depthleft;
 	
 	int score = 0;
-	int bestscore = INT_MIN;
-	int legalmoves = 0;
 	int fullwindow = 1;
 	
-	for (int i = 0;i < num_moves;i++) {
+	for (int i = 0;i < num_moves && !beatsbeta;i++) {
 		depthleft = allorigdepthleft;
 		
 		char piece = moves[i].piece;
@@ -538,9 +612,25 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		int isTTmove = 0;
 		if (TTmove.from == moves[i].from && TTmove.to == moves[i].to && TTmove.prom == moves[i].prom) isTTmove = 1;
 		
+		if (isTTmove && searchedTTmove) continue; // already searched TT move
+		
 		int isKiller = 0;
-		if (killers[ply][0].from == moves[i].from && killers[ply][0].to == moves[i].to && killers[ply][0].prom == moves[i].prom) isKiller = 1;
-		if (killers[ply][1].from == moves[i].from && killers[ply][1].to == moves[i].to && killers[ply][1].prom == moves[i].prom) isKiller = 1;
+		int isKiller0 = 0;
+		int isKiller1 = 0;
+		int isCM = 0;
+		if (killers[ply][0].from == moves[i].from && killers[ply][0].to == moves[i].to && killers[ply][0].prom == moves[i].prom) {
+			isKiller = 1;
+			isKiller0 = 1;
+		}
+		if (killers[ply][1].from == moves[i].from && killers[ply][1].to == moves[i].to && killers[ply][1].prom == moves[i].prom) {
+			isKiller = 1;
+			isKiller1 = 1;
+		}
+		if (countermove.to == moves[i].to && countermove.from == moves[i].from && countermove.prom == moves[i].prom) isCM = 1;
+		
+		if (isKiller0 && searchedKiller0) continue; // already searched first killer
+		if (isKiller1 && searchedKiller1) continue; // already searched second killer
+		if (isCM && searchedCM) continue; // already searched countermove
 		
 		int histmargins[13] = { 120, 120, 120, 120, 150, 180, 180, 350, 550, 1000, 1500, 2000, 3000 };
 		//int histmargins[13] = { 120, 80, 100, 120, 120, 140, 140, 250, 750, 1100, 1500, 2000 };
