@@ -302,7 +302,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	
 	// static null pruning (reverse futility pruning)
 	
-	if (beta <= MATE_SCORE) {
+	if (!nullmove && beta <= MATE_SCORE) {
 		if (depthleft == 1 && staticeval - 300 > beta) return beta;
 		if (depthleft == 2 && staticeval - 525 > beta) return beta;
 		if (depthleft == 3 && staticeval - 900 > beta) depthleft--;
@@ -509,6 +509,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	//	premoves[num_premoves] = countermove;
 	//	num_premoves++;
 	//}
+	int singularLMR = 0;
 	struct move curmove;
 	for (int i = 0;i < num_premoves;i++) {
 		curmove = premoves[i];
@@ -520,7 +521,29 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		else if (curmove.piece == 'P' && getrank(curmove.to) == 6) {
 			extension = 1;
 		}
-		 
+		/*
+		int isexcluded = 0;
+		if (excludedmove.from == premoves[i].from && excludedmove.to == premoves[i].to && excludedmove.prom == premoves[i].prom) isexcluded = 1;
+		
+		if (ply != 0 && depthleft >= 6 && !isexcluded && abs(TTdata.score) < MATE_SCORE && TTdata.flag == LOWERBOUND && TTdata.depth >= depthleft - 3) {
+			int singularBeta = TTdata.score - 2 * depthleft;
+			int halfDepth = depthleft / 2;
+			excludedmove = TTmove;
+			int value = alphaBeta(pos, singularBeta - 1, singularBeta, halfDepth, 0, ply + 1, pv, endtime);
+			struct move blankmove = {.to=-1,.from=-1,.prom=-1,.cappiece=-1};
+			excludedmove = blankmove;
+			if (value < singularBeta) {
+				extension = 1;
+				singularLMR++;
+				if (value < singularBeta - min(4 * depthleft, 36)) singularLMR++;
+				//printf("extended tt move\n");
+			}
+			else if (staticeval >= beta && singularBeta >= beta) {
+				return singularBeta;
+			}
+		}
+		*/
+		
 		makeMove(&curmove,pos);
 		int score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 + extension, 0, ply + 1, pv, endtime);
 		unmakeMove(pos);
@@ -752,6 +775,8 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			 */
 		}
 		int r = reduction(&moves[i], depthleft, cappiece, legalmoves, incheck, givescheck, ply);
+		
+		r -= singularLMR;
 		
 		if (piece == 'p' && getrank(moves[i].to) == 1) {
 			extension = 1;
