@@ -194,7 +194,7 @@ int taperedEval(struct position *pos) {
 	 */
 	openingEval += 20 * __builtin_popcountll(BBattackers);
 	endgameEval += 20 * __builtin_popcountll(BBattackers);
-	U64 BBkingdist2 = BBkingattacks(BBkingdist1); // fill 2 squares away
+	U64 BBkingdist2 = BBkingfillLookup2[enemykingpos]; // fill 2 squares away
 	BBkingdist2 = BBkingdist2 & ~(BBkingdist1);
 	BBattackers = BBkingdist2 & (pos->BBwhitepieces & (pos->BBrooks | pos->BBqueens | pos->BBknights | pos->BBpawns));
 	/*
@@ -206,7 +206,7 @@ int taperedEval(struct position *pos) {
 	}
 	 */
 	endgameEval += 40 * __builtin_popcountll(BBattackers);
-	U64 BBkingdist3 = BBkingattacks(BBkingdist2); // fill 3 squares away
+	U64 BBkingdist3 = BBkingfillLookup3[enemykingpos]; // fill 3 squares away
 	BBkingdist3 = BBkingdist3 & ~(BBkingdist2);
 	BBattackers = BBkingdist3 & (pos->BBwhitepieces & (pos->BBrooks | pos->BBqueens | pos->BBknights | pos->BBpawns));
 	/*
@@ -219,7 +219,7 @@ int taperedEval(struct position *pos) {
 	 */
 	openingEval += 10 * __builtin_popcountll(BBattackers);
 	endgameEval += 10 * __builtin_popcountll(BBattackers);
-	U64 BBkingdist4 = BBkingattacks(BBkingdist3); // fill 4 squares away
+	U64 BBkingdist4 = BBkingfillLookup4[enemykingpos]; // fill 4 squares away
 	BBkingdist4 = BBkingdist4 & ~(BBkingdist3);
 	BBattackers = BBkingdist4 & (pos->BBwhitepieces & (pos->BBrooks | pos->BBqueens | pos->BBknights | pos->BBpawns));
 	/*
@@ -248,7 +248,7 @@ int taperedEval(struct position *pos) {
 	openingEval -= 20 * __builtin_popcountll(BBattackers);
 	endgameEval -= 20 * __builtin_popcountll(BBattackers);
 	
-	BBkingdist2 = BBkingattacks(BBkingdist1); // fill 2 squares away
+	BBkingdist2 = BBkingfillLookup2[enemykingpos]; // fill 2 squares away
 	BBkingdist2 = BBkingdist2 & ~(BBkingdist1);
 	BBattackers = BBkingdist2 & (pos->BBblackpieces & (pos->BBrooks | pos->BBqueens | pos->BBknights | pos->BBpawns));
 	/*
@@ -260,7 +260,7 @@ int taperedEval(struct position *pos) {
 	}
 	 */
 	endgameEval -= 40 * __builtin_popcountll(BBattackers);
-	BBkingdist3 = BBkingattacks(BBkingdist2); // fill 3 squares away
+	BBkingdist3 = BBkingfillLookup3[enemykingpos]; // fill 3 squares away
 	BBkingdist3 = BBkingdist3 & ~(BBkingdist2);
 	BBattackers = BBkingdist3 & (pos->BBblackpieces & (pos->BBrooks | pos->BBqueens | pos->BBknights | pos->BBpawns));
 	/*
@@ -273,7 +273,7 @@ int taperedEval(struct position *pos) {
 	 */
 	openingEval -= 10 * __builtin_popcountll(BBattackers);
 	endgameEval -= 10 * __builtin_popcountll(BBattackers);
-	BBkingdist4 = BBkingattacks(BBkingdist3); // fill 4 squares away
+	BBkingdist4 = BBkingfillLookup4[enemykingpos]; // fill 4 squares away
 	BBkingdist4 = BBkingdist4 & ~(BBkingdist3);
 	BBattackers = BBkingdist4 & (pos->BBblackpieces & (pos->BBrooks | pos->BBqueens | pos->BBknights | pos->BBpawns));
 	/*
@@ -311,7 +311,7 @@ int taperedEval(struct position *pos) {
 		int square = __builtin_ctzll(BBwhitepawns);
 		//BBwhitepawns &= ~(1ULL << square);
 		BBwhitepawns &= BBwhitepawns - 1;
-		U64 BBpiece = (1ULL << square);
+		/*
 		U64 BBmidsquare = BBpiece;
 		U64 BBchecksquares = 0ULL;
 		int startrank = getrank(square);
@@ -327,6 +327,10 @@ int taperedEval(struct position *pos) {
 			if (BBenemypawns) break;
 			rank++;
 		}
+		 */
+		U64 BBpiece = (1ULL << square);
+		int startrank = getrank(square);
+		U64 BBenemypawns = BBpasserLookup[WHITE][square] & (pos->BBblackpieces & pos->BBpawns);
 		if (BBenemypawns == 0) {
 			// pawn is passed
 			
@@ -361,10 +365,10 @@ int taperedEval(struct position *pos) {
 		int square = __builtin_ctzll(BBblackpawns);
 		//BBblackpawns &= ~(1ULL << square);
 		BBblackpawns &= BBblackpawns - 1;
+		/*
 		U64 BBpiece = (1ULL << square);
 		U64 BBmidsquare = BBpiece;
 		U64 BBchecksquares = 0ULL;
-		int startrank = getrank(square);
 		int rank = startrank;
 		//printf("\n%d\n",rank);
 		U64 BBenemypawns = 0ULL;
@@ -377,6 +381,10 @@ int taperedEval(struct position *pos) {
 			if (BBenemypawns) break;
 			rank--;
 		}
+		 */
+		U64 BBpiece = (1ULL << square);
+		int startrank = getrank(square);
+		U64 BBenemypawns = (BBpasserLookup[BLACK][square] & (pos->BBwhitepieces & pos->BBpawns));
 		if (BBenemypawns == 0) {
 			BBblackPP |= square;
 			int bonus = BpassedRankBonus[startrank];
@@ -1150,8 +1158,11 @@ int taperedEval(struct position *pos) {
 	int Wkingpos = pos->Wkingpos;
 	//BBkingdist1 = BBkingattacks((1ULL << Wkingpos)); // fill 1 square away
 	//BBkingdist2 = BBkingattacks((1ULL << Wkingpos << 8)); // fill 3 squares nw, n, ne of king zone
+	/*
 	U64 BBpawnshield = noWeOne(1ULL << Wkingpos) | northOne(1ULL << Wkingpos) | noEaOne(1ULL << Wkingpos);
 	BBpawnshield |= northOne(BBpawnshield);
+	 */
+	U64 BBpawnshield = BBpawnshieldLookup[WHITE][Wkingpos];
 	BBpawnshield &= (pos->BBwhitepieces & pos->BBpawns);
 	openingEval += 30 * __builtin_popcountll(BBpawnshield);
 	
@@ -1161,8 +1172,11 @@ int taperedEval(struct position *pos) {
 	//BBkingdist1 = BBkingattacks((1ULL << Bkingpos)); // fill 1 square away
 	//BBkingdist2 = BBkingattacks((1ULL << Bkingpos >> 8)); // fill 3 squares sw, s, se of king zone
 	//BBpawnshield = BBkingdist2 & (pos->BBblackpieces & pos->BBpawns);
+	/*
 	BBpawnshield = soWeOne(1ULL << Bkingpos) | southOne(1ULL << Bkingpos) | soEaOne(1ULL << Bkingpos);
 	BBpawnshield |= southOne(BBpawnshield);
+	 */
+	BBpawnshield = BBpawnshieldLookup[BLACK][Bkingpos];
 	BBpawnshield &= (pos->BBblackpieces & pos->BBpawns);
 	openingEval -= 30 * __builtin_popcountll(BBpawnshield);
 	

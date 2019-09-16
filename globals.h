@@ -30,6 +30,10 @@ int seldepth;
 int lastreduce;
 U64 BBkingLookup[64];
 U64 BBknightLookup[64];
-
+U64 BBpasserLookup[2][64];
+U64 BBkingfillLookup2[64];
+U64 BBkingfillLookup3[64];
+U64 BBkingfillLookup4[64];
+U64 BBpawnshieldLookup[2][64];
 
 #endif

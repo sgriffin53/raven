@@ -131,5 +131,55 @@ void genLookups() {
 	for (int i = 0; i < 64;i++) {
 		BBkingLookup[i] = BBkingattacks(1ULL << i);
 		BBknightLookup[i] = BBknightattacks(1ULL << i);
+		
+		// generate passed pawn lookups
+		
+		// white
+		
+		int rank = getrank(i);
+		U64 BBpiece = (1ULL << i);
+		U64 BBmidsquare = (1ULL << i);
+		U64 BBchecksquares = 0ULL;
+		
+		while (rank < 6) {
+			BBchecksquares |= noWeOne(BBmidsquare);
+			BBchecksquares |= northOne(BBmidsquare);
+			BBchecksquares |= noEaOne(BBmidsquare);
+			BBmidsquare = northOne(BBmidsquare);
+			rank++;
+		}
+		BBpasserLookup[WHITE][i] = BBchecksquares;
+		
+		// black
+		
+		BBmidsquare = (1ULL << i);
+		BBchecksquares = 0ULL;
+		rank = getrank(i);
+		while (rank > 1) {
+			BBchecksquares |= soWeOne(BBmidsquare);
+			BBchecksquares |= southOne(BBmidsquare);
+			BBchecksquares |= soEaOne(BBmidsquare);
+			BBmidsquare = southOne(BBmidsquare);
+			rank--;
+		}
+		BBpasserLookup[BLACK][i] = BBchecksquares;
+		
+		// king fills
+		
+		// kinglookup is 1 away
+		
+		BBkingfillLookup2[i] = BBkingattacks(BBkingLookup[i]);
+		BBkingfillLookup3[i] = BBkingattacks(BBkingfillLookup2[i]);
+		BBkingfillLookup4[i] = BBkingattacks(BBkingfillLookup3[i]);
+		
+		// pawn shields
+		
+		U64 BBpawnshield = noWeOne(1ULL << i) | northOne(1ULL << i) | noEaOne(1ULL << i);
+		BBpawnshield |= northOne(BBpawnshield);
+		BBpawnshieldLookup[WHITE][i] = BBpawnshield;
+		
+		BBpawnshield = soWeOne(1ULL << i) | southOne(1ULL << i) | soEaOne(1ULL << i);
+		BBpawnshield |= southOne(BBpawnshield);
+		BBpawnshieldLookup[BLACK][i] = BBpawnshield;
 	}
 }
