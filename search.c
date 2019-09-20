@@ -113,9 +113,19 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 		return alpha;
 	}
 	if (alpha < standpat) alpha = standpat;
-
+	const int incheck = isCheck(pos);
+	
 	struct move moves[MAX_MOVES];
-	const int num_moves = genMoves(pos,moves, 1);
+	//const int num_moves = genMoves(pos,moves, 1);
+	int num_moves = 0;
+	/*
+	int fulllegal = 0;
+	if (1) {
+		fulllegal = 1;
+		num_moves = legalMoves(pos, moves);
+	}
+	 */
+	num_moves = genMoves(pos, moves, 1);
 	//int origischeck = isCheck(pos);
 /*
 	U64 hash;
@@ -139,7 +149,7 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 		//int time_spentms = (int)(time_spent * 1000);
 		//char cappiece = getPiece(pos,moves[i].to);
 		//char cappiece = moves[i].cappiece;
-
+		if (moves[i].cappiece == '0' && moves[i].prom == 0) continue;
 		//futility pruning in qsearch
 		/*
 		if (!isEndgame(pos) && pieceval(cappiece) + 120 + standpat <= alpha) {
@@ -150,16 +160,21 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 			int SEEvalue = SEEcapture(pos, moves[i].from, moves[i].to, pos->tomove);
 			if (SEEvalue < 0) continue;
 		}
-		makeMove(&moves[i],pos);
-
-		// check if move is legal (doesn't put in check)
-		pos->tomove = !pos->tomove;
-		const int incheck = isCheck(pos);
-		if (incheck) {
-			unmakeMove(pos);
-			continue;
+		int isCastlingorEP = 0;
+		if (isCastling(pos, &moves[i]) || isEnPassant(pos, &moves[i])) isCastlingorEP = 1;
+		if (!isCastlingorEP) {
+			if (!isLegal(pos,&moves[i])) continue;
 		}
-		pos->tomove = !pos->tomove;
+		makeMove(&moves[i],pos);
+		if (isCastlingorEP) {
+			pos->tomove = !pos->tomove;
+			if (isCheck(pos)) {
+				unmakeMove(pos);
+				continue;
+			}
+			pos->tomove = !pos->tomove;
+		}
+		
 		nodesSearched++;
 		/*
 		int delta = standpat + 120;
@@ -509,7 +524,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	//	premoves[num_premoves] = countermove;
 	//	num_premoves++;
 	//}
-	int singularLMR = 0;
+	//int singularLMR = 0;
 	struct move curmove;
 	for (int i = 0;i < num_premoves;i++) {
 		curmove = premoves[i];
@@ -578,7 +593,14 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	//if (TTmove.from == -1) TTmove = *pv;
 	struct move moves[MAX_MOVES];
 	int num_moves = 0;
+	int fulllegal = 0;
 	if (!beatsbeta) {
+		/*
+		if (1) {
+			fulllegal = 1;
+			num_moves = legalMoves(pos, moves);
+		}
+		 */
 		num_moves = genMoves(pos,moves, 0);
 		sortMoves(pos,moves,num_moves,TTmove,ply);
 	}
@@ -597,13 +619,21 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		int rbeta = min(MATE_SCORE, beta + 100);
 		int probcutcount = 0;
 		for (int i = 0;i < num_moves;i++) {
-			makeMove(&moves[i],pos);
-			pos->tomove = !pos->tomove;
-			if (isCheck(pos)) {
-				unmakeMove(pos);
-				continue;
+			int isCastlingorEP = 0;
+			if (isCastling(pos, &moves[i]) || isEnPassant(pos, &moves[i])) isCastlingorEP = 1;
+			if (!isCastlingorEP) {
+				if (!isLegal(pos,&moves[i])) continue;
 			}
-			pos->tomove = !pos->tomove;
+			makeMove(&moves[i],pos);
+			if (isCastlingorEP) {
+				pos->tomove = !pos->tomove;
+				if (isCheck(pos)) {
+					unmakeMove(pos);
+					continue;
+				}
+				pos->tomove = !pos->tomove;
+			}
+			
 			probcutcount++;
 			int probcutscore;
 			//probcutscore = -qSearch(pos, -rbeta, -rbeta + 1, ply + 1, endtime);
@@ -734,15 +764,20 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			
 		}
 		*/
-		makeMove(&moves[i],pos);
-		pos->tomove = !pos->tomove;
-		if (isCheck(pos)) {
-			unmakeMove(pos);
-			continue;
+		int isCastlingorEP = 0;
+		if (isCastling(pos, &moves[i]) || isEnPassant(pos, &moves[i])) isCastlingorEP = 1;
+		if (!isCastlingorEP) {
+			if (!isLegal(pos,&moves[i])) continue;
 		}
-		
-		pos->tomove = !pos->tomove;
-		
+		makeMove(&moves[i],pos);
+		if (isCastlingorEP) {
+			pos->tomove = !pos->tomove;
+			if (isCheck(pos)) {
+				unmakeMove(pos);
+				continue;
+			}
+			pos->tomove = !pos->tomove;
+		}
 		nodesSearched++;
 		int givescheck = isCheck(pos);
 		legalmoves++;
@@ -776,7 +811,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		}
 		int r = reduction(&moves[i], depthleft, cappiece, legalmoves, incheck, givescheck, ply);
 		
-		r -= singularLMR;
+		//r -= singularLMR;
 		
 		if (piece == 'p' && getrank(moves[i].to) == 1) {
 			extension = 1;

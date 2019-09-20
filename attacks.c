@@ -4,6 +4,7 @@
 #include "bitboards.h"
 #include "hash.h"
 #include "magicmoves.h"
+#include "globals.h"
 
 int isCheck(struct position *pos) {
 	if (pos->tomove == WHITE) return isAttacked(pos, pos->Wkingpos, !pos->tomove);
@@ -183,3 +184,62 @@ U64 BBpawnDoublePushB(U64 BBbpawns, U64 BBunoccupied)  {
    U64 BBsinglePushes = BBpawnSinglePushB(BBbpawns, BBunoccupied);
    return southOne(BBsinglePushes) & BBunoccupied & BBrank5;
 }
+
+U64 BBpawnattacks(struct position *pos, int side) {
+	if (side == WHITE) {
+		return BBpawnattacksW(pos->BBwhitepieces & pos->BBpawns);
+	}
+	else {
+		return BBpawnattacksB(pos->BBblackpieces & pos->BBpawns);
+	}
+}
+U64 BBallknightattacks(struct position *pos, int side) {
+	U64 BBattacks = 0;
+	U64 BB;
+	if (side == WHITE) {
+		BB = pos->BBwhitepieces & pos->BBknights;
+	}
+	else BB = pos->BBblackpieces & pos->BBknights;
+	while (BB) {
+		int square = __builtin_ctzll(BB);
+		BB &= BB - 1;
+		BBattacks |= BBknightLookup[square];
+	}
+	return BBattacks;
+}
+U64 BBallkingattacks(struct position *pos, int side) {
+	U64 attacks = 0;
+	U64 bb;
+	if (side == WHITE) {
+		bb = (1ULL << pos->Wkingpos);
+	}
+	else bb = (1ULL << pos->Bkingpos);
+	while (bb) {
+		const int from = __builtin_ctzll(bb);
+		bb &= bb - 1;
+		attacks |= BBkingLookup[from];
+	}
+	return attacks;
+}
+U64 BBslidingAttacks(struct position *pos, U64 (*movesFunc)(int, U64), U64 BB) {
+	U64 BBattacks = 0;
+	while (BB) {
+		int square = __builtin_ctzll(BB);
+		BB &= BB - 1;
+		BBattacks |= movesFunc(square, pos->BBwhitepieces | pos->BBblackpieces);
+	}
+	return BBattacks;
+}
+U64 BBqueenAttacks(int square, U64 BBoccupied) {
+	return Bmagic(square, BBoccupied) | Rmagic(square, BBoccupied);
+}
+U64 BBrookAttacks(int square, U64 BBoccupied) {
+	return Rmagic(square, BBoccupied);
+}
+U64 BBbishopAttacks(int square, U64 BBoccupied) {
+	return Bmagic(square, BBoccupied);
+}
+U64 wCaptRightPawn (const U64 bb, const U64 opPieces) { return noEaOne(bb) & opPieces; }
+U64 bCaptRightPawn (const U64 bb, const U64 opPieces) { return soEaOne(bb) & opPieces; }
+U64 wCaptLeftPawn  (const U64 bb, const U64 opPieces) { return noWeOne(bb) & opPieces; }
+U64 bCaptLeftPawn  (const U64 bb, const U64 opPieces) { return soWeOne(bb) & opPieces; }

@@ -17,10 +17,11 @@ U64 perft(struct position *pos, int depth) {
 
 	U64 nodes = 0;
 	struct move moves[MAX_MOVES];
-	const int n_moves = genMoves(pos,moves, 0);
-
+	//const int n_moves = genMoves(pos,moves, 0);
+	const int n_moves = legalMoves(pos, moves);
 	for (int i = 0; i < n_moves;i++) {
 		makeMove(&moves[i], pos);
+		/*
 		pos->tomove = !pos->tomove;
 		const int incheck = isCheck(pos);
 		if (incheck) {
@@ -28,7 +29,7 @@ U64 perft(struct position *pos, int depth) {
 			continue;
 		}
 		pos->tomove = !pos->tomove;
-
+		*/
 		nodes += perft(pos, depth - 1);
 
 		unmakeMove(pos);
@@ -47,10 +48,11 @@ U64 splitperft(struct position *pos, int depth) {
 
 	if (depth == 0) return 1;
 
-	const int n_moves = genMoves(pos,moves, 0);
-
+	//const int n_moves = genMoves(pos,moves, 0);
+	const int n_moves = legalMoves(pos, moves);
 	for (int i = 0; i < n_moves;i++) {
 		makeMove(&moves[i], pos);
+		/*
 		pos->tomove = !pos->tomove;
 		const int incheck = isCheck(pos);
 		//printf("move - %s - %d\n",movetostr(moves[i]),incheck);
@@ -60,7 +62,7 @@ U64 splitperft(struct position *pos, int depth) {
 			continue;
 		}
 		pos->tomove = !pos->tomove;
-
+		*/
 		const U64 nodes = perft(pos,depth - 1);
 
 		printf("%s - %" PRIu64 "\n",movetostr(moves[i]), nodes);

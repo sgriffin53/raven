@@ -1,5 +1,6 @@
 #ifndef BITBOARDS_H
 #define BITBOARDS_H
+#define NO_CHECK 0xffffffffffffffff
 
 #include "hash.h"
 
@@ -59,5 +60,6 @@ U64 noEaOne(U64 BB);
 U64 noWeOne(U64 BB);
 
 void genLookups();
+void initInBetween();
 
 #endif

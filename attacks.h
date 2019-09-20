@@ -25,4 +25,17 @@ U64 BBpawnDoublePushW(U64 BBwpawns, U64 BBunoccupied);
 U64 BBpawnSinglePushB(U64 BBbpawns, U64 BBunoccupied);
 U64 BBpawnDoublePushB(U64 BBwpawns, U64 BBunoccupied);
 
+U64 BBallkingattacks(struct position *pos, int side);
+U64 BBpawnattacks(struct position *pos, int side);
+U64 BBallknightattacks(struct position *pos, int side);
+U64 BBqueenAttacks(int square, U64 BBoccupied);
+U64 BBrookAttacks(int square, U64 BBoccupied);
+U64 BBbishopAttacks(int square, U64 BBoccupied);
+U64 BBslidingAttacks(struct position *pos, U64 (*movesFunc)(int, U64), U64 BB);
+
+U64 wCaptRightPawn (const U64 bb, const U64 opPieces);
+U64 bCaptRightPawn (const U64 bb, const U64 opPieces);
+U64 wCaptLeftPawn  (const U64 bb, const U64 opPieces);
+U64 bCaptLeftPawn  (const U64 bb, const U64 opPieces);
+
 #endif

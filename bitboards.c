@@ -3,6 +3,9 @@
 #include "position.h"
 #include "attacks.h"
 #include "globals.h"
+#include "magicmoves.h"
+#include <stdlib.h>
+#include "movegen.h"
 
 typedef unsigned long long U64;
 
@@ -181,5 +184,29 @@ void genLookups() {
 		BBpawnshield = soWeOne(1ULL << i) | southOne(1ULL << i) | soEaOne(1ULL << i);
 		BBpawnshield |= southOne(BBpawnshield);
 		BBpawnshieldLookup[BLACK][i] = BBpawnshield;
+	}
+	initInBetween();
+
+}
+void initInBetween() {
+	for (int i = 0; i < 64; ++i) {
+		for (int j = 0; j < 64; ++j) {
+			if (i == j)
+				continue;
+
+			BBinbetweenLookup[i][j] = 0;
+
+			if (i % 8 == j % 8 || i / 8 == j / 8) {
+				BBinbetweenLookup[i][j] = Rmagic(i, bitmask[j]) & Rmagic(j, bitmask[i]);
+				continue;
+			}
+
+			if (abs(j % 8 - i % 8) == abs(j / 8 - i / 8)) {
+				BBinbetweenLookup[i][j] = Bmagic(i, bitmask[j]) & Bmagic(j, bitmask[i]);;
+				continue;
+			}
+
+
+		}
 	}
 }
