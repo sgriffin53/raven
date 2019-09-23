@@ -509,17 +509,35 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	//	premoves[num_premoves] = countermove;
 	//	num_premoves++;
 	//}
-	int singularLMR = 0;
+	//int singularLMR = 0;
 	struct move curmove;
 	for (int i = 0;i < num_premoves;i++) {
 		curmove = premoves[i];
 		extension = 0;
 		
-		if (curmove.piece == 'p' && getrank(curmove.to) == 1) {
-			extension = 1;
+		if (curmove.piece == 'p') {
+			U64 BBarea = BBrank2 | BBrank3 | BBrank4 | BBrank5;
+			U64 BBpiece = 1ULL << curmove.from;
+			if (BBpiece & BBarea) {
+				// pawn is on rank 2-5
+				U64 BBenemypawns = BBpasserLookup[BLACK][curmove.from] & (pos->BBwhitepieces & pos->BBpawns);
+				if (!BBenemypawns) {
+					// pawn is passed
+					extension = 1;
+				}
+			}
 		}
-		else if (curmove.piece == 'P' && getrank(curmove.to) == 6) {
-			extension = 1;
+		else if (curmove.piece == 'P') {
+			U64 BBarea = BBrank4 | BBrank5 | BBrank6 | BBrank7;
+			U64 BBpiece = 1ULL << curmove.from;
+			if (BBpiece & BBarea) {
+				// pawn is on rank 2-5
+				U64 BBenemypawns = BBpasserLookup[WHITE][curmove.from] & (pos->BBblackpieces & pos->BBpawns);
+				if (!BBenemypawns) {
+					// pawn is passed
+					extension = 1;
+				}
+			}
 		}
 		/*
 		int isexcluded = 0;
@@ -776,13 +794,31 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		}
 		int r = reduction(&moves[i], depthleft, cappiece, legalmoves, incheck, givescheck, ply);
 		
-		r -= singularLMR;
+		//r -= singularLMR;
 		
-		if (piece == 'p' && getrank(moves[i].to) == 1) {
-			extension = 1;
+		if (moves[i].piece == 'p') {
+			U64 BBarea = BBrank2 | BBrank3 | BBrank4 | BBrank5;
+			U64 BBpiece = 1ULL << moves[i].from;
+			if (BBpiece & BBarea) {
+				// pawn is on rank 2-5
+				U64 BBenemypawns = BBpasserLookup[BLACK][moves[i].from] & (pos->BBwhitepieces & pos->BBpawns);
+				if (!BBenemypawns) {
+					// pawn is passed
+					extension = 1;
+				}
+			}
 		}
-		else if (piece == 'P' && getrank(moves[i].to) == 6) {
-			extension = 1;
+		else if (moves[i].piece == 'P') {
+			U64 BBarea = BBrank4 | BBrank5 | BBrank6 | BBrank7;
+			U64 BBpiece = 1ULL << moves[i].from;
+			if (BBpiece & BBarea) {
+				// pawn is on rank 2-5
+				U64 BBenemypawns = BBpasserLookup[WHITE][moves[i].from] & (pos->BBblackpieces & pos->BBpawns);
+				if (!BBenemypawns) {
+					// pawn is passed
+					extension = 1;
+				}
+			}
 		}
 		// castling extensions
 		/*
