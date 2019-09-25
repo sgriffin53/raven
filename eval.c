@@ -62,7 +62,7 @@ const int arrCenterManhattanDistance[64] = { // char is sufficient as well, also
 int pieceval(const char inpiece) {
 	switch (inpiece) {
 		case 'p':
-		case 'P': return 100;
+		case 'P': return 110;
 		case 'n':
 		case 'N': return 300;
 		case 'b':
