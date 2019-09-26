@@ -8,16 +8,13 @@ typedef unsigned long long U64;
 #define WHITE 1
 #define BLACK 0
 #define MATE_SCORE 9999
+enum { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING };
 
 struct position {
-	U64 BBwhitepieces;
-	U64 BBblackpieces;
-	U64 BBpawns;
-	U64 BBknights;
-	U64 BBbishops;
-	U64 BBrooks;
-	U64 BBqueens;
-	U64 BBkings;
+
+	U64 pieces[6];
+	U64 colours[2];
+	
 	int epsquare;
 	int WcastleQS;
 	int WcastleKS;
@@ -48,9 +45,10 @@ int fileranktosquareidx(int file,int rank);
 void dspBB(U64 BB);
 void dspBBstr(char* BBstr,struct position pos);
 int strsquaretoidx(char square[]);
-char getPiece(struct position *pos,int sq);
-void setPiece(struct position *pos, int sq, char piece);
+int getPiece(struct position *pos,int sq);
+void setPiece(struct position *pos, int sq, int piece, int piececol);
 void dspBoard(struct position *pos);
+int getPieceCol(struct position *pos, int sq);
 
 
 #endif

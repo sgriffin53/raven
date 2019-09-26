@@ -20,12 +20,9 @@
 #include "magicmoves.h"
 
 
-int reduction(const struct move *move, const int depthleft, char cappiece, int legalmoves, int incheck, int givescheck, int ply) {
+int reduction(const struct move *move, const int depthleft, int cappiece, int legalmoves, int incheck, int givescheck, int ply) {
 	assert(move);
 	assert(depthleft >= 0);
-	int tomove;
-	if (move->piece >= 'a' && move->piece <= 'z') tomove = BLACK;
-	else tomove = WHITE;
 	/*
 	if (!incheck && depthleft >= 3 && move->prom == 0 && !givescheck && cappiece != '0') {
 		struct position lastpos = posstack[posstackend - 2];
@@ -33,7 +30,7 @@ int reduction(const struct move *move, const int depthleft, char cappiece, int l
 		if (SEEvalue < -300) return 1;
 	}
 	 */
-	if ((!incheck) && (legalmoves > 4) && (depthleft >= 3) && (move->prom == 0) && (!givescheck)) {
+	if ((!incheck) && (legalmoves > 4) && (depthleft >= 3) && (move->prom == -1) && (!givescheck)) {
 		//int histval = history[tomove][move->from][move->to];
 		//int r = 1 + (legalmoves - 4) / 9 + (depthleft - 3)  / 4;
 		//r = r + histval / -5000;
@@ -42,7 +39,7 @@ int reduction(const struct move *move, const int depthleft, char cappiece, int l
 		//return r;
 		
 		//return 1 + (legalmoves - 4) / 9 + (depthleft - 3)  / 4;
-		if (cappiece == '0') {
+		if (cappiece == -1) {
 			if (depthleft >= 6) return 2;
 			return 1;
 		}
@@ -137,8 +134,6 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 		//clock_t end = clock();
 		//double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 		//int time_spentms = (int)(time_spent * 1000);
-		//char cappiece = getPiece(pos,moves[i].to);
-		//char cappiece = moves[i].cappiece;
 
 		//futility pruning in qsearch
 		/*
@@ -146,7 +141,7 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 			if (!isCheck(pos)) continue;
 		}
 		*/
-		if (moves[i].cappiece != '0') {
+		if (moves[i].cappiece != -1) {
 			int SEEvalue = SEEcapture(pos, moves[i].from, moves[i].to, pos->tomove);
 			if (SEEvalue < 0) continue;
 		}
@@ -515,24 +510,24 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		curmove = premoves[i];
 		extension = 0;
 		
-		if (curmove.piece == 'p') {
+		if (curmove.piece == PAWN && pos->tomove == BLACK) {
 			U64 BBarea = BBrank2 | BBrank3 | BBrank4 | BBrank5;
 			U64 BBpiece = 1ULL << curmove.from;
 			if (BBpiece & BBarea) {
 				// pawn is on rank 2-5
-				U64 BBenemypawns = BBpasserLookup[BLACK][curmove.from] & (pos->BBwhitepieces & pos->BBpawns);
+				U64 BBenemypawns = BBpasserLookup[BLACK][curmove.from] & (pos->colours[WHITE] & pos->pieces[PAWN]);
 				if (!BBenemypawns) {
 					// pawn is passed
 					extension = 1;
 				}
 			}
 		}
-		else if (curmove.piece == 'P') {
+		else if (curmove.piece == PAWN && pos->tomove == WHITE) {
 			U64 BBarea = BBrank4 | BBrank5 | BBrank6 | BBrank7;
 			U64 BBpiece = 1ULL << curmove.from;
 			if (BBpiece & BBarea) {
 				// pawn is on rank 2-5
-				U64 BBenemypawns = BBpasserLookup[WHITE][curmove.from] & (pos->BBblackpieces & pos->BBpawns);
+				U64 BBenemypawns = BBpasserLookup[WHITE][curmove.from] & (pos->colours[BLACK] & pos->pieces[PAWN]);
 				if (!BBenemypawns) {
 					// pawn is passed
 					extension = 1;
@@ -575,7 +570,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		}
 		if (alpha >= beta) {
 			beatsbeta = 1;
-			if (curmove.cappiece == '0') {
+			if (curmove.cappiece == -1) {
 				killers[ply][1] = killers[ply][0];
 				killers[ply][0] = curmove;
 				history[pos->tomove][curmove.from][curmove.to] += pow(2,depthleft);
@@ -587,7 +582,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		}
 		else {
 			// no beta cut off
-			if (curmove.cappiece == '0') {
+			if (curmove.cappiece == -1) {
 				butterfly[pos->tomove][curmove.from][curmove.to] += pow(2,depthleft);
 			}
 		}
@@ -642,8 +637,8 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	for (int i = 0;i < num_moves && !beatsbeta;i++) {
 		depthleft = allorigdepthleft;
 		
-		char piece = moves[i].piece;
-		char cappiece = moves[i].cappiece;
+		int piece = moves[i].piece;
+		int cappiece = moves[i].cappiece;
 		
 		int histval = history[pos->tomove][moves[i].from][moves[i].to];
 		int butterflyval = butterfly[pos->tomove][moves[i].from][moves[i].to];
@@ -686,7 +681,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		
 		double cutoffpercent = ((double)histval * 100.0 / (double)(histval + butterflyval));
 		
-		if (!isTTmove && moves[i].cappiece == '0' && !isKiller
+		if (!isTTmove && moves[i].cappiece == -1 && !isKiller
 			&& bestmove.from != -1 && legalmoves >= 1 && (histval + butterflyval) > histmargin && cutoffpercent < 1.25 && ply != 0) {
 			continue;
 		}
@@ -772,12 +767,12 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		//}
 		if (f_prune
 		&& legalmoves > 1
-		&&  moves[i].prom == 0
+		&&  moves[i].prom == -1
 		//&&  histscore <= fhistorythreshold[depthleft]
 		&& !givescheck
 		&& ply != 0) {
 		//&&  !isAttacked(pos,kingpos,pos->tomove)) {
-			if (cappiece == '0') {
+			if (cappiece == -1) {
 			unmakeMove(pos);
 			continue;
 			}
@@ -796,37 +791,31 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		
 		//r -= singularLMR;
 		
-		if (moves[i].piece == 'p') {
+		if (moves[i].piece == PAWN && !pos->tomove == BLACK) {
 			U64 BBarea = BBrank2 | BBrank3 | BBrank4 | BBrank5;
 			U64 BBpiece = 1ULL << moves[i].from;
 			if (BBpiece & BBarea) {
 				// pawn is on rank 2-5
-				U64 BBenemypawns = BBpasserLookup[BLACK][moves[i].from] & (pos->BBwhitepieces & pos->BBpawns);
+				U64 BBenemypawns = BBpasserLookup[BLACK][moves[i].from] & (pos->colours[WHITE] & pos->pieces[PAWN]);
 				if (!BBenemypawns) {
 					// pawn is passed
 					extension = 1;
 				}
 			}
 		}
-		else if (moves[i].piece == 'P') {
+		else if (moves[i].piece == PAWN && !pos->tomove == WHITE) {
 			U64 BBarea = BBrank4 | BBrank5 | BBrank6 | BBrank7;
 			U64 BBpiece = 1ULL << moves[i].from;
 			if (BBpiece & BBarea) {
 				// pawn is on rank 2-5
-				U64 BBenemypawns = BBpasserLookup[WHITE][moves[i].from] & (pos->BBblackpieces & pos->BBpawns);
+				U64 BBenemypawns = BBpasserLookup[WHITE][moves[i].from] & (pos->colours[BLACK] & pos->pieces[PAWN]);
 				if (!BBenemypawns) {
 					// pawn is passed
 					extension = 1;
 				}
 			}
 		}
-		// castling extensions
-		/*
-		if ((moves[i].piece == 'K' && moves[i].from == E1 && (moves[i].to == G1 || moves[i].to == C1))
-			|| (moves[i].piece == 'k' && moves[i].from == E8 && (moves[i].to == G8 || moves[i].to == C8))) {
-				depthleft += 2;
-		}
-		*/
+		
 		// PV search - doesn't work
 		
 		//r = r - extension;
@@ -852,14 +841,14 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		*/
 		 
 		// Search
-
-		score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 - r + extension, 0, ply + 1, pv, endtime);
 		
+		score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 - r + extension, 0, ply + 1, pv, endtime);
 		// Redo search
 		
 		if (r > 0 && score > alpha) {
 			score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 + extension, 0, ply + 1, pv, endtime);
 		}
+		//printf("move\t\t %d %s - %d\n", ply, movetostr(moves[i]), score);;
 		if (ply == 0) {
 			//printf("ab: depth: %d, move: %s, score: %d\n", depthleft, movetostr(moves[i]), score);
 		}
@@ -878,7 +867,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		if (alpha >= beta) {
 			numbetacutoffs++;
 			if (legalmoves == 1) numinstantbetacutoffs++;
-			if (cappiece == '0') {
+			if (cappiece == -1) {
 				killers[ply][1] = killers[ply][0];
 				killers[ply][0] = moves[i];
 				history[pos->tomove][moves[i].from][moves[i].to] += pow(2,depthleft);
@@ -889,7 +878,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		}
 		else {
 			// no beta cut off
-			if (cappiece == '0') {
+			if (cappiece == -1) {
 				butterfly[pos->tomove][moves[i].from][moves[i].to] += pow(2,depthleft);
 			}
 		}
@@ -917,7 +906,8 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	else {
 		newflag = EXACT;
 	}
-	
+	//if (ply == 0) printf("%s - %d\n", movetostr(bestmove), bestscore);;
+	//if (ply == 1) printf("\t%s - %d\n", movetostr(bestmove), bestscore);;
 	addTTentry(&TT, hash, origdepthleft, newflag, bestmove, bestscore);
 	*pv = bestmove;
 	assert(bestmove.to >= 0 && bestmove.to <= 63 && bestmove.from >= 0 && bestmove.from <= 63);
@@ -1226,9 +1216,9 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 }
 int SEEcapture(struct position *pos, int from, int to, int side) {
 	int value = 0;
-	char piece = getPiece(pos,from);
-	char cappiece = getPiece(pos,to);
-	struct move capmove = {.from=from, .to=to, .prom=0, .piece=piece, .cappiece=cappiece};
+	int piece = getPiece(pos,from);
+	int cappiece = getPiece(pos,to);
+	struct move capmove = {.from=from, .to=to, .prom=-1, .piece=piece, .cappiece=cappiece};
 	makeMove(&capmove, pos);
 	value = pieceval(cappiece) - SEE(pos, to, !side);
 	unmakeMove(pos);
@@ -1254,96 +1244,96 @@ struct move get_smallest_attacker(struct position *pos, int square, int side) {
 	U64 BBmypieces;
 	U64 BBopppieces;
 	U64 BBsquare = 1ULL << square;
-	U64 BBoccupied = pos->BBwhitepieces | pos->BBblackpieces;
-	if (side == WHITE) BBmypieces = pos->BBwhitepieces;
-	else BBmypieces = pos->BBblackpieces;
-	if (side == BLACK) BBopppieces = pos->BBwhitepieces;
-	else BBopppieces = pos->BBblackpieces;
+	U64 BBoccupied = pos->colours[WHITE] | pos->colours[BLACK];
+	if (side == WHITE) BBmypieces = pos->colours[WHITE];
+	else BBmypieces = pos->colours[BLACK];
+	if (side == BLACK) BBopppieces = pos->colours[WHITE];
+	else BBopppieces = pos->colours[BLACK];
 	struct move blankmove = {.to=-1, .from=-1, .prom=-1, .piece=-1, .cappiece=-1};
 	struct move returnmove = {.to=square, .from=-1, .prom=0, .piece=-1, .cappiece=getPiece(pos,square)};
 	// pawns
 	if (side == WHITE) {
 		U64 BBattacks = soWeOne(BBsquare) | soEaOne(BBsquare);
-		if (BBattacks & pos->BBpawns & BBmypieces) {
-			returnmove.from = __builtin_ctzll(BBattacks & pos->BBpawns & BBmypieces);
-			returnmove.piece = 'P';
+		if (BBattacks & pos->pieces[PAWN] & BBmypieces) {
+			returnmove.from = __builtin_ctzll(BBattacks & pos->pieces[PAWN] & BBmypieces);
+			returnmove.piece = PAWN;
 			return returnmove;
 		}
 	}
 	else { // black
 		U64 BBattacks = noWeOne(BBsquare) | noEaOne(BBsquare);
-		if (BBattacks & pos->BBpawns & BBmypieces) {
-			returnmove.from = __builtin_ctzll(BBattacks & pos->BBpawns & BBmypieces);
-			returnmove.piece = 'p';
+		if (BBattacks & pos->pieces[PAWN] & BBmypieces) {
+			returnmove.from = __builtin_ctzll(BBattacks &  pos->pieces[PAWN] & BBmypieces);
+			returnmove.piece = PAWN;
 			return returnmove;
 		}
 	}
 	// Knights
 	U64 BBattacks = BBknightattacks(BBsquare);
-	if (BBattacks & BBmypieces & pos->BBknights) {
+	if (BBattacks & BBmypieces & pos->pieces[KNIGHT]) {
 		if (side == WHITE) {
-			returnmove.from = __builtin_ctzll(BBattacks & pos->BBknights & BBmypieces);
-			returnmove.piece = 'N';
+			returnmove.from = __builtin_ctzll(BBattacks & pos->pieces[KNIGHT] & BBmypieces);
+			returnmove.piece = KNIGHT;
 			return returnmove;
 		}
 		else {
-			returnmove.from = __builtin_ctzll(BBattacks & pos->BBknights & BBmypieces);
-			returnmove.piece = 'n';
+			returnmove.from = __builtin_ctzll(BBattacks & pos->pieces[KNIGHT] & BBmypieces);
+			returnmove.piece = KNIGHT;
 			return returnmove;
 		}
 	}
 	// Bishops
 	BBattacks = Bmagic(square, BBoccupied);
-	if (BBattacks & BBmypieces & pos->BBbishops) {
+	if (BBattacks & BBmypieces & pos->pieces[BISHOP]) {
 		if (side == WHITE) {
-			returnmove.from = __builtin_ctzll(BBattacks & pos->BBbishops & BBmypieces);
-			returnmove.piece = 'B';
+			returnmove.from = __builtin_ctzll(BBattacks & pos->pieces[BISHOP] & BBmypieces);
+			returnmove.piece = BISHOP;
 			return returnmove;
 		}
 		else {
-			returnmove.from = __builtin_ctzll(BBattacks & pos->BBbishops & BBmypieces);
-			returnmove.piece = 'b';
+			returnmove.from = __builtin_ctzll(BBattacks & pos->pieces[BISHOP] & BBmypieces);
+			returnmove.piece = BISHOP;
 			return returnmove;
 		}
 	}
 	// Rooks
 	BBattacks = Rmagic(square, BBoccupied);
-	if (BBattacks & BBmypieces & pos->BBrooks) {
+	if (BBattacks & BBmypieces & pos->pieces[ROOK]) {
 		if (side == WHITE) {
-			returnmove.from = __builtin_ctzll(BBattacks & pos->BBrooks & BBmypieces);
-			returnmove.piece = 'R';
+			returnmove.from = __builtin_ctzll(BBattacks & pos->pieces[ROOK] & BBmypieces);
+			returnmove.piece = ROOK;
 			return returnmove;
 		}
 		else {
-			returnmove.from = __builtin_ctzll(BBattacks & pos->BBrooks & BBmypieces);
-			returnmove.piece = 'r';
+			returnmove.from = __builtin_ctzll(BBattacks & pos->pieces[ROOK] & BBmypieces);
+			returnmove.piece = ROOK;
 			return returnmove;
 		}
 	}
 	// Queens
 	BBattacks = Rmagic(square, BBoccupied) | Bmagic(square, BBoccupied);
-	if (BBattacks & BBmypieces & pos->BBqueens) {
+	if (BBattacks & BBmypieces & pos->pieces[QUEEN]) {
 		if (side == WHITE) {
-			returnmove.from = __builtin_ctzll(BBattacks & pos->BBqueens & BBmypieces);
-			returnmove.piece = 'Q';
+			returnmove.from = __builtin_ctzll(BBattacks & pos->pieces[QUEEN] & BBmypieces);
+			returnmove.piece = QUEEN;
 			return returnmove;
 		}
 		else {
-			returnmove.from = __builtin_ctzll(BBattacks & pos->BBqueens & BBmypieces);
-			returnmove.piece = 'q';
+			returnmove.from = __builtin_ctzll(BBattacks & pos->pieces[QUEEN] & BBmypieces);
+			returnmove.piece = QUEEN;
 			return returnmove;
 		}
 	}
 	BBattacks = BBkingattacks(BBsquare);
-	if (BBattacks & BBmypieces & pos->BBkings) {
+	if (BBattacks & BBmypieces & pos->pieces[KING]) {
 		if (side == WHITE) {
-			returnmove.from = __builtin_ctzll(BBattacks & pos->BBkings & BBmypieces);
-			returnmove.piece = 'K';
+			returnmove.from = __builtin_ctzll(BBattacks & pos->pieces[KING] & BBmypieces);
+			returnmove.piece = KING;
 			return returnmove;
 		}
 		else {
-			returnmove.from = __builtin_ctzll(BBattacks & pos->BBkings & BBmypieces);
-			returnmove.piece = 'k';
+			returnmove.from = __builtin_ctzll(BBattacks & pos->pieces[KING] & BBmypieces);
+			returnmove.piece = KING;
 			return returnmove;
 		}
 	}

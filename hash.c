@@ -44,33 +44,29 @@ int pieceintval(char inpiece) {
 	return 0;
 }
 */
-int pieceintval(char inpiece) {
-	if (inpiece == 'p') return 12;
-	if (inpiece == 'n') return 1;
-	if (inpiece == 'b') return 2;
-	if (inpiece == 'r') return 3;
-	if (inpiece == 'q') return 4;
-	if (inpiece == 'k') return 5;
-	if (inpiece == 'P') return 6;
-	if (inpiece == 'N') return 7;
-	if (inpiece == 'B') return 8;
-	if (inpiece == 'R') return 9;
-	if (inpiece == 'Q') return 10;
-	if (inpiece == 'K') return 11;
-	//printf("-- %c\n",inpiece);
-	assert(0);
+int pieceintvals[2][6] = {
+	{ 0, 1, 2, 3, 4, 5, },
+	{ 7, 8, 9, 10, 11, 12 }
+};
+int pieceintval(int inpiece, int piececol) {
+	
+	
+	
+	return pieceintvals[piececol][inpiece];
 	return 0;
 }
 
 U64 generateHash(struct position *pos) {
 	assert(pos);
 	U64 zobrist = 0;
-	U64 BBoccupied = pos->BBblackpieces | pos->BBwhitepieces;
+	U64 BBoccupied = pos->colours[BLACK] | pos->colours[WHITE];
 	while (BBoccupied != 0) {
 		int square = __builtin_ctzll(BBoccupied);
 		BBoccupied &= BBoccupied - 1;
-		char sqpiece = getPiece(pos,square);
-		int piece = pieceintval(sqpiece);
+		int sqpiece = getPiece(pos,square);
+		int sqpiececol = getPieceCol(pos, square);
+		
+		int piece = pieceintval(sqpiece, sqpiececol);
 		zobrist ^= pieceHash[piece][square];
 	}
 	/*

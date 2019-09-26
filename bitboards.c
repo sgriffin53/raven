@@ -3,6 +3,9 @@
 #include "position.h"
 #include "attacks.h"
 #include "globals.h"
+#include "magicmoves.h"
+
+#include <stdlib.h>
 
 typedef unsigned long long U64;
 
@@ -181,5 +184,42 @@ void genLookups() {
 		BBpawnshield = soWeOne(1ULL << i) | southOne(1ULL << i) | soEaOne(1ULL << i);
 		BBpawnshield |= southOne(BBpawnshield);
 		BBpawnshieldLookup[BLACK][i] = BBpawnshield;
+	}
+	for (int i = 8; i < 56; i++) {
+		if (getfile(i) > 0 && getfile(i) < 7) {
+			BBconnectedLookup[WHITE][i] =
+			1ULL << (i - 1) | 1ULL << (i + 1) | 1ULL << (i - 9) | 1ULL << (i - 7);
+			BBconnectedLookup[BLACK][i] =
+			1ULL << (i - 1) | 1ULL << (i + 1) | 1ULL << (i + 9) | 1ULL << (i + 7);
+		} else if (getfile(i) == 0) {
+			BBconnectedLookup[WHITE][i] = 1ULL << (i + 1) | 1ULL << (i - 7);
+			BBconnectedLookup[BLACK][i] = 1ULL << (i + 1) | 1ULL << (i + 9);
+		} else if (getfile(i) == 7) {
+			BBconnectedLookup[WHITE][i] = 1ULL << (i - 1) | 1ULL << (i - 9);
+			BBconnectedLookup[BLACK][i] = 1ULL << (i - 1) | 1ULL << (i + 7);
+		}
+	}
+	initInBetween();
+}
+void initInBetween() {
+	for (int i = 0; i < 64; ++i) {
+		for (int j = 0; j < 64; ++j) {
+			if (i == j)
+				continue;
+
+			BBinbetweenLookup[i][j] = 0;
+
+			if (i % 8 == j % 8 || i / 8 == j / 8) {
+				BBinbetweenLookup[i][j] = Rmagic(i, 1ULL << j) & Rmagic(j, 1ULL << i);
+				continue;
+			}
+
+			if (abs(j % 8 - i % 8) == abs(j / 8 - i / 8)) {
+				BBinbetweenLookup[i][j] = Bmagic(i, 1ULL << j) & Bmagic(j, 1ULL << i);;
+				continue;
+			}
+
+
+		}
 	}
 }

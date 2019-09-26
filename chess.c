@@ -18,6 +18,7 @@
 #include "eval.h"
 #include "search.h"
 #include "bitboards.h"
+#include "PST.h"
 #include <limits.h>
 
 
@@ -81,13 +82,25 @@ int main() {
 		if (strcmp(splitstr[0],"test") == 0) {
 			runTestsAll();
 		}
+		if (strcmp(splitstr[0],"pst") == 0) {
+			int square = atoi(splitstr[1]);
+			int piece = getPiece(&pos, square);
+			int piececol = getPieceCol(&pos, square);
+			printf("%d\n", PSTval(piece, piececol, square, 'E'));
+		}
+		if (strcmp(splitstr[0],"attacked") == 0) {
+			//pos.pieces[KING] ^= (1ULL << pos.Wkingpos);
+			pos.pieces[KING] ^= (1ULL << pos.Bkingpos);
+			pos.colours[BLACK] ^= (1ULL << pos.Bkingpos);
+			printf("attacked: %d\n", isAttacked(&pos, atoi(splitstr[1]), !pos.tomove));
+		}
 		if (strcmp(splitstr[0],"test2") == 0) {
 			parsefen(&pos,"8/8/8/8/6k1/K7/8/8 b - -");
 			printf("%d\n",isAttacked(&pos, H3, !pos.tomove));
 			
 		}
 		if (strcmp(splitstr[0],"testBB") == 0) {
-			U64 BBwhitepawns = (pos.BBwhitepieces & pos.BBpawns);
+			U64 BBwhitepawns = (pos.colours[WHITE] & pos.pieces[PAWN]);
 			while (BBwhitepawns) {
 				int square = __builtin_ctzll(BBwhitepawns);
 				BBwhitepawns &= ~(1ULL << square);
@@ -106,8 +119,8 @@ int main() {
 			}
 		}
 		if (strcmp(splitstr[0],"magic") == 0) {
-			U64 BBrook = Rmagic(E4,pos.BBwhitepieces | pos.BBblackpieces);
-			dspBB(BBrook & ~pos.BBblackpieces);
+			U64 BBrook = Rmagic(E4,pos.colours[WHITE] | pos.colours[BLACK]);
+			dspBB(BBrook & ~pos.colours[BLACK]);
 		}
 		else if (strcmp(splitstr[0],"moves") == 0) {
 			for (int i = 1;i < splitstrend;i++) {
@@ -210,13 +223,13 @@ int main() {
 			dspBoard(&pos);
 		}
 		if (strcmp(splitstr[0],"set") == 0) {
-			setPiece(&pos,atoi(splitstr[1]),splitstr[2][0]);;
+			setPiece(&pos,atoi(splitstr[1]),splitstr[2][0], -1);;
 		}
 		if (strcmp(splitstr[0],"isready") == 0) {
 			printf("readyok\n");
 		}
 		if (strcmp(splitstr[0],"piece") == 0) {
-			printf("%c\n",getPiece(&pos,atoi(splitstr[1])));
+			printf("%d\n",getPiece(&pos,atoi(splitstr[1])));
 		}
 
 		else if (strcmp(splitstr[0],"uci") == 0) {

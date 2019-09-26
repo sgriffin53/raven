@@ -3,7 +3,9 @@
 
 #include "position.h"
 
-int pieceval(const char inpiece);
+int pieceval_eg(const char inpiece);
+int pieceval_mg(const char inpiece);
+int pieceval(const int inpiece);
 int evalBoard(struct position *pos);
 int taperedEval(struct position *pos);
 int isEndgame(struct position *pos);

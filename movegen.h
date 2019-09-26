@@ -12,4 +12,8 @@ int genRookMoves(struct position *pos, int square, struct move *moves, int forqs
 int genQueenMoves(struct position *pos, int square, struct move *moves, int forqsearch);
 int genBishopMoves(struct position *pos, int square, struct move *moves, int forqsearch);
 int genPawnMoves(struct position *pos, int square, struct move *moves, int forqsearch);
+U64 pinnedPieces(struct position *pos);
+U64 xrayBishopAttacks(const int sqr, const U64 occupied, const U64 myPieces);
+U64 xrayRookAttacks(const int sqr, const U64 occupied, const U64 myPieces);
+U64 line(const int a, const int b);
 #endif

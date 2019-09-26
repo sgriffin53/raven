@@ -59,5 +59,5 @@ U64 noEaOne(U64 BB);
 U64 noWeOne(U64 BB);
 
 void genLookups();
-
+void initInBetween();
 #endif

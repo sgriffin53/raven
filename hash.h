@@ -6,7 +6,7 @@
 typedef unsigned long long U64;
 
 extern void initZobrist();
-extern int pieceintval(char inpiece);
+extern int pieceintval(int inpiece, int piececol);
 extern U64 generateHash(struct position *pos);
 
 #endif
