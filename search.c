@@ -821,6 +821,8 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			// recapture extension
 			extension = 1;
 		}
+		struct position lastpos = posstack[posstackend - 2];
+		if (SEEcapture(&lastpos, moves[i].from, moves[i].to, lastpos.tomove) < 0) depthleft -= 1; // reduce bad captures
 		// PV search - doesn't work
 		
 		//r = r - extension;
