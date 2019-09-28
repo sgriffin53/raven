@@ -539,28 +539,11 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 				}
 			}
 		}
-		/*
-		int isexcluded = 0;
-		if (excludedmove.from == premoves[i].from && excludedmove.to == premoves[i].to && excludedmove.prom == premoves[i].prom) isexcluded = 1;
-		
-		if (ply != 0 && depthleft >= 6 && !isexcluded && abs(TTdata.score) < MATE_SCORE && TTdata.flag == LOWERBOUND && TTdata.depth >= depthleft - 3) {
-			int singularBeta = TTdata.score - 2 * depthleft;
-			int halfDepth = depthleft / 2;
-			excludedmove = TTmove;
-			int value = alphaBeta(pos, singularBeta - 1, singularBeta, halfDepth, 0, ply + 1, pv, endtime);
-			struct move blankmove = {.to=-1,.from=-1,.prom=-1,.cappiece=-1};
-			excludedmove = blankmove;
-			if (value < singularBeta) {
-				extension = 1;
-				singularLMR++;
-				if (value < singularBeta - min(4 * depthleft, 36)) singularLMR++;
-				//printf("extended tt move\n");
-			}
-			else if (staticeval >= beta && singularBeta >= beta) {
-				return singularBeta;
-			}
+		struct move lastmove = movestack[movestackend - 1];
+		if (pieceval(lastmove.cappiece) == pieceval(lastmove.piece) && curmove.to == lastmove.to) {
+			// recapture extension
+			extension = 1;
 		}
-		*/
 		
 		makeMove(&curmove,pos);
 		int score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 + extension, 0, ply + 1, pv, endtime);
@@ -639,8 +622,11 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	int score = 0;
 	int fullwindow = 1;
 	
+	
 	for (int i = 0;i < num_moves && !beatsbeta;i++) {
 		depthleft = allorigdepthleft;
+		
+		int numpassers = 0;
 		
 		char piece = moves[i].piece;
 		char cappiece = moves[i].cappiece;
@@ -690,7 +676,17 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			&& bestmove.from != -1 && legalmoves >= 1 && (histval + butterflyval) > histmargin && cutoffpercent < 1.25 && ply != 0) {
 			continue;
 		}
-		
+		// check for potential passers before we make the move
+		/*
+		if (moves[i].cappiece == 'p' || moves[i].cappiece == 'P') {
+			// three files
+			U64 BBfiles = (BBfileA << getfile(moves[i].to)) | westOne(1ULL << moves[i].to) | eastOne(moves[i].to)
+			U64 BBpotentialPassers;
+			if (pos->tomove == WHITE) {
+				BBpotentialPassers = pos->BBwhitepieces & pos->BBpawns
+			}
+		}
+		 */
 		// SEE pruning
 		/*
 		if (legalmoves >= 0 && cappiece != '0' && staticeval < 100 && depthleft <= 6 && ply != 0) {
@@ -820,13 +816,11 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 				}
 			}
 		}
-		// castling extensions
-		/*
-		if ((moves[i].piece == 'K' && moves[i].from == E1 && (moves[i].to == G1 || moves[i].to == C1))
-			|| (moves[i].piece == 'k' && moves[i].from == E8 && (moves[i].to == G8 || moves[i].to == C8))) {
-				depthleft += 2;
+		struct move lastmove = movestack[movestackend - 2];
+		if (pieceval(lastmove.cappiece) == pieceval(lastmove.piece) && moves[i].to == lastmove.to) {
+			// recapture extension
+			extension = 1;
 		}
-		*/
 		// PV search - doesn't work
 		
 		//r = r - extension;
@@ -852,7 +846,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		*/
 		 
 		// Search
-
+		
 		score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 - r + extension, 0, ply + 1, pv, endtime);
 		
 		// Redo search
@@ -917,7 +911,6 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	else {
 		newflag = EXACT;
 	}
-	
 	addTTentry(&TT, hash, origdepthleft, newflag, bestmove, bestscore);
 	*pv = bestmove;
 	assert(bestmove.to >= 0 && bestmove.to <= 63 && bestmove.from >= 0 && bestmove.from <= 63);
