@@ -402,7 +402,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	}
 	*/
 	
-	/*
+	
 	if (!incheck && depthleft <= 2 && ply != 0) {
 		const int ralpha = alpha - 250 - depthleft * 50;
 		if (staticeval < ralpha) {
@@ -413,7 +413,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			if (value <= ralpha) return value;
 		}
 	}
-	*/
+	
 	int f_prune = 0;
 	
 	int fmargin[4] = { 0, 200, 300, 500 };
@@ -427,7 +427,6 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	
 	if (TTmove.from == -1 && depthleft >= 7) {
 		int newdepth = 3;
-		if (newdepth < 1) newdepth = 1;
 		int val = alphaBeta(pos, alpha, beta, newdepth, 0, ply + 1, pv, endtime);
 		//int val = qSearch(pos, alpha, beta, ply + 1, endtime);
 		//TTmove = *pv;
@@ -437,46 +436,6 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
         }
 	}
 	
-	// trapped piece extensions
-	/*
-	struct move prevmove = movestack[movestackend - 1];
-	if (pos->tomove == WHITE) {
-		int square = prevmove.to;
-		if (((1ULL << square) & (BBrank1 | BBrank2 | BBrank3 | BBrank4)  & ~BBfileD & ~BBfileE) && (prevmove.piece == 'n' || prevmove.piece == 'b' || prevmove.piece == 'q')) {
-			if (isTrappedPiece(pos, BLACK) == prevmove.to) {
-				depthleft += 1;
-			//	printf("trapped piece!");
-			}
-		}
-	}
-	if (pos->tomove == BLACK) {
-		int square = prevmove.to;
-		if (((1ULL << square) & (BBrank5 | BBrank6 | BBrank7 | BBrank8)  & ~BBfileD & ~BBfileE) && (prevmove.piece == 'N' || prevmove.piece == 'B' || prevmove.piece == 'Q')) {
-			if (isTrappedPiece(pos, WHITE) == prevmove.to) {
-				
-			//	printf("trapped piece!");
-				depthleft += 1;
-			}
-		}
-	}
-	*/
-	/*
-	//if (TTmove.from == -1 && depthleft >= 6 && staticeval + 150 >= beta) {
-	if (TTmove.from == -1 && depthleft >= 6 && staticeval > alpha - 200) {
-		//int new_depth = 3 * (depthleft / 4) - 1;
-		int new_depth = depthleft - 3;
-		if (new_depth < 1) new_depth = 1;
-		assert(new_depth > 0);
-		//if (new_depth < 1) new_depth = 1;
-		const int score = alphaBeta(pos, alpha, beta, new_depth, 0, ply + 1, pv, endtime);
-		//const int score = -alphaBeta(pos, -beta, -alpha, new_depth, 0, ply + 1, pv, endtime);
-		//TTmove = *pv;
-		TTdata = getTTentry(&TT, hash);
-		assert(TTdata.hash == hash);
-		TTmove = TTdata.bestmove;
-		
-	}
-	*/
 	int bestscore = INT_MIN;
 	int searchedKiller0 = 0;
 	int searchedKiller1 = 0;
@@ -544,9 +503,14 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			// recapture extension
 			extension = 1;
 		}
-		
+		int r = 0;
+		int SEEvalue = SEEcapture(pos, curmove.from, curmove.to, pos->tomove);
+		if (SEEvalue < 0) r = 1; // reduce bad captures
 		makeMove(&curmove,pos);
-		int score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 + extension, 0, ply + 1, pv, endtime);
+		int score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 + extension - r, 0, ply + 1, pv, endtime);
+		if (r > 0 && score > alpha) {
+			score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 + extension, 0, ply + 1, pv, endtime);
+		}
 		unmakeMove(pos);
 		legalmoves++;
 		if (score > bestscore) {
@@ -676,30 +640,6 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			&& bestmove.from != -1 && legalmoves >= 1 && (histval + butterflyval) > histmargin && cutoffpercent < 1.25 && ply != 0) {
 			continue;
 		}
-		// check for potential passers before we make the move
-		/*
-		if (moves[i].cappiece == 'p' || moves[i].cappiece == 'P') {
-			// three files
-			U64 BBfiles = (BBfileA << getfile(moves[i].to)) | westOne(1ULL << moves[i].to) | eastOne(moves[i].to)
-			U64 BBpotentialPassers;
-			if (pos->tomove == WHITE) {
-				BBpotentialPassers = pos->BBwhitepieces & pos->BBpawns
-			}
-		}
-		 */
-		// SEE pruning
-		/*
-		if (legalmoves >= 0 && cappiece != '0' && staticeval < 100 && depthleft <= 6 && ply != 0) {
-			//struct position lastpos = posstack[posstackend - 2];
-			int SEEvalue = SEEcapture(pos, moves[i].from, moves[i].to, pos->tomove);
-			//int SEEmargin[7] = { 0, -20, -80, -180, -320, -500, -720 };
-			//int SEEmargin[7] = { 0, -100, -100, -200, -525, -525, -900 };
-			//int SEEmargin[7] = { 0, -100, -200, -200, -300, -525, -900 };
-			if (SEEvalue <= -20 * depthleft * depthleft) {
-				continue;
-			} 
-		}
-		*/
 		
 		int extension = 0;
 
@@ -822,7 +762,9 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			extension = 1;
 		}
 		struct position lastpos = posstack[posstackend - 2];
-		if (SEEcapture(&lastpos, moves[i].from, moves[i].to, lastpos.tomove) < 0) depthleft -= 1; // reduce bad captures
+		int SEEvalue = SEEcapture(&lastpos, moves[i].from, moves[i].to, lastpos.tomove);
+		if (SEEvalue < 0) depthleft -= 1; // reduce bad captures
+		
 		// PV search - doesn't work
 		
 		//r = r - extension;
