@@ -44,6 +44,7 @@ int main() {
 	origbtime = -1;
 	movestackend = 0;
 	hashstackend = 0;
+	movestogo = 25;
 	
 	genLookups(); // generate king and knight lookup tables
 	
@@ -80,6 +81,12 @@ int main() {
 		}
 		if (strcmp(splitstr[0],"test") == 0) {
 			runTestsAll();
+		}
+		if (strcmp(splitstr[0],"attacked") == 0) {
+			//pos.BBkings ^= (1ULL << pos.Wkingpos);
+			pos.BBkings ^= (1ULL << pos.Bkingpos);
+			pos.BBblackpieces ^= (1ULL << pos.Bkingpos);
+			printf("attacked: %d\n", isAttacked(&pos, atoi(splitstr[1]), !pos.tomove));
 		}
 		if (strcmp(splitstr[0],"test2") == 0) {
 			parsefen(&pos,"8/8/8/8/6k1/K7/8/8 b - -");
@@ -123,6 +130,7 @@ int main() {
 			for (int i = 0;i < 1024;i++) {
 				hashstack[i] = 0;
 			}
+			movestogo = 25;
 		}
 		if (strcmp(splitstr[0],"eval") == 0) {
 			printf("%d\n",taperedEval(&pos));
@@ -147,12 +155,16 @@ int main() {
 					btime = atoi(splitstr[i+1]);
 					if (origbtime == -1) origbtime = btime;
 				}
+				if (strcmp(splitstr[i],"movestogo") == 0) {
+					movestogo = atoi(splitstr[i+1]);
+				} 
 			}
 			if (pos.tomove == WHITE) {
-				if (wtime != -1) movetime = wtime / 25;
+				if (wtime != -1) movetime = wtime / min(25, max(2, movestogo));
+				printf("movestogo %d movetime %d\n",movestogo, movetime);
 			}
 			else {
-				if (btime != -1) movetime = btime / 25;
+				if (btime != -1) movetime = btime / min(25, max(2, movestogo));
 			}
 			if (strcmp(splitstr[1],"movetime") == 0) {
 				movetime = atoi(splitstr[2]);

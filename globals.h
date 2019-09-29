@@ -20,6 +20,7 @@ struct move pvArray[1024];
 int rootdepth;
 int wtime, btime;
 int origwtime, origbtime;
+int movestogo;
 int lastsearchdepth;
 struct move movestack[1024];
 int movestackend;
@@ -35,5 +36,7 @@ U64 BBkingfillLookup2[64];
 U64 BBkingfillLookup3[64];
 U64 BBkingfillLookup4[64];
 U64 BBpawnshieldLookup[2][64];
+U64 BBconnectedLookup[2][64];
+U64 BBinbetweenLookup[64][64];
 
 #endif
