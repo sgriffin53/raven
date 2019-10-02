@@ -10,6 +10,41 @@
 #include <stdlib.h>
 #include "search.h"
 
+// Minor piece attack bonus
+
+int minorAttackBonus_mg(char piece) {
+	switch (piece) {
+		case 'p':
+		case 'P': return 6;
+		case 'n':
+		case 'N': return 14;
+		case 'b':
+		case 'B': return 14;
+		case 'r':
+		case 'R': return 20;
+		case 'q':
+		case 'Q': return 22;
+		case 'k':
+		case 'K': return 0;
+	}
+}
+int minorAttackBonus_eg(char piece) {
+	switch (piece) {
+		case 'p':
+		case 'P': return 10;
+		case 'n':
+		case 'N': return 18;
+		case 'b':
+		case 'B': return 18;
+		case 'r':
+		case 'R': return 28;
+		case 'q':
+		case 'Q': return 30;
+		case 'k':
+		case 'K': return 0;
+	}
+}
+
 // Piece mobility
 
 int knightMgMobility[9] = {-15, -5, -1, 2, 5, 7, 9, 11, 13};
@@ -2026,7 +2061,49 @@ int taperedEval(struct position *pos) {
 	endgameEval -= num_WN * (16 - (num_WP + num_BP)) * 4;
 	openingEval += num_BN * (16 - (num_WP + num_BP)) * 4;
 	endgameEval += num_BN * (16 - (num_WP + num_BP)) * 4;
-
+	
+	// bonus for minor pieces attacking enemy pieces not defended by pawns
+	
+	// white
+	
+	U64 BBblackpieces = pos->BBblackpieces & ~pos->BBpawns;
+	U64 BBwhitepieces = pos->BBwhitepieces & ~pos->BBpawns;
+	U64 BBoccupancy = pos->BBwhitepieces | pos->BBblackpieces;
+	
+	U64 BBcopy = BBblackpieces;
+	while (BBcopy) {
+		int square = __builtin_ctzll(BBcopy);
+		BBcopy &= BBcopy - 1;
+		
+		// check if piece is defended by pawn
+		U64 BBdefendingpawns = BBpawnattacksW(1ULL << square) & (pos->BBblackpieces & pos->BBpawns);
+		if (BBdefendingpawns) continue; // piece is defended by a pawn
+		// check if it's attacked by minor piece
+		U64 BBattacksN = BBknightattacks(1ULL << square) & (pos->BBwhitepieces & pos->BBknights);
+		U64 BBattacksB = Bmagic(square, BBoccupancy) & (pos->BBwhitepieces & pos->BBbishops);
+		if (!BBattacksN && !BBattacksB) continue; // not attacked by minor piece
+		int piece = getPiece(pos, square);
+		openingEval += minorAttackBonus_mg(piece);
+		endgameEval += minorAttackBonus_eg(piece);
+	}
+	
+	BBcopy = BBwhitepieces;
+	while (BBcopy) {
+		int square = __builtin_ctzll(BBcopy);
+		BBcopy &= BBcopy - 1;
+		
+		// check if piece is defended by pawn
+		U64 BBdefendingpawns = BBpawnattacksB(1ULL << square) & (pos->BBwhitepieces & pos->BBpawns);
+		if (BBdefendingpawns) continue; // piece is defended by a pawn
+		// check if it's attacked by minor piece
+		U64 BBattacksN = BBknightattacks(1ULL << square) & (pos->BBblackpieces & pos->BBknights);
+		U64 BBattacksB = Bmagic(square, BBoccupancy) & (pos->BBblackpieces & pos->BBbishops);
+		if (!BBattacksN && !BBattacksB) continue; // not attacked by minor piece
+		int piece = getPiece(pos, square);
+		openingEval -= minorAttackBonus_mg(piece);
+		endgameEval -= minorAttackBonus_eg(piece);
+	}
+	
 	// penalty for pieces attacking king zone
 	/*
 	// white
