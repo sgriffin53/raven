@@ -24,8 +24,8 @@ int reduction(const struct move *move, const int depthleft, char cappiece, int l
 	assert(move);
 	assert(depthleft >= 0);
 	int tomove;
-	if (move->piece >= 'a' && move->piece <= 'z') tomove = BLACK;
-	else tomove = WHITE;
+	//if (move->piece >= 'a' && move->piece <= 'z') tomove = BLACK;
+	//else tomove = WHITE;
 	/*
 	if (!incheck && depthleft >= 3 && move->prom == 0 && !givescheck && cappiece != '0') {
 		struct position lastpos = posstack[posstackend - 2];
@@ -402,7 +402,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	}
 	*/
 	
-	
+	/*
 	if (!incheck && depthleft <= 2 && ply != 0) {
 		const int ralpha = alpha - 250 - depthleft * 50;
 		if (staticeval < ralpha) {
@@ -413,6 +413,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			if (value <= ralpha) return value;
 		}
 	}
+	*/
 	
 	int f_prune = 0;
 	
@@ -641,6 +642,11 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			continue;
 		}
 		
+		// SEE pruning
+		
+		if (depthleft <= 8 && bestscore > -MATE_SCORE && SEEcapture(pos, moves[i].from, moves[i].to, pos->tomove) <= -80 * depthleft * depthleft) {
+			continue;
+		}
 		int extension = 0;
 
 		// Singular extensions and multi-cut
@@ -700,7 +706,6 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		nodesSearched++;
 		int givescheck = isCheck(pos);
 		legalmoves++;
-		
 		// futility pruning
 		
 		//if (histscore > 0) {
@@ -798,9 +803,9 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		if (r > 0 && score > alpha) {
 			score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 + extension, 0, ply + 1, pv, endtime);
 		}
-		if (ply == 0) {
-			//printf("ab: depth: %d, move: %s, score: %d\n", depthleft, movetostr(moves[i]), score);
-		}
+		//if (ply == 0) {
+		//	printf("ab: depth: %d, move: %s, score: %d\n", depthleft, movetostr(moves[i]), score);
+		//}
 		unmakeMove(pos);
 		
 		if (score > alpha) {
