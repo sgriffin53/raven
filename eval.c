@@ -1525,6 +1525,16 @@ int taperedEval(struct position *pos) {
 	openingEval -= 20 * __builtin_popcountll(BBBpiecesincentre);
 	endgameEval -= 20 * __builtin_popcountll(BBBpiecesincentre);
 	
+	// bonus for pawns attacking the centre
+	
+	U64 BBWattackingcentre = BBpawnattacksW(pos->BBwhitepieces & pos->BBpawns) & BBcentre;
+	openingEval += 20 * __builtin_popcountll(BBWattackingcentre);
+	endgameEval += 10 * __builtin_popcountll(BBWattackingcentre);
+	
+	U64 BBBattackingcentre = BBpawnattacksB(pos->BBblackpieces & pos->BBpawns) & BBcentre;
+	openingEval -= 20 * __builtin_popcountll(BBBattackingcentre);
+	endgameEval -= 10 * __builtin_popcountll(BBBattackingcentre);
+	
 	// bonus for connected knights
 	// white
 	if (num_WN >= 2) {
