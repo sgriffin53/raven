@@ -18,6 +18,7 @@
 #include "eval.h"
 #include "search.h"
 #include "bitboards.h"
+#include "misc.h"
 #include <limits.h>
 
 
@@ -161,7 +162,6 @@ int main() {
 			}
 			if (pos.tomove == WHITE) {
 				if (wtime != -1) movetime = wtime / min(25, max(2, movestogo));
-				printf("movestogo %d movetime %d\n",movestogo, movetime);
 			}
 			else {
 				if (btime != -1) movetime = btime / min(25, max(2, movestogo));
