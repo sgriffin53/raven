@@ -396,6 +396,7 @@ int taperedEval(struct position *pos) {
 			openingEval += 20;
 			endgameEval += 20;
 		}
+		
 	}
 	
 	U64 BBblackpawns = (pos->BBblackpieces & pos->BBpawns);
@@ -511,6 +512,7 @@ int taperedEval(struct position *pos) {
 			openingEval -= 20;
 			endgameEval -= 20;
 		}
+		
 	}
 	
 	// bonus for pawns attacking enemy pieces
@@ -1027,6 +1029,65 @@ int taperedEval(struct position *pos) {
 		}
 	} 
 	
+	// bonus for queen distance to king
+	
+	U64 BBwhitequeens = pos->BBwhitepieces & pos->BBqueens;
+	U64 BBblackqueens = pos->BBblackpieces & pos->BBqueens;
+	
+	U64 BBwhiterooks = pos->BBwhitepieces & pos->BBrooks;
+	U64 BBblackrooks = pos->BBblackpieces & pos->BBrooks;
+	
+	while (BBwhitequeens) {
+		int square = __builtin_ctzll(BBwhitequeens);
+		BBwhitequeens &= BBwhitequeens - 1;
+		if (getrank(square) != 6) continue;
+		// queen on 7th rank
+		U64 BBhostilepawns = BBrank7 & pos->BBblackpieces & pos->BBpawns;
+		if (!BBhostilepawns && getrank(pos->Bkingpos) != 7) continue;
+		// either hostile pawns on 7th rank or king is on 8th rank
+		
+		openingEval += 10;
+		endgameEval += 20;
+	}
+	
+	while (BBblackqueens) {
+		int square = __builtin_ctzll(BBblackqueens);
+		BBblackqueens &= BBblackqueens - 1;
+		if (getrank(square) != 1) continue;
+		// queen on 7th rank
+		U64 BBhostilepawns = BBrank2 & pos->BBwhitepieces & pos->BBpawns;
+		if (!BBhostilepawns && getrank(pos->Wkingpos) != 0) continue;
+		// either hostile pawns on 7th rank or king is on 8th rank
+		
+		openingEval -= 10;
+		endgameEval -= 20;
+	}
+	
+	while (BBwhiterooks) {
+		int square = __builtin_ctzll(BBwhiterooks);
+		BBwhiterooks &= BBwhiterooks - 1;
+		if (getrank(square) != 6) continue;
+		// rook on 7th rank
+		U64 BBhostilepawns = BBrank7 & pos->BBblackpieces & pos->BBpawns;
+		if (!BBhostilepawns && getrank(pos->Bkingpos) != 7) continue;
+		// either hostile pawns on 7th rank or king is on 8th rank
+		
+		openingEval += 20;
+		endgameEval += 40;
+	}
+	
+	while (BBblackrooks) {
+		int square = __builtin_ctzll(BBblackrooks);
+		BBblackrooks &= BBblackrooks - 1;
+		if (getrank(square) != 1) continue;
+		// rook on 7th rank
+		U64 BBhostilepawns = BBrank2 & pos->BBwhitepieces & pos->BBpawns;
+		if (!BBhostilepawns && getrank(pos->Wkingpos) != 0) continue;
+		// either hostile pawns on 7th rank or king is on 8th rank
+		
+		openingEval -= 20;
+		endgameEval -= 40;
+	}
 	// bonus for rooks trapping kings on the edge
 	/*
 	int kingonedgebonus = 15;
@@ -1153,6 +1214,7 @@ int taperedEval(struct position *pos) {
 				endgameEval += 6;
 			}
 		}
+		
 		//if (!BBallrooksonfile) continue;
 		// rooks on open files
 		U64 BBpawnsonfile = BBfilemask & pos->BBpawns;
@@ -1763,9 +1825,11 @@ int taperedEval(struct position *pos) {
 	*/
 	
 	// colour weaknesses
+	/*
+	int badpawnpenalty[9] = { 0, 2, 3, 4, 6, 7, 10, 14, 19 };
 	
 	// white
-	/*
+	
 	if ((pos->BBblackpieces & pos->BBbishops & BBlightsquares)
 		&& !(pos->BBwhitepieces & pos->BBbishops & BBlightsquares)) {
 		// black has a light square bishop
@@ -1773,8 +1837,8 @@ int taperedEval(struct position *pos) {
 		U64 BBWdarkpawns = pos->BBwhitepieces & pos->BBpawns & BBdarksquares;
 		int numbadpawns = __builtin_popcountll(BBWdarkpawns);
 		// penalty for each pawn on a dark square
-		openingEval -= numbadpawns * 3;
-		endgameEval -= numbadpawns * 6;
+		openingEval -= badpawnpenalty[numbadpawns];
+		endgameEval -= badpawnpenalty[numbadpawns];
 	}
 	if ((pos->BBblackpieces & pos->BBbishops & BBdarksquares) 
 		&& !(pos->BBwhitepieces & pos->BBbishops & BBdarksquares)) {
@@ -1783,8 +1847,8 @@ int taperedEval(struct position *pos) {
 		U64 BBWlightpawns = pos->BBwhitepieces & pos->BBpawns & BBlightsquares;
 		int numbadpawns = __builtin_popcountll(BBWlightpawns);
 		// penalty for each pawn on a light square
-		openingEval -= numbadpawns * 3;
-		endgameEval -= numbadpawns * 6;
+		openingEval -= badpawnpenalty[numbadpawns];
+		endgameEval -= badpawnpenalty[numbadpawns];
 	}
 	
 	// black
@@ -1795,8 +1859,8 @@ int taperedEval(struct position *pos) {
 		U64 BBBdarkpawns = pos->BBblackpieces & pos->BBpawns & BBdarksquares;
 		int numbadpawns = __builtin_popcountll(BBBdarkpawns);
 		// penalty for each pawn on a dark square
-		openingEval += numbadpawns * 3;
-		endgameEval += numbadpawns * 6;
+		openingEval += badpawnpenalty[numbadpawns];
+		endgameEval += badpawnpenalty[numbadpawns];
 	}
 	if ((pos->BBwhitepieces & pos->BBbishops & BBdarksquares) 
 		&& !(pos->BBblackpieces & pos->BBbishops & BBdarksquares)) {
@@ -1805,8 +1869,8 @@ int taperedEval(struct position *pos) {
 		U64 BBBlightpawns = pos->BBblackpieces & pos->BBpawns & BBlightsquares;
 		int numbadpawns = __builtin_popcountll(BBBlightpawns);
 		// penalty for each pawn on a light square
-		openingEval += numbadpawns * 3;
-		endgameEval += numbadpawns * 6;
+		openingEval += badpawnpenalty[numbadpawns];
+		endgameEval += badpawnpenalty[numbadpawns];
 	}
 	*/
 	
