@@ -1029,7 +1029,7 @@ int taperedEval(struct position *pos) {
 		}
 	} 
 	
-	// bonus for queen distance to king
+	// bonus for rooks/queens being on 7th rank
 	
 	U64 BBwhitequeens = pos->BBwhitepieces & pos->BBqueens;
 	U64 BBblackqueens = pos->BBblackpieces & pos->BBqueens;
