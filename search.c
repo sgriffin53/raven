@@ -526,7 +526,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			if (curmove.cappiece == '0') {
 				killers[ply][1] = killers[ply][0];
 				killers[ply][0] = curmove;
-				history[pos->tomove][curmove.from][curmove.to] += pow(2,depthleft);
+				history[pos->tomove][curmove.from][curmove.to] += pow(2.0,(double)depthleft);
 				countermoves[prevmove.from][prevmove.to] = curmove;
 			}
 			addTTentry(&TT, hash, origdepthleft, LOWERBOUND, bestmove, bestscore);
@@ -536,7 +536,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		else {
 			// no beta cut off
 			if (curmove.cappiece == '0') {
-				butterfly[pos->tomove][curmove.from][curmove.to] += pow(2,depthleft);
+				butterfly[pos->tomove][curmove.from][curmove.to] += pow(2.0,(double)depthleft);
 			}
 		}
 	}
@@ -824,7 +824,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			if (cappiece == '0') {
 				killers[ply][1] = killers[ply][0];
 				killers[ply][0] = moves[i];
-				history[pos->tomove][moves[i].from][moves[i].to] += pow(2,depthleft);
+				history[pos->tomove][moves[i].from][moves[i].to] += pow(2.0,(double)depthleft);
 				struct move prevmove = movestack[movestackend - 1];
 				countermoves[prevmove.from][prevmove.to] = moves[i];
 			}
@@ -833,7 +833,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		else {
 			// no beta cut off
 			if (cappiece == '0') {
-				butterfly[pos->tomove][moves[i].from][moves[i].to] += pow(2,depthleft);
+				butterfly[pos->tomove][moves[i].from][moves[i].to] += pow(2.0,(double)depthleft);
 			}
 		}
 		depthleft = allorigdepthleft;
