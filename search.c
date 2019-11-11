@@ -19,7 +19,12 @@
 #include "bitboards.h"
 #include "magicmoves.h"
 
-
+int mate_in(int ply) {
+	return MATE_SCORE - ply;
+}
+int mated_in(int ply) {
+	return -MATE_SCORE + ply;
+}
 int reduction(const struct move *move, const int depthleft, char cappiece, int legalmoves, int incheck, int givescheck, int ply) {
 	assert(move);
 	assert(depthleft >= 0);
@@ -260,7 +265,13 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	
 	
 	
+	// Mate distance pruning
 	
+	if (ply != 0) {
+		alpha = max(mated_in(ply), alpha);
+		beta = min(mate_in(ply+1), beta);
+		if (alpha >= beta) return alpha;
+	}
 	U64 hash;
 	if (currenthash != 0) {
 		hash = currenthash;
@@ -694,6 +705,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			
 		}
 		*/
+		
 		makeMove(&moves[i],pos);
 		pos->tomove = !pos->tomove;
 		if (isCheck(pos)) {

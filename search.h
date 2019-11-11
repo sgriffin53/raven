@@ -9,6 +9,10 @@ struct pvline {
 	struct move moves[1024];
 	int size;
 };
+
+int mate_in(int ply);
+int mated_in(int ply);
+
 int SEEcapture(struct position *pos, int from, int to, int side);
 int SEE(struct position *pos, int square, int side);
 struct move get_smallest_attacker(struct position *pos, int square, int side);
