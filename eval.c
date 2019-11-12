@@ -10,6 +10,19 @@
 #include <stdlib.h>
 #include "search.h"
 
+static const int safety_table[9][30] =
+{
+/*0p*/{0,  0,  0,  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0},
+/*1p*/{0,  0,  0,  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0},
+/*2p*/{0,  1,  2,  4,   7,  11,  16,  22,  29,  37,  46,  56,  67,  79,  92, 106, 121, 137, 154, 172, 191, 211, 232, 254, 277, 301, 326, 352, 379, 400},
+/*3p*/{0,  2,  5,  9,  14,  20,  27,  35,  44,  54,  65,  77,  90, 104, 119, 135, 152, 170, 189, 209, 230, 252, 275, 299, 324, 350, 377, 400, 400, 400},
+/*4p*/{0,  4,  8, 13,  19,  26,  34,  43,  53,  64,  76,  89, 103, 118, 134, 151, 169, 188, 208, 229, 251, 274, 298, 323, 349, 376, 400, 400, 400, 400},
+/*5p*/{0,  8, 16, 25,  35,  46,  58,  71,  85, 100, 116, 133, 151, 170, 190, 211, 233, 256, 280, 305, 331, 358, 386, 400, 400, 400, 400, 400, 400, 400},
+/*6p*/{0, 16, 26, 37,  49,  62,  76,  91, 107, 124, 142, 161, 181, 202, 224, 247, 271, 296, 322, 349, 377, 400, 400, 400, 400, 400, 400, 400, 400, 400},
+/*7p*/{0, 32, 44, 57,  71,  86, 102, 119, 137, 156, 176, 197, 219, 242, 266, 291, 317, 344, 372, 400, 400, 400, 400, 400, 400, 400, 400, 400, 400, 400},
+/*8p*/{0, 64, 78, 93, 109, 126, 144, 163, 183, 204, 226, 249, 273, 298, 324, 351, 379, 400, 400, 400, 400, 400, 400, 400, 400, 400, 400, 400, 400, 400}
+};
+
 // Minor piece attack bonus
 
 int minorAttackBonus_mg(char piece) {
@@ -212,7 +225,7 @@ int taperedEval(struct position *pos) {
 	}
 	
 	// bonus for pieces being near enemy king
-	
+	/*
 	// white pieces attacking black king
 	
 	int enemykingpos = pos->Bkingpos;
@@ -267,7 +280,7 @@ int taperedEval(struct position *pos) {
 
 	openingEval -= 10 * __builtin_popcountll(BBattackers);
 	endgameEval -= 10 * __builtin_popcountll(BBattackers);
-	
+	*/
 	
 	
 	
@@ -644,6 +657,114 @@ int taperedEval(struct position *pos) {
 	
 	// Candidate passed pawns
 	
+	// Toga's method
+	
+	// white
+	/*
+	BBwhitepawns = pos->BBwhitepieces & pos->BBpawns;
+	BBblackpawns = pos->BBblackpieces & pos->BBpawns;
+	U64 BBwhitepawnscopy = BBwhitepawns;
+	U64 BBblackpawnscopy = BBblackpawns;
+	while (BBwhitepawnscopy) {
+		int square = __builtin_ctzll(BBwhitepawnscopy);
+		BBwhitepawnscopy &= ~(1ULL << square);
+		//if (getrank(square) <= 2) continue;
+		if (BBwhitePP & 1ULL << square) continue;
+		int sentries = 0;
+		int helpers = 0;
+		U64 BBsentries = 0;
+		U64 BBfront = 0;
+		int rank = getrank(square);
+		int file = getfile(square);
+		int isopen = 1;
+		while (rank < 6) {
+			rank++;
+			int midsquare = fileranktosquareidx(file,rank);
+			BBfront |= 1ULL << midsquare;
+			BBsentries |= westOne(midsquare) | eastOne(midsquare);
+		}
+		if (BBfront & pos->BBpawns) continue; // not open
+		BBsentries &= pos->BBblackpieces & pos->BBpawns;
+		sentries = __builtin_popcountll(BBsentries);
+	
+		U64 BBhelpers = westOne(square) | eastOne(square);
+		rank = getrank(square);
+		while (rank > 1) {
+			rank--;
+			int midsquare = fileranktosquareidx(file,rank);
+			BBhelpers |= westOne(midsquare) | eastOne(midsquare);
+		}
+		BBhelpers &= pos->BBwhitepieces & pos->BBpawns;
+		helpers = __builtin_popcountll(BBhelpers);
+		if (sentries > helpers) continue;
+		
+		int hostile = 0;
+		int friendly = 0;
+		
+		U64 BBhostile = BBpawnattacksW(1ULL << square) & pos->BBblackpieces & pos->BBpawns;
+		hostile = __builtin_popcountll(BBhostile);
+		U64 BBfriendly = BBpawnattacksB(1ULL << square) & pos->BBwhitepieces & pos->BBpawns;
+		friendly = __builtin_popcountll(BBfriendly);
+		if (hostile > friendly) continue;
+		
+		// pawn is a candidate
+		//printf("candidate! %d\n", square);
+		//dspBoard(pos);
+		double rankbonus[8] = { 0, 0, 0, 0.1, 0.3, 0.6, 1.0, 0 };
+		openingEval += (5 + 50 * rankbonus[getrank(square)]);
+		endgameEval += (10 + 100 * rankbonus[getrank(square)]);
+		
+	}
+	
+	// black
+	
+	while (BBblackpawnscopy) {
+		int square = __builtin_ctzll(BBblackpawnscopy);
+		BBblackpawnscopy &= ~(1ULL << square);
+		//if (getrank(square) >= 5) continue;
+		if (BBblackPP & 1ULL << square) continue;
+		int sentries = 0;
+		int helpers = 0;
+		U64 BBsentries = 0;
+		int rank = getrank(square);
+		int file = getfile(square);
+		while (rank > 1) {
+			rank--;
+			int midsquare = fileranktosquareidx(file,rank);
+			BBsentries |= westOne(midsquare) | eastOne(midsquare);
+		}
+		BBsentries &= pos->BBwhitepieces & pos->BBpawns;
+		sentries = __builtin_popcountll(BBsentries);
+		U64 BBfront;
+		U64 BBhelpers = westOne(square) | eastOne(square);
+		rank = getrank(square);
+		while (rank < 6) {
+			rank++;
+			int midsquare = fileranktosquareidx(file,rank);
+			BBfront |= 1ULL << midsquare;
+			BBhelpers |= westOne(midsquare) | eastOne(midsquare);
+		}
+		if (BBfront & pos->BBpawns) continue; // not open
+		BBhelpers &= pos->BBblackpieces & pos->BBpawns;
+		helpers = __builtin_popcountll(BBhelpers);
+		if (sentries > helpers) continue;
+		
+		int hostile = 0;
+		int friendly = 0;
+		
+		U64 BBhostile = BBpawnattacksB(1ULL << square) & pos->BBwhitepieces & pos->BBpawns;
+		hostile = __builtin_popcountll(BBhostile);
+		U64 BBfriendly = BBpawnattacksW(1ULL << square) & pos->BBblackpieces & pos->BBpawns;
+		friendly = __builtin_popcountll(BBfriendly);
+		if (hostile > friendly) continue;
+		
+		// pawn is a candidate
+		//printf("candidate!\n");
+		double rankbonus[8] = { 0, 0, 0, 0.1, 0.3, 0.6, 1.0, 0 };
+		openingEval -= (5 + 50 * rankbonus[7 - getrank(square)]);
+		endgameEval -= (10 + 100 * rankbonus[7 - getrank(square)]);
+	}
+	 */
 	// white
 	/*
 	BBwhitepawns = pos->BBwhitepieces & pos->BBpawns;
@@ -2038,35 +2159,68 @@ int taperedEval(struct position *pos) {
 	openingEval -= Bmobility * 5;
 	endgameEval -= Bmobility * 5;
 	 */
-	 
+	int kingattackers = 0;
+	int kingattacks = 0;
 	// white
 	
-	int WNmobility = Nmobility(pos,WHITE);
-	openingEval += knightMgMobility[WNmobility];
-	endgameEval += knightEgMobility[WNmobility];
-	int WBmobility = Bmobility(pos,WHITE);
-	openingEval += bishopMgMobility[WBmobility];
-	endgameEval += bishopEgMobility[WBmobility];
-	int WRmobility = Rmobility(pos,WHITE);
-	openingEval += rookMgMobility[WRmobility];
-	endgameEval += rookEgMobility[WRmobility];
-	int WQmobility = Qmobility(pos,WHITE);
-	openingEval += queenMgMobility[WQmobility];
-	endgameEval += queenEgMobility[WQmobility];	
+	struct mobreturn WNmobility = Nmobility(pos,WHITE);
+	openingEval += knightMgMobility[WNmobility.mobility];
+	endgameEval += knightEgMobility[WNmobility.mobility];
+	kingattacks +=  WNmobility.kingattacks;
+	kingattackers += WNmobility.kingattackers;
 	
+	struct mobreturn WBmobility = Bmobility(pos,WHITE);
+	openingEval += bishopMgMobility[WBmobility.mobility];
+	endgameEval += bishopEgMobility[WBmobility.mobility];
+	kingattacks += WBmobility.kingattacks;
+	kingattackers += WBmobility.kingattackers;
+	
+	struct mobreturn WRmobility = Rmobility(pos,WHITE);
+	openingEval += rookMgMobility[WRmobility.mobility];
+	endgameEval += rookEgMobility[WRmobility.mobility];
+	kingattacks += 2 * WRmobility.kingattacks;
+	kingattackers += WRmobility.kingattackers;
+	
+	struct mobreturn WQmobility = Qmobility(pos,WHITE);
+	openingEval += queenMgMobility[WQmobility.mobility];
+	endgameEval += queenEgMobility[WQmobility.mobility];
+	kingattacks += 4 * WQmobility.kingattacks;
+	kingattackers += WQmobility.kingattackers;
+	
+	openingEval += safety_table[kingattackers][kingattacks];
+	endgameEval += safety_table[kingattackers][kingattacks];
+	//openingEval += king_safety_table[kingattacks];
+	//openingEval += 20 * kingattacks * attackWeight[kingattackers];
+	
+	kingattacks = 0;
+	kingattackers = 0;
 	// black
-	int BNmobility = Nmobility(pos,BLACK);
-	openingEval -= knightMgMobility[BNmobility];
-	endgameEval -= knightEgMobility[BNmobility];
-	int BBmobility = Bmobility(pos,BLACK);
-	openingEval -= bishopMgMobility[BBmobility];
-	endgameEval -= bishopEgMobility[BBmobility];
-	int BRmobility = Rmobility(pos,BLACK);
-	openingEval -= rookMgMobility[WBmobility];
-	endgameEval -= rookEgMobility[WBmobility];
-	int BQmobility = Qmobility(pos,BLACK);
-	openingEval -= queenMgMobility[BQmobility];
-	endgameEval -= queenEgMobility[BQmobility];	
+	struct mobreturn BNmobility = Nmobility(pos,BLACK);
+	openingEval -= knightMgMobility[BNmobility.mobility];
+	endgameEval -= knightEgMobility[BNmobility.mobility];
+	kingattacks += BNmobility.kingattacks;
+	kingattackers += BNmobility.kingattackers;
+	
+	struct mobreturn BBmobility = Bmobility(pos,BLACK);
+	openingEval -= bishopMgMobility[BBmobility.mobility];
+	endgameEval -= bishopEgMobility[BBmobility.mobility];
+	kingattacks += BBmobility.kingattacks;
+	kingattackers += BBmobility.kingattackers;
+	
+	struct mobreturn BRmobility = Rmobility(pos,BLACK);
+	openingEval -= rookMgMobility[WBmobility.mobility];
+	endgameEval -= rookEgMobility[WBmobility.mobility];
+	kingattacks += 2 * BRmobility.kingattacks;
+	kingattackers += BRmobility.kingattackers;
+	
+	struct mobreturn BQmobility = Qmobility(pos,BLACK);
+	openingEval -= queenMgMobility[BQmobility.mobility];
+	endgameEval -= queenEgMobility[BQmobility.mobility];
+	kingattacks += 4 * BQmobility.kingattacks;
+	kingattackers += BQmobility.kingattackers;
+	
+	openingEval -= safety_table[kingattackers][kingattacks];
+	endgameEval -= safety_table[kingattackers][kingattacks];
 	
 	// bonus for knights in closed positions, bishops in open positions
 	/*
@@ -2450,15 +2604,28 @@ int isTrappedPiece(struct position *pos, int side) {
 	}
 	return -1;
 }
-int Nmobility(struct position *pos, int side) {
+struct mobreturn Nmobility(struct position *pos, int side) {
 	U64 BBsidepieces;
-	if (side == WHITE) BBsidepieces = pos->BBwhitepieces;
-	else BBsidepieces = pos->BBblackpieces;
+	U64 BBkingzone;
+	U64 BBkingonly;
+	if (side == WHITE) {
+		BBsidepieces = pos->BBwhitepieces;
+		BBkingonly = pos->BBkings & pos->BBblackpieces;
+		BBkingzone = BBpawnshieldLookup[BLACK][pos->Bkingpos];
+	}
+	else {
+		BBsidepieces = pos->BBblackpieces;
+		BBkingonly = pos->BBkings & pos->BBwhitepieces;
+		BBkingzone = BBpawnshieldLookup[WHITE][pos->Wkingpos];
+	}
 	U64 BBallowed = ~BBsidepieces;
 	U64 BBoccupied = pos->BBwhitepieces | pos->BBblackpieces;
 	U64 BBmoves = 0;
 	U64 BBcopy = 0;
 	int from = 0;
+	
+	int kzattacks = 0;
+	int kzattackers = 0;
 	
 	// Knights
 	BBcopy = pos->BBknights & BBsidepieces;
@@ -2466,16 +2633,35 @@ int Nmobility(struct position *pos, int side) {
 	{
 		from = __builtin_ctzll(BBcopy);
 		//BBmoves |= BBknightattacks(1ULL << from) & BBallowed;
-		BBmoves |= BBknightLookup[from] & BBallowed;
+		U64 BBnewmoves = BBknightLookup[from] & BBallowed;
+		BBmoves |= BBnewmoves;
+		U64 BBkzattacks = BBnewmoves & BBkingzone;
+		kzattacks += __builtin_popcountll(BBkzattacks);
+		if (BBkzattacks) kzattackers++;
 		BBcopy &= BBcopy-1;
 	}
-	
-	return __builtin_popcountll(BBmoves);
+	struct mobreturn returnstruct;
+	returnstruct.kingattacks = kzattacks;
+	returnstruct.mobility = __builtin_popcountll(BBmoves);
+	returnstruct.kingattackers = kzattackers;
+	return returnstruct;
 }
-int Bmobility(struct position *pos, int side) {
+struct mobreturn Bmobility(struct position *pos, int side) {
 	U64 BBsidepieces;
-	if (side == WHITE) BBsidepieces = pos->BBwhitepieces;
-	else BBsidepieces = pos->BBblackpieces;
+	U64 BBkingzone;
+	U64 BBkingonly;
+	if (side == WHITE) {
+		BBsidepieces = pos->BBwhitepieces;
+		BBkingonly = pos->BBkings & pos->BBblackpieces;
+		BBkingzone = BBpawnshieldLookup[BLACK][pos->Bkingpos];
+	}
+	else {
+		BBsidepieces = pos->BBblackpieces;
+		BBkingonly = pos->BBkings & pos->BBwhitepieces;
+		BBkingzone = BBpawnshieldLookup[WHITE][pos->Wkingpos];
+	}
+	int kzattackers = 0;
+	int kzattacks = 0;
 	U64 BBallowed = ~BBsidepieces;
 	U64 BBoccupied = pos->BBwhitepieces | pos->BBblackpieces;
 	U64 BBmoves = 0;
@@ -2485,15 +2671,35 @@ int Bmobility(struct position *pos, int side) {
 	while(BBcopy)
 	{
 		from = __builtin_ctzll(BBcopy);
-		BBmoves |= Bmagic(from, BBoccupied) & BBallowed;
+		U64 BBnewmoves = Bmagic(from, BBoccupied) & BBallowed;
+		BBmoves |= BBnewmoves;
+		U64 BBkzattacks = BBnewmoves & BBkingzone;
+		kzattacks += __builtin_popcountll(BBkzattacks);
+		if (BBkzattacks) kzattackers++;
 		BBcopy &= BBcopy-1;
 	}
-	return __builtin_popcountll(BBmoves);
+	struct mobreturn returnstruct;
+	returnstruct.kingattacks = kzattacks;
+	returnstruct.mobility = __builtin_popcountll(BBmoves);
+	returnstruct.kingattackers = kzattackers;
+	return returnstruct;
 }
-int Rmobility(struct position *pos, int side) {
+struct mobreturn Rmobility(struct position *pos, int side) {
 	U64 BBsidepieces;
-	if (side == WHITE) BBsidepieces = pos->BBwhitepieces;
-	else BBsidepieces = pos->BBblackpieces;
+	U64 BBkingzone;
+	U64 BBkingonly;
+	if (side == WHITE) {
+		BBsidepieces = pos->BBwhitepieces;
+		BBkingonly = pos->BBkings & pos->BBblackpieces;
+		BBkingzone = BBpawnshieldLookup[BLACK][pos->Bkingpos];
+	}
+	else {
+		BBsidepieces = pos->BBblackpieces;
+		BBkingonly = pos->BBkings & pos->BBwhitepieces;
+		BBkingzone = BBpawnshieldLookup[WHITE][pos->Wkingpos];
+	}
+	int kzattackers = 0;
+	int kzattacks = 0;
 	U64 BBallowed = ~BBsidepieces;
 	U64 BBoccupied = pos->BBwhitepieces | pos->BBblackpieces;
 	U64 BBmoves = 0;
@@ -2503,15 +2709,35 @@ int Rmobility(struct position *pos, int side) {
 	while(BBcopy)
 	{
 		from = __builtin_ctzll(BBcopy);
-		BBmoves |= Rmagic(from, BBoccupied) & BBallowed;
+		U64 BBnewmoves = Rmagic(from, BBoccupied) & BBallowed;
+		BBmoves |= BBnewmoves;
+		U64 BBkzattacks = BBnewmoves & BBkingzone;
+		kzattacks += __builtin_popcountll(BBkzattacks);
+		if (BBkzattacks) kzattackers++;
 		BBcopy &= BBcopy-1;
 	}
-	return __builtin_popcountll(BBmoves);
+	struct mobreturn returnstruct;
+	returnstruct.kingattacks = kzattacks;
+	returnstruct.mobility = __builtin_popcountll(BBmoves);
+	returnstruct.kingattackers = kzattackers;
+	return returnstruct;
 }
-int Qmobility(struct position *pos, int side) {
+struct mobreturn Qmobility(struct position *pos, int side) {
 	U64 BBsidepieces;
-	if (side == WHITE) BBsidepieces = pos->BBwhitepieces;
-	else BBsidepieces = pos->BBblackpieces;
+	U64 BBkingzone;
+	U64 BBkingonly;
+	if (side == WHITE) {
+		BBsidepieces = pos->BBwhitepieces;
+		BBkingonly = pos->BBkings & pos->BBblackpieces;
+		BBkingzone = BBpawnshieldLookup[BLACK][pos->Bkingpos];
+	}
+	else {
+		BBsidepieces = pos->BBblackpieces;
+		BBkingonly = pos->BBkings & pos->BBwhitepieces;
+		BBkingzone = BBpawnshieldLookup[WHITE][pos->Wkingpos];
+	}
+	int kzattackers = 0;
+	int kzattacks = 0;
 	U64 BBallowed = ~BBsidepieces;
 	U64 BBoccupied = pos->BBwhitepieces | pos->BBblackpieces;
 	U64 BBmoves = 0;
@@ -2521,10 +2747,18 @@ int Qmobility(struct position *pos, int side) {
 	while(BBcopy)
 	{
 		from = __builtin_ctzll(BBcopy);
-		BBmoves |= (Rmagic(from, BBoccupied) | Bmagic(from, BBoccupied)) & BBallowed;
+		U64 BBnewmoves = (Rmagic(from, BBoccupied) | Bmagic(from, BBoccupied)) & BBallowed;
+		BBmoves |= BBnewmoves;
+		U64 BBkzattacks = BBnewmoves & BBkingzone;
+		kzattacks += __builtin_popcountll(BBkzattacks);
+		if (BBkzattacks) kzattackers++;
 		BBcopy &= BBcopy-1;
 	}
-	return __builtin_popcountll(BBmoves);
+	struct mobreturn returnstruct;
+	returnstruct.kingattacks = kzattacks;
+	returnstruct.mobility = __builtin_popcountll(BBmoves);
+	returnstruct.kingattackers = kzattackers;
+	return returnstruct;
 }
 /*
 int mobility(struct position *pos, int side) {
