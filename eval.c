@@ -145,7 +145,6 @@ int taperedEval(struct position *pos) {
 	int endgameEval = 0;
 	int material = 0;
 	int pstvalO, pstvalE;
-	U64 BBoccupied = (pos->BBwhitepieces | pos->BBblackpieces);
 	
 	int num_BP = __builtin_popcountll(pos->BBblackpieces & pos->BBpawns);
 	int num_BN = __builtin_popcountll(pos->BBblackpieces & pos->BBknights);
@@ -175,11 +174,12 @@ int taperedEval(struct position *pos) {
 	endgameEval += white_pieces - black_pieces;
 	material += white_pieces - black_pieces;
 	
-
-	while (BBoccupied != 0) {
-		int square = __builtin_ctzll(BBoccupied);
+	U64 BBpawns = pos->BBpawns | pos->BBkings;
+	
+	while (BBpawns != 0) {
+		int square = __builtin_ctzll(BBpawns);
 		//BBoccupied &= ~(1ULL << square);
-		BBoccupied &= BBoccupied - 1;
+		BBpawns &= BBpawns - 1;
 		char piece = getPiece(pos,square);
 		//int piececol;
 		//if ((piece >= 'a') && (piece <= 'z')) {
@@ -1451,9 +1451,53 @@ int taperedEval(struct position *pos) {
 	}
 	*/
 	
-
+	/*
+	// pawn storms
 	
+	int stormDistBonus[4] = { 0, 20, 10, 5 };
 	
+	// white (white king being stormed by black pawns)
+	
+	U64 BBA1quarter = (BBrank1 | BBrank2 | BBrank3 | BBrank4) & (BBfileA | BBfileB | BBfileC | BBfileD);
+	U64 BBH1quarter = (BBrank1 | BBrank2 | BBrank3 | BBrank4) & (BBfileE | BBfileF | BBfileG | BBfileH);
+	U64 BBkingquarter = 0;
+	if (BBA1quarter & (1ULL << pos->Wkingpos)) BBkingquarter = BBA1quarter;
+	else if (BBH1quarter & (1ULL << pos->Wkingpos)) BBkingquarter = BBH1quarter;
+	
+	if (BBkingquarter & (1ULL << pos->Wkingpos) & (BBrank1 | BBrank2) & ~(BBfileE | BBfileD))  {
+		U64 BBstormpawns = pos->BBpawns & pos->BBblackpieces & BBkingquarter;
+		while (BBstormpawns) {
+			int square = __builtin_ctzll(BBstormpawns);
+			BBstormpawns &= BBstormpawns - 1;
+			int distx = abs(getfile(pos->Wkingpos) - getfile(square));
+			int disty = abs(getrank(pos->Wkingpos) - getrank(square));
+			int dist = max(distx, disty);
+			openingEval -= stormDistBonus[dist];
+			endgameEval -= stormDistBonus[dist];
+		}
+	}
+	
+	// black (black king being stormed by white pawns)
+	
+	U64 BBA8quarter = (BBrank5 | BBrank6 | BBrank7 | BBrank8) & (BBfileA | BBfileB | BBfileC | BBfileD);
+	U64 BBH8quarter = (BBrank5 | BBrank6 | BBrank7 | BBrank8) & (BBfileE | BBfileF | BBfileG | BBfileH);
+	BBkingquarter = 0;
+	if (BBA8quarter & (1ULL << pos->Bkingpos)) BBkingquarter = BBA8quarter;
+	else if (BBH8quarter & (1ULL << pos->Bkingpos)) BBkingquarter = BBH8quarter;
+	
+	if (BBkingquarter & (1ULL << pos->Bkingpos) & (BBrank7 | BBrank8) & ~(BBfileE | BBfileD)) {
+		U64 BBstormpawns = pos->BBpawns & pos->BBwhitepieces & BBkingquarter;
+		while (BBstormpawns) {
+			int square = __builtin_ctzll(BBstormpawns);
+			BBstormpawns &= BBstormpawns - 1;
+			int distx = abs(getfile(pos->Bkingpos) - getfile(square));
+			int disty = abs(getrank(pos->Bkingpos) - getrank(square));
+			int dist = max(distx, disty);
+			openingEval += stormDistBonus[dist];
+			endgameEval += stormDistBonus[dist];
+		}
+	}
+	*/
 	// pawn shield
 	
 	// white pawn shield
@@ -2166,31 +2210,37 @@ int taperedEval(struct position *pos) {
 	struct mobreturn WNmobility = Nmobility(pos,WHITE);
 	openingEval += knightMgMobility[WNmobility.mobility];
 	endgameEval += knightEgMobility[WNmobility.mobility];
+	openingEval += WNmobility.pstO;
+	endgameEval += WNmobility.pstE;
 	kingattacks +=  WNmobility.kingattacks;
 	kingattackers += WNmobility.kingattackers;
 	
 	struct mobreturn WBmobility = Bmobility(pos,WHITE);
 	openingEval += bishopMgMobility[WBmobility.mobility];
 	endgameEval += bishopEgMobility[WBmobility.mobility];
+	openingEval += WBmobility.pstO;
+	endgameEval += WBmobility.pstE;
 	kingattacks += WBmobility.kingattacks;
 	kingattackers += WBmobility.kingattackers;
 	
 	struct mobreturn WRmobility = Rmobility(pos,WHITE);
 	openingEval += rookMgMobility[WRmobility.mobility];
 	endgameEval += rookEgMobility[WRmobility.mobility];
+	openingEval += WRmobility.pstO;
+	endgameEval += WRmobility.pstE;
 	kingattacks += 2 * WRmobility.kingattacks;
 	kingattackers += WRmobility.kingattackers;
 	
 	struct mobreturn WQmobility = Qmobility(pos,WHITE);
 	openingEval += queenMgMobility[WQmobility.mobility];
 	endgameEval += queenEgMobility[WQmobility.mobility];
+	openingEval += WQmobility.pstO;
+	endgameEval += WQmobility.pstE;
 	kingattacks += 4 * WQmobility.kingattacks;
 	kingattackers += WQmobility.kingattackers;
 	
 	openingEval += safety_table[kingattackers][kingattacks];
 	endgameEval += safety_table[kingattackers][kingattacks];
-	//openingEval += king_safety_table[kingattacks];
-	//openingEval += 20 * kingattacks * attackWeight[kingattackers];
 	
 	kingattacks = 0;
 	kingattackers = 0;
@@ -2198,24 +2248,32 @@ int taperedEval(struct position *pos) {
 	struct mobreturn BNmobility = Nmobility(pos,BLACK);
 	openingEval -= knightMgMobility[BNmobility.mobility];
 	endgameEval -= knightEgMobility[BNmobility.mobility];
+	openingEval += BNmobility.pstO;
+	endgameEval += BNmobility.pstE;
 	kingattacks += BNmobility.kingattacks;
 	kingattackers += BNmobility.kingattackers;
 	
 	struct mobreturn BBmobility = Bmobility(pos,BLACK);
 	openingEval -= bishopMgMobility[BBmobility.mobility];
 	endgameEval -= bishopEgMobility[BBmobility.mobility];
+	openingEval += BBmobility.pstO;
+	endgameEval += BBmobility.pstE;
 	kingattacks += BBmobility.kingattacks;
 	kingattackers += BBmobility.kingattackers;
 	
 	struct mobreturn BRmobility = Rmobility(pos,BLACK);
 	openingEval -= rookMgMobility[WBmobility.mobility];
 	endgameEval -= rookEgMobility[WBmobility.mobility];
+	openingEval += BRmobility.pstO;
+	endgameEval += BRmobility.pstE;
 	kingattacks += 2 * BRmobility.kingattacks;
 	kingattackers += BRmobility.kingattackers;
 	
 	struct mobreturn BQmobility = Qmobility(pos,BLACK);
 	openingEval -= queenMgMobility[BQmobility.mobility];
 	endgameEval -= queenEgMobility[BQmobility.mobility];
+	openingEval += BQmobility.pstO;
+	endgameEval += BQmobility.pstE;
 	kingattacks += 4 * BQmobility.kingattacks;
 	kingattackers += BQmobility.kingattackers;
 	
@@ -2626,7 +2684,11 @@ struct mobreturn Nmobility(struct position *pos, int side) {
 	
 	int kzattacks = 0;
 	int kzattackers = 0;
-	
+	int PSTvalO = 0;
+	int PSTvalE = 0;
+	char piece;
+	if (side == WHITE) piece = 'N';
+	else piece = 'n';
 	// Knights
 	BBcopy = pos->BBknights & BBsidepieces;
 	while(BBcopy)
@@ -2638,12 +2700,16 @@ struct mobreturn Nmobility(struct position *pos, int side) {
 		U64 BBkzattacks = BBnewmoves & BBkingzone;
 		kzattacks += __builtin_popcountll(BBkzattacks);
 		if (BBkzattacks) kzattackers++;
+		PSTvalO += PSTval(piece,from,'O');
+		PSTvalE += PSTval(piece,from,'E');
 		BBcopy &= BBcopy-1;
 	}
 	struct mobreturn returnstruct;
 	returnstruct.kingattacks = kzattacks;
 	returnstruct.mobility = __builtin_popcountll(BBmoves);
 	returnstruct.kingattackers = kzattackers;
+	returnstruct.pstO = PSTvalO;
+	returnstruct.pstE = PSTvalE;
 	return returnstruct;
 }
 struct mobreturn Bmobility(struct position *pos, int side) {
@@ -2666,7 +2732,12 @@ struct mobreturn Bmobility(struct position *pos, int side) {
 	U64 BBoccupied = pos->BBwhitepieces | pos->BBblackpieces;
 	U64 BBmoves = 0;
 	U64 BBcopy = 0;
+	int PSTvalO = 0;
+	int PSTvalE = 0;
 	int from = 0;
+	char piece;
+	if (side == WHITE) piece = 'B';
+	else piece = 'b';
 	BBcopy = pos->BBbishops & BBsidepieces;
 	while(BBcopy)
 	{
@@ -2676,12 +2747,16 @@ struct mobreturn Bmobility(struct position *pos, int side) {
 		U64 BBkzattacks = BBnewmoves & BBkingzone;
 		kzattacks += __builtin_popcountll(BBkzattacks);
 		if (BBkzattacks) kzattackers++;
+		PSTvalO += PSTval(piece,from,'O');
+		PSTvalE += PSTval(piece,from,'E');
 		BBcopy &= BBcopy-1;
 	}
 	struct mobreturn returnstruct;
 	returnstruct.kingattacks = kzattacks;
 	returnstruct.mobility = __builtin_popcountll(BBmoves);
 	returnstruct.kingattackers = kzattackers;
+	returnstruct.pstO = PSTvalO;
+	returnstruct.pstE = PSTvalE;
 	return returnstruct;
 }
 struct mobreturn Rmobility(struct position *pos, int side) {
@@ -2704,6 +2779,11 @@ struct mobreturn Rmobility(struct position *pos, int side) {
 	U64 BBoccupied = pos->BBwhitepieces | pos->BBblackpieces;
 	U64 BBmoves = 0;
 	U64 BBcopy = 0;
+	int PSTvalO = 0;
+	int PSTvalE = 0;
+	char piece;
+	if (side == WHITE) piece = 'R';
+	else piece = 'r';
 	int from = 0;
 	BBcopy = pos->BBrooks & BBsidepieces;
 	while(BBcopy)
@@ -2714,12 +2794,16 @@ struct mobreturn Rmobility(struct position *pos, int side) {
 		U64 BBkzattacks = BBnewmoves & BBkingzone;
 		kzattacks += __builtin_popcountll(BBkzattacks);
 		if (BBkzattacks) kzattackers++;
+		PSTvalO += PSTval(piece,from,'O');
+		PSTvalE += PSTval(piece,from,'E');
 		BBcopy &= BBcopy-1;
 	}
 	struct mobreturn returnstruct;
 	returnstruct.kingattacks = kzattacks;
 	returnstruct.mobility = __builtin_popcountll(BBmoves);
 	returnstruct.kingattackers = kzattackers;
+	returnstruct.pstO = PSTvalO;
+	returnstruct.pstE = PSTvalE;
 	return returnstruct;
 }
 struct mobreturn Qmobility(struct position *pos, int side) {
@@ -2742,6 +2826,11 @@ struct mobreturn Qmobility(struct position *pos, int side) {
 	U64 BBoccupied = pos->BBwhitepieces | pos->BBblackpieces;
 	U64 BBmoves = 0;
 	U64 BBcopy = 0;
+	int PSTvalO = 0;
+	int PSTvalE = 0;
+	char piece;
+	if (side == WHITE) piece = 'Q';
+	else piece = 'q';
 	int from = 0;
 	BBcopy = pos->BBqueens & BBsidepieces;
 	while(BBcopy)
@@ -2752,12 +2841,16 @@ struct mobreturn Qmobility(struct position *pos, int side) {
 		U64 BBkzattacks = BBnewmoves & BBkingzone;
 		kzattacks += __builtin_popcountll(BBkzattacks);
 		if (BBkzattacks) kzattackers++;
+		PSTvalO += PSTval(piece,from,'O');
+		PSTvalE += PSTval(piece,from,'E');
 		BBcopy &= BBcopy-1;
 	}
 	struct mobreturn returnstruct;
 	returnstruct.kingattacks = kzattacks;
 	returnstruct.mobility = __builtin_popcountll(BBmoves);
 	returnstruct.kingattackers = kzattackers;
+	returnstruct.pstO = PSTvalO;
+	returnstruct.pstE = PSTvalE;
 	return returnstruct;
 }
 /*
