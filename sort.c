@@ -50,13 +50,11 @@ void sortMoves(struct position *pos, struct move *moves, const int num_moves, st
 	assert(pos);
 	assert(num_moves < MAX_MOVES);
 	int scores[num_moves];
-	//struct movescore movescores[num_moves];
 	// Score
 	for (int i = 0; i < num_moves; i++) {
 
 		scores[i] = 0;
 		char cappiece = moves[i].cappiece;
-		//char piece = getPiece(pos,moves[i].from);
 		char piece = moves[i].piece;
 		int histval = history[pos->tomove][moves[i].from][moves[i].to];
 		int butterflyval = butterfly[pos->tomove][moves[i].from][moves[i].to];
@@ -92,17 +90,9 @@ void sortMoves(struct position *pos, struct move *moves, const int num_moves, st
 			scores[i] = (int)histscore;
 		}
 		if (moves[i].from == countermove.from && moves[i].to == countermove.to) {
-			// decent values: 400k
-			// bad values: 600k, 200k, 800k
-			// lower node count: 500k, 900k, 350k
 			scores[i] += 350000;
 		}
 	}
-	//qsort(movescores, sizeof(movescores)/sizeof(movescores[0]), sizeof(movescores[0]), compar);
-	//for (int i = 0; i < num_moves;i++) {
-	//	moves[i] = movescores[i].move;
-	//}
-	
 	
 	// selection sort
 	
@@ -121,81 +111,4 @@ void sortMoves(struct position *pos, struct move *moves, const int num_moves, st
 		moves[min_idx] = movecopy;
 	}
 	
-	/*
-	// wrong node count
-	int i, j;
-	for (i = 0;i < num_moves - 1;i++) {
-		int position = i;
-		for (j = i+1;j < num_moves - 1;j++) {
-			if (scores[position] < scores[j]) {
-				position = j;
-			}
-		}
-		if (position != i) {
-			int scorecopy = scores[i];
-			scores[i] = scores[position];
-			scores[position] = scorecopy;
-			
-			struct move movecopy = moves[i];
-			moves[i] = moves[position];
-			moves[position] = movecopy;
-		}
-	}
-	*/
-	// Sort
-	// insertion sort - doesn't work
-	/*
-	for (int i = 1;i < num_moves;i++) {
-		int j = i;
-		while (j > 0 && scores[j] >= scores[j - 1]) {
-			int temp = scores[j];
-			scores[j] = scores[j-1];
-			scores[j-1] = temp;
-			
-			struct move tempmove = moves[j];
-			moves[j] = moves[j-1];
-			moves[j-1] = tempmove;
-			
-			j--;
-		}
-	}
-	*/
-	/*
-	for (int a = 1; a < num_moves; a++) {
-		int temp = scores[a];
-		struct move tempmove = moves[a];
-		int j = a - 1;
-		while (j >= 0 && scores[j] < temp) {
-			scores[j+1] = scores[j];
-			moves[j+1] = moves[j];
-			
-			j = j - 1;
-		}
-		scores[j+1] = temp;
-		moves[j+1] = tempmove;
-	}
-	 */
-	// Sort
-	// bubble sort
-	/*
-	for (int a = 0; a < num_moves-1; ++a) {
-		// Find best move
-		int index = a;
-		for (int b = a+1; b < num_moves; ++b) {
-			if (scores[b] > scores[index]) {
-				index = b;
-			}
-		}
-
-		// Put best move at the front
-		struct move copy = moves[index];
-		moves[index] = moves[a];
-		moves[a] = copy;
-
-		// Put best score at the front
-		int copy2 = scores[index];
-		scores[index] = scores[a];
-		scores[a] = copy2;
-	}
-	*/
 }

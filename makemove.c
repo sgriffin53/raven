@@ -75,7 +75,6 @@ void makeMove(const struct move *move, struct position *pos) {
 		if (move->to == epsquare) {
 			// pawn moves en passant
 			// remove captured piece
-			//printf("setting %d to 0",pos->epsquare - 8);
 			setPiece(pos,epsquare + 8,'0');
 		}
 		if (abs(fromsquare - tosquare) == 16) {
@@ -119,20 +118,6 @@ void makeMove(const struct move *move, struct position *pos) {
 			setPiece(pos,A8,'0');
 		}
 	}
-	/*
-	if (getPiece(pos,A8) != 'r') { // black a8 rook moved or captured
-		pos->BcastleQS = 0;
-	}
-	if (getPiece(pos,H8) != 'r') { // black h8 rook moved or captured
-		pos->BcastleKS = 0;
-	}
-	if (getPiece(pos,A1) != 'R') { // white a1 rook moved or captured
-		pos->WcastleQS = 0;
-	}
-	if (getPiece(pos,H1) != 'R') { // white h1 rook moved or captured
-		pos->WcastleKS = 0;
-	}
-	 */
 	if (piece == 'r') {
 		if (fromsquare == A8) {
 			pos->BcastleQS = 0;

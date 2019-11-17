@@ -27,23 +27,6 @@ void initZobrist() {
 		castleHash[i] = RAND_64;
 	}
 }
-/*
-int pieceintval(char inpiece) {
-	if (inpiece == 'P') return wP;
-	if (inpiece == 'N') return wN;
-	if (inpiece == 'B') return wB;
-	if (inpiece == 'R') return wR;
-	if (inpiece == 'Q') return wQ;
-	if (inpiece == 'K') return wK;
-	if (inpiece == 'p') return bP;
-	if (inpiece == 'n') return bN;
-	if (inpiece == 'b') return bB;
-	if (inpiece == 'r') return bR;
-	if (inpiece == 'q') return bQ;
-	if (inpiece == 'k') return bK;
-	return 0;
-}
-*/
 int pieceintval(char inpiece) {
 	if (inpiece == 'p') return 12;
 	if (inpiece == 'n') return 1;
@@ -57,7 +40,6 @@ int pieceintval(char inpiece) {
 	if (inpiece == 'R') return 9;
 	if (inpiece == 'Q') return 10;
 	if (inpiece == 'K') return 11;
-	//printf("-- %c\n",inpiece);
 	assert(0);
 	return 0;
 }

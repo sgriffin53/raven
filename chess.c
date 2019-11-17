@@ -3,6 +3,7 @@
 #include <string.h>
 #include <inttypes.h>
 #include <time.h>
+#include <math.h>
 #include "TT.h"
 #include "position.h"
 #include "move.h"
@@ -18,9 +19,8 @@
 #include "eval.h"
 #include "search.h"
 #include "bitboards.h"
-#include "misc.h"
 #include <limits.h>
-
+#include "misc.h"
 
 int main() {
 	setbuf(stdout, NULL);
@@ -72,7 +72,7 @@ int main() {
 				char value[128];
 				strcpy(name,splitstr[2]);
 				strcpy(value,splitstr[4]);
-				if (strcmp(name,"hash") == 0) {
+				if (strcmp(name,"hash") == 0 || strcmp(name,"Hash") == 0) {
 					hashsize = atoi(value);
 					free(TT.entries);
 					initTT(&TT);
@@ -82,40 +82,6 @@ int main() {
 		}
 		if (strcmp(splitstr[0],"test") == 0) {
 			runTestsAll();
-		}
-		if (strcmp(splitstr[0],"attacked") == 0) {
-			//pos.BBkings ^= (1ULL << pos.Wkingpos);
-			pos.BBkings ^= (1ULL << pos.Bkingpos);
-			pos.BBblackpieces ^= (1ULL << pos.Bkingpos);
-			printf("attacked: %d\n", isAttacked(&pos, atoi(splitstr[1]), !pos.tomove));
-		}
-		if (strcmp(splitstr[0],"test2") == 0) {
-			parsefen(&pos,"8/8/8/8/6k1/K7/8/8 b - -");
-			printf("%d\n",isAttacked(&pos, H3, !pos.tomove));
-			
-		}
-		if (strcmp(splitstr[0],"testBB") == 0) {
-			U64 BBwhitepawns = (pos.BBwhitepieces & pos.BBpawns);
-			while (BBwhitepawns) {
-				int square = __builtin_ctzll(BBwhitepawns);
-				BBwhitepawns &= ~(1ULL << square);
-				U64 BBpiece = (1ULL << square);
-				U64 BBmidsquare = BBpiece;
-				U64 BBchecksquares = 0ULL;
-				int rank = getrank(square);
-				//printf("\n%d\n",rank);
-				while (rank < 6) {
-					BBchecksquares |= noWeOne(BBmidsquare);
-					BBchecksquares |= northOne(BBmidsquare);
-					BBchecksquares |= noEaOne(BBmidsquare);
-					BBmidsquare = northOne(BBmidsquare);
-					rank++;
-				}
-			}
-		}
-		if (strcmp(splitstr[0],"magic") == 0) {
-			U64 BBrook = Rmagic(E4,pos.BBwhitepieces | pos.BBblackpieces);
-			dspBB(BBrook & ~pos.BBblackpieces);
 		}
 		else if (strcmp(splitstr[0],"moves") == 0) {
 			for (int i = 1;i < splitstrend;i++) {
@@ -174,7 +140,6 @@ int main() {
 
 			search(pos,searchdepth,movetime);
 
-			//printf("bestmove %s\n",movetostr(bestmove));
 		}
 		if (strcmp(splitstr[0],"perft") == 0) {
 			int depth;
@@ -200,10 +165,8 @@ int main() {
 			makeMovestr(splitstr[1],&pos);
 		}
 		if (strcmp(splitstr[0],"legalmoves") == 0) {
-			//struct move TTmove = {.to=-1,.from=-1,.prom=-1,.cappiece=-1};
 			struct move moves[MAX_MOVES];
 			int num_moves = genMoves(&pos,moves, 1);
-			//sortMoves(&pos, moves, num_moves, TTmove, 0);
 			int j;
 			printf("%d num moves\n",num_moves);
 			printf("%d --\n",num_moves);
@@ -232,7 +195,7 @@ int main() {
 		}
 
 		else if (strcmp(splitstr[0],"uci") == 0) {
-			printf("id name Raven 0.50\nid author Steve Griffin\n");
+			printf("id name Raven 0.60\nid author Steve Griffin\n");
 			printf("option name Hash type spin default 32 min 32 max 256\n");
 			printf("uciok\n");
 		}
@@ -241,8 +204,6 @@ int main() {
 		}
 		else if ( (strcmp(splitstr[0],"position") == 0) && (strcmp(splitstr[1],"startpos") == 0) ) {
 			parsefen(&pos, "startpos"); // set start position
-			//posstack[0] = pos;
-			//posstackend = 1;
 			movestackend = 0;
 			U64 hash = generateHash(&pos);
 			hashstack[0] = hash;

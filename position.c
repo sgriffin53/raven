@@ -64,7 +64,6 @@ void parsefen(struct position *pos, const char *ofen) {
 		//get rank and file of A1 = 0 board from A8 = 0 board
 		int realrank = 7 - (j/8);
 		int realfile = j % 8;
-		//printf("%c %d %d\n",letter,realfile,realrank);
 		int a = fileranktosquareidx(realfile,realrank);
 		switch (letter) {
 			case 'p': {
@@ -207,26 +206,6 @@ void setPiece(struct position *pos, int sq, char piece) {
 	U64 BBsquare = (1ULL << sq);
 	//clear bitboard of old square
 	char oldpiece = getPiece(pos,sq);
-	/*
-	if ((oldpiece == 'p') || (oldpiece == 'P')) {
-		pos->BBpawns &= ~BBsquare;
-	}
-	else if ((oldpiece == 'n') || (oldpiece == 'N')) {
-		pos->BBknights &= ~BBsquare;
-	}
-	else if ((oldpiece == 'b') || (oldpiece == 'B')) {
-		pos->BBbishops &= ~BBsquare;
-	}
-	else if ((oldpiece == 'r') || (oldpiece == 'R')) {
-		pos->BBrooks &= ~BBsquare;
-	}
-	else if ((oldpiece == 'q') || (oldpiece == 'Q')) {
-		pos->BBqueens &= ~BBsquare;
-	}
-	else if ((oldpiece == 'k') || (oldpiece == 'K')) {
-		pos->BBkings &= ~BBsquare;
-	}
-	 */
 	switch (oldpiece) {
 		case 'p':
 		case 'P': pos->BBpawns &= ~BBsquare; break;
@@ -244,64 +223,6 @@ void setPiece(struct position *pos, int sq, char piece) {
 	//clear white and black piece bitboards of that square
 	pos->BBwhitepieces &= ~BBsquare;
 	pos->BBblackpieces &= ~BBsquare;
-	//white pieces
-	/*
-	if (piece == 'P') {
-		pos->BBpawns |= BBsquare;
-		//pos->BBwhitepieces |= BBsquare;
-	}
-	else if (piece == 'N') {
-		pos->BBknights |= BBsquare;
-		//pos->BBwhitepieces |= BBsquare;
-	}
-	else if (piece == 'B') {
-		pos->BBbishops |= BBsquare;
-		//pos->BBwhitepieces |= BBsquare;
-	}
-	else if (piece == 'R') {
-		pos->BBrooks |= BBsquare;
-		//pos->BBwhitepieces |= BBsquare;
-	}
-	else if (piece == 'Q') {
-		pos->BBqueens |= BBsquare;
-		//pos->BBwhitepieces |= BBsquare;
-	}
-	else if (piece == 'K') {
-		pos->BBkings |= BBsquare;
-		//pos->BBwhitepieces |= BBsquare;
-		//pos->Wkingpos = sq;
-	}
-	 */
-	//black pieces
-	/*
-	char lpiece = tolower(piece);
-	if (lpiece == 'p') {
-		pos->BBpawns |= BBsquare;
-		//pos->BBblackpieces |= BBsquare;
-	}
-	else if (lpiece == 'n') {
-		pos->BBknights |= BBsquare;
-		//pos->BBblackpieces |= BBsquare;
-	}
-	else if (lpiece == 'b') {
-		pos->BBbishops |= BBsquare;
-		//pos->BBblackpieces |= BBsquare;
-	}
-	else if (lpiece == 'r') {
-		pos->BBrooks |= BBsquare;
-		//pos->BBblackpieces |= BBsquare;
-	}
-	else if (lpiece == 'q') {
-		pos->BBqueens |= BBsquare;
-		//pos->BBblackpieces |= BBsquare;
-	}
-	else if (lpiece == 'k') {
-		pos->BBkings |= BBsquare;
-		//pos->BBblackpieces |= BBsquare;
-		if (piece == 'k') pos->Bkingpos = sq;
-		else pos->Wkingpos = sq;
-	}
-	 */
 	switch (piece) {
 		case 'p':
 		case 'P': pos->BBpawns |= BBsquare; break;
@@ -320,19 +241,6 @@ void setPiece(struct position *pos, int sq, char piece) {
 		pos->BBwhitepieces |= BBsquare;
 	}
 	else if (piece >= 'a' && piece <= 'z') pos->BBblackpieces |= BBsquare;
-	//empty square
-	/*
-	else if (piece == '0') {
-		pos->BBpawns &= ~BBsquare;
-		pos->BBknights &= ~BBsquare;
-		pos->BBbishops &= ~BBsquare;
-		pos->BBrooks &= ~BBsquare;
-		pos->BBqueens &= ~BBsquare;
-		pos->BBkings &= ~BBsquare;
-		pos->BBwhitepieces &= ~BBsquare;
-		pos->BBblackpieces &= ~BBsquare;
-	}
-	 */
 	
 }
 void dspBBstr(char* BBstr,struct position pos) {

@@ -18,13 +18,11 @@ int genKingMoves(struct position *pos, int square, struct move *moves, int forqs
 	if (pos->tomove == BLACK) piece = 'k';
 	if (pos->tomove == WHITE) {
 		U64 BBking = (pos->BBkings & pos->BBwhitepieces);
-		//BBattacks = BBkingattacks(BBking);
 		BBattacks = BBkingLookup[square];
 		BBattacks = BBattacks & ~pos->BBwhitepieces;
 	}
 	else if (pos->tomove == BLACK) {
 		U64 BBking = (pos->BBkings & pos->BBblackpieces);
-		//BBattacks = BBkingattacks(BBking);
 		BBattacks = BBkingLookup[square];
 		BBattacks = BBattacks & ~pos->BBblackpieces;
 	}
@@ -128,20 +126,17 @@ int genKnightMoves(struct position *pos, int square, struct move *moves, int for
 	if (pos->tomove == BLACK) piece = 'n';
 	if (pos->tomove == WHITE) {
 		U64 BBknight = (1ULL << square);
-		//BBattacks = BBknightattacks(BBknight);
 		BBattacks = BBknightLookup[square];
 		BBattacks = BBattacks & ~pos->BBwhitepieces;
 	}
 	else if (pos->tomove == BLACK) {
 		U64 BBknight = (1ULL << square);
-		//BBattacks = BBknightattacks(BBknight);
 		BBattacks = BBknightLookup[square];
 		BBattacks = BBattacks & ~pos->BBblackpieces;
 	}
 	//dspBB(BBattacks);
 	while (BBattacks != 0) {
 		int movesquare = __builtin_ctzll(BBattacks);
-		//BBattacks &= ~(1ULL << movesquare);
 		BBattacks &= BBattacks - 1;
 		char cappiece = getPiece(pos,movesquare);
 		if (!forqsearch || (forqsearch && cappiece != '0')) {
@@ -172,7 +167,6 @@ int genBishopMoves(struct position *pos, int square, struct move *moves, int for
 	}
 	while (BBattacks != 0) {
 		int movesquare = __builtin_ctzll(BBattacks);
-		//BBattacks &= ~(1ULL << movesquare);
 		BBattacks &= BBattacks - 1;
 		char cappiece = getPiece(pos,movesquare);
 		if (!forqsearch || (forqsearch && cappiece != '0')) {
@@ -203,7 +197,6 @@ int genRookMoves(struct position *pos, int square, struct move *moves, int forqs
 	}
 	while (BBattacks != 0) {
 		int movesquare = __builtin_ctzll(BBattacks);
-		//BBattacks &= ~(1ULL << movesquare);
 		BBattacks &= BBattacks - 1;
 		char cappiece = getPiece(pos,movesquare);
 		if (!forqsearch || (forqsearch && cappiece != '0')) {
@@ -234,7 +227,6 @@ int genQueenMoves(struct position *pos, int square, struct move *moves, int forq
 	}
 	while (BBattacks != 0) {
 		int movesquare = __builtin_ctzll(BBattacks);
-		//BBattacks &= ~(1ULL << movesquare);
 		BBattacks &= BBattacks - 1;
 		char cappiece = getPiece(pos,movesquare);
 		if (!forqsearch || (forqsearch && cappiece != '0')) {
@@ -460,7 +452,6 @@ int genPawnMoves(struct position *pos, int square, struct move *moves, int forqs
 				moves[num_moves].piece = piece;
 				num_moves++;
 			}
-			//BBmove &= ~(1ULL << movesquare);
 			BBmove &= BBmove - 1;
 		}
 	}
@@ -548,28 +539,6 @@ int genMoves(struct position *pos, struct move *moves, int forqsearch) {
 			case 'q': num_moves += genQueenMoves(pos,square,&moves[num_moves], forqsearch); break;
 			
 		}
-		 
-		/*
-		if ((piece == 'K') || (piece == 'k')) {
-			num_moves += genKingMoves(pos,square,&moves[num_moves]);
-		}
-		else if ((piece == 'P') || (piece == 'p')) {
-			num_moves += genPawnMoves(pos,square,&moves[num_moves]);
-		}
-		else if ((piece == 'N') || (piece == 'n')) {
-			num_moves += genKnightMoves(pos,square,&moves[num_moves]);
-		}
-		else if ((piece == 'B') || (piece == 'b')) {
-			num_moves += genBishopMoves(pos,square,&moves[num_moves]);
-		}
-		else if ((piece == 'R') || (piece == 'r')) {
-			num_moves += genRookMoves(pos,square,&moves[num_moves]);
-		}
-		else if ((piece == 'Q') || (piece == 'q')) {
-			num_moves += genQueenMoves(pos,square,&moves[num_moves]);
-		}
-		*/
-		//BBallpieces &= ~(1ULL << square);
 		BBallpieces &= BBallpieces - 1;
 	}
 	return num_moves;

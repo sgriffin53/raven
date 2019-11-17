@@ -34,8 +34,6 @@ U64 perft(struct position *pos, int depth) {
 		unmakeMove(pos);
 	}
 
-//	addPTTentry(&PTT,hash,depth,nodes);
-
 	return nodes;
 }
 
@@ -53,9 +51,7 @@ U64 splitperft(struct position *pos, int depth) {
 		makeMove(&moves[i], pos);
 		pos->tomove = !pos->tomove;
 		const int incheck = isCheck(pos);
-		//printf("move - %s - %d\n",movetostr(moves[i]),incheck);
 		if (incheck) {
-		//	printf("illegal move - %s\n",movetostr(moves[i]));
 			unmakeMove(pos);
 			continue;
 		}
