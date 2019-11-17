@@ -242,6 +242,28 @@ int taperedEval(struct position *pos) {
 			endgameEval += 20;
 		}
 		
+		U64 BBfilemask = BBfileA << getfile(square);
+		
+		// doubled pawns
+
+		U64 BBWpawnsonfile = BBfilemask & (pos->BBwhitepieces & pos->BBpawns);
+		U64 BBisdoubled = BBWpawnsonfile & (BBWpawnsonfile-1);
+		if (BBisdoubled) {
+			openingEval -= 16;
+			endgameEval -= 16;
+		}
+		
+		
+		// isolated pawns
+		
+		U64 BBleftpawns = westOne(BBfilemask) & (pos->BBwhitepieces & pos->BBpawns);
+		U64 BBrightpawns = eastOne(BBfilemask) & (pos->BBwhitepieces & pos->BBpawns);
+		if (BBleftpawns == 0 && BBrightpawns == 0) {
+			openingEval -= 6;
+			endgameEval -= 6;
+		}
+
+		
 	}
 	
 	U64 BBblackpawns = (pos->BBblackpieces & pos->BBpawns);
@@ -275,7 +297,6 @@ int taperedEval(struct position *pos) {
 			
 		}
 		
-		// pawn chain bonus
 		
 		// pawn chain bonus
 		U64 BBpawnattacks = BBpawnEastAttacksW(BBpiece) | BBpawnWestAttacksW(BBpiece);
@@ -283,7 +304,25 @@ int taperedEval(struct position *pos) {
 			openingEval -= 20;
 			endgameEval -= 20;
 		}
+		U64 BBfilemask = BBfileA << getfile(square);
 		
+		// Doubled pawns
+		U64 BBBpawnsonfile = BBfilemask & (pos->BBblackpieces & pos->BBpawns);
+		
+		U64 BBisdoubled = BBBpawnsonfile & (BBBpawnsonfile-1);
+		if (BBisdoubled) {
+			openingEval += 16;
+			endgameEval += 16;
+		}
+		
+		// Isolated pawns
+		
+		U64 BBleftpawns = westOne(BBfilemask) & (pos->BBblackpieces & pos->BBpawns);
+		U64 BBrightpawns = eastOne(BBfilemask) & (pos->BBblackpieces & pos->BBpawns);
+		if (BBleftpawns == 0 && BBrightpawns == 0) {
+			openingEval += 6;
+			endgameEval += 6;
+		}
 	}
 	
 	// give a bonus for free passed pawns
@@ -469,6 +508,32 @@ int taperedEval(struct position *pos) {
 		
 		openingEval += 20;
 		endgameEval += 40;
+		
+		U64 BBfilemask = BBfileA << getfile(square);
+		
+		// rooks on open files
+		U64 BBpawnsonfile = BBfilemask & pos->BBpawns;
+		U64 BBBpawnsonfile = BBfilemask & pos->BBpawns & pos->BBblackpieces;
+		U64 BBWpawnsonfile = BBfilemask & pos->BBpawns & pos->BBwhitepieces;
+		// white rook on open file
+		if (BBpawnsonfile == 0) {
+			// white rook on open file
+			openingEval += 48;
+			endgameEval += 16;
+		}
+		if ((BBWpawnsonfile == 0) && (BBBpawnsonfile)) {
+			// white rook on semi-open file with black pawns
+			openingEval += 6;
+			endgameEval += 6;
+		}
+		
+		// rook on same file as queen
+		
+		U64 BBBqueensonfile = BBfilemask & (pos->BBqueens & pos->BBblackpieces);
+		if (BBBqueensonfile) {
+			openingEval += 40;
+			endgameEval += 40;
+		}
 	}
 	
 	while (BBblackrooks) {
@@ -482,9 +547,34 @@ int taperedEval(struct position *pos) {
 		
 		openingEval -= 20;
 		endgameEval -= 40;
+		
+		U64 BBfilemask = BBfileA << getfile(square);
+		
+		// rooks on open files
+		U64 BBpawnsonfile = BBfilemask & pos->BBpawns;
+		U64 BBBpawnsonfile = BBfilemask & pos->BBpawns & pos->BBblackpieces;
+		U64 BBWpawnsonfile = BBfilemask & pos->BBpawns & pos->BBwhitepieces;
+		// black rook on open file
+		if (BBpawnsonfile == 0) {
+			// black rook on open file
+			openingEval -= 48;
+			endgameEval -= 16;
+		}
+		if ((BBBpawnsonfile == 0) && (BBWpawnsonfile)) {
+			// black rook on semi-open file with white pawns
+			openingEval -= 6;
+			endgameEval -= 6;
+		}
+		// rook on same file as queen
+		
+		U64 BBWqueensonfile = BBfilemask & (pos->BBqueens & pos->BBwhitepieces);
+		if (BBWqueensonfile) {
+			openingEval -= 40;
+			endgameEval -= 40;
+		}
 	}
 	// loop to check for doubled pawns and rooks on open files
-	
+	/*
 	for (int i = 0;i < 8;i++) {
 		// doubled pawns
 		// white pawns
@@ -572,7 +662,7 @@ int taperedEval(struct position *pos) {
 			}
 		}
 	}
-	
+	*/
 	// pawn shield
 	
 	// white pawn shield
