@@ -907,6 +907,8 @@ int taperedEval(struct position *pos) {
 	phase -= num_BQ * queenPhase;
 
 	phase = (phase * 256 + (totalPhase / 2)) / totalPhase;
+	
+	int eval = ((openingEval * (256 - phase)) + (endgameEval * phase)) / 256;
 
 	if (pos->tomove == BLACK) eval = -eval;
 	return eval;
