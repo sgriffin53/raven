@@ -20,101 +20,97 @@ int genKingMoves(struct position *pos, int square, struct move *moves, int forqs
 		U64 BBking = (pos->BBkings & pos->BBwhitepieces);
 		BBattacks = BBkingLookup[square];
 		BBattacks = BBattacks & ~pos->BBwhitepieces;
+		if (forqsearch) BBattacks = BBattacks & pos->BBblackpieces;
 	}
 	else if (pos->tomove == BLACK) {
 		U64 BBking = (pos->BBkings & pos->BBblackpieces);
 		BBattacks = BBkingLookup[square];
 		BBattacks = BBattacks & ~pos->BBblackpieces;
+		if (forqsearch) BBattacks = BBattacks & pos->BBwhitepieces;
 	}
 	//dspBB(BBattacks);
 	while (BBattacks != 0) {
 		int movesquare = __builtin_ctzll(BBattacks);
 		BBattacks &= ~(1ULL << movesquare);
 		char cappiece = getPiece(pos,movesquare);
-		if (!forqsearch || (forqsearch && cappiece != '0')) {
-			moves[num_moves].from = square;
-			moves[num_moves].to = movesquare;
-			moves[num_moves].prom = 0;
-			moves[num_moves].cappiece = cappiece;
-			moves[num_moves].piece = piece;
-			num_moves++;
-		}
+		moves[num_moves].from = square;
+		moves[num_moves].to = movesquare;
+		moves[num_moves].prom = 0;
+		moves[num_moves].cappiece = cappiece;
+		moves[num_moves].piece = piece;
+		num_moves++;
 	}
 	// castling moves
 	// white castling
-	if (pos->tomove == WHITE) {
-		// King side castling
-		if ((pos->WcastleKS == 1) &&
-			getPiece(pos,F1) == '0' &&
-			getPiece(pos,G1) == '0' &&
-			!isAttacked(pos, E1, BLACK) &&
-			!isAttacked(pos, F1, BLACK) &&
-			!isAttacked(pos, G1, BLACK)) {
+	if (!forqsearch) {
+		if (pos->tomove == WHITE) {
+			// King side castling
+			if ((pos->WcastleKS == 1) &&
+				getPiece(pos,F1) == '0' &&
+				getPiece(pos,G1) == '0' &&
+				!isAttacked(pos, E1, BLACK) &&
+				!isAttacked(pos, F1, BLACK) &&
+				!isAttacked(pos, G1, BLACK)) {
 				// Add move
-				if (!forqsearch) {
-					moves[num_moves].from = E1;
-					moves[num_moves].to = G1;
-					moves[num_moves].prom = 0;
-					moves[num_moves].cappiece = '0';
-					moves[num_moves].piece = piece;
-					num_moves += 1;
-				}
+				moves[num_moves].from = E1;
+				moves[num_moves].to = G1;
+				moves[num_moves].prom = 0;
+				moves[num_moves].cappiece = '0';
+				moves[num_moves].piece = piece;
+				num_moves += 1;
+			}
+			// Queenside castling
+			if ((pos->WcastleQS == 1) &&
+				getPiece(pos,D1)  == '0' &&
+				getPiece(pos,C1)  == '0' &&
+				getPiece(pos,B1)  == '0' &&
+				!isAttacked(pos, E1, BLACK) &&
+				!isAttacked(pos, D1, BLACK) &&
+				!isAttacked(pos, C1, BLACK)) {
+				// Add move
+				moves[num_moves].from = E1;
+				moves[num_moves].to = C1;
+				moves[num_moves].prom = 0;
+				moves[num_moves].cappiece = '0';
+				moves[num_moves].piece = piece;
+				num_moves += 1;
+			}
 		}
-		// Queenside castling
-		if ((pos->WcastleQS == 1) &&
-			getPiece(pos,D1)  == '0' &&
-			getPiece(pos,C1)  == '0' &&
-			getPiece(pos,B1)  == '0' &&
-			!isAttacked(pos, E1, BLACK) &&
-			!isAttacked(pos, D1, BLACK) &&
-			!isAttacked(pos, C1, BLACK)) {
+		// black castling
+		else if (pos->tomove == BLACK) {
+			// Kingside castling
+			if ((pos->BcastleKS == 1) &&
+				getPiece(pos,F8) == '0' &&
+				getPiece(pos,G8) == '0' &&
+				!isAttacked(pos, E8, WHITE) &&
+				!isAttacked(pos, F8, WHITE) &&
+				!isAttacked(pos, G8, WHITE)) {
+					// Add move
+					if (!forqsearch) {
+						moves[num_moves].from = E8;
+						moves[num_moves].to = G8;
+						moves[num_moves].prom = 0;
+						moves[num_moves].cappiece = '0';
+						moves[num_moves].piece = piece;
+						num_moves += 1;
+					}
+			}
+			// Queenside castling
+			if ((pos->BcastleQS == 1) &&
+				getPiece(pos,D8) == '0' &&
+				getPiece(pos,C8) == '0' &&
+				getPiece(pos,B8) == '0' &&
+				!isAttacked(pos, E8, WHITE) &&
+				!isAttacked(pos, D8, WHITE) &&
+				!isAttacked(pos, C8, WHITE)) {
 				// Add move
-				if (!forqsearch) {
-					moves[num_moves].from = E1;
-					moves[num_moves].to = C1;
-					moves[num_moves].prom = 0;
-					moves[num_moves].cappiece = '0';
-					moves[num_moves].piece = piece;
-					num_moves += 1;
-				}
-		}
-	}
-	// black castling
-	else if (pos->tomove == BLACK) {
-		// Kingside castling
-		if ((pos->BcastleKS == 1) &&
-			getPiece(pos,F8) == '0' &&
-			getPiece(pos,G8) == '0' &&
-			!isAttacked(pos, E8, WHITE) &&
-			!isAttacked(pos, F8, WHITE) &&
-			!isAttacked(pos, G8, WHITE)) {
-				// Add move
-				if (!forqsearch) {
-					moves[num_moves].from = E8;
-					moves[num_moves].to = G8;
-					moves[num_moves].prom = 0;
-					moves[num_moves].cappiece = '0';
-					moves[num_moves].piece = piece;
-					num_moves += 1;
-				}
-		}
-		// Queenside castling
-		if ((pos->BcastleQS == 1) &&
-			getPiece(pos,D8) == '0' &&
-			getPiece(pos,C8) == '0' &&
-			getPiece(pos,B8) == '0' &&
-			!isAttacked(pos, E8, WHITE) &&
-			!isAttacked(pos, D8, WHITE) &&
-			!isAttacked(pos, C8, WHITE)) {
-				// Add move
-				if (!forqsearch) {
-					moves[num_moves].from = E8;
-					moves[num_moves].to = C8;
-					moves[num_moves].prom = 0;
-					moves[num_moves].cappiece = '0';
-					moves[num_moves].piece = piece;
-					num_moves += 1;
-				}
+				moves[num_moves].from = E8;
+				moves[num_moves].to = C8;
+				moves[num_moves].prom = 0;
+				moves[num_moves].cappiece = '0';
+				moves[num_moves].piece = piece;
+				num_moves += 1;
+			}
 		}
 	}
 	return num_moves;
@@ -128,25 +124,25 @@ int genKnightMoves(struct position *pos, int square, struct move *moves, int for
 		U64 BBknight = (1ULL << square);
 		BBattacks = BBknightLookup[square];
 		BBattacks = BBattacks & ~pos->BBwhitepieces;
+		if (forqsearch) BBattacks = BBattacks & pos->BBblackpieces;
 	}
 	else if (pos->tomove == BLACK) {
 		U64 BBknight = (1ULL << square);
 		BBattacks = BBknightLookup[square];
 		BBattacks = BBattacks & ~pos->BBblackpieces;
+		if (forqsearch) BBattacks = BBattacks & pos->BBwhitepieces;
 	}
 	//dspBB(BBattacks);
 	while (BBattacks != 0) {
 		int movesquare = __builtin_ctzll(BBattacks);
 		BBattacks &= BBattacks - 1;
 		char cappiece = getPiece(pos,movesquare);
-		if (!forqsearch || (forqsearch && cappiece != '0')) {
-			moves[num_moves].from = square;
-			moves[num_moves].to = movesquare;
-			moves[num_moves].prom = 0;
-			moves[num_moves].cappiece = cappiece;
-			moves[num_moves].piece = piece;
-			num_moves++;
-		}
+		moves[num_moves].from = square;
+		moves[num_moves].to = movesquare;
+		moves[num_moves].prom = 0;
+		moves[num_moves].cappiece = cappiece;
+		moves[num_moves].piece = piece;
+		num_moves++;
 	}
 	return num_moves;
 }
@@ -159,24 +155,24 @@ int genBishopMoves(struct position *pos, int square, struct move *moves, int for
 		U64 BBoccupancy = (pos->BBwhitepieces | pos->BBblackpieces);
 		BBattacks = Bmagic(square,BBoccupancy);
 		BBattacks = BBattacks & ~pos->BBwhitepieces;
+		if (forqsearch) BBattacks = BBattacks & pos->BBblackpieces;
 	}
 	else if (pos->tomove == BLACK) {
 		U64 BBoccupancy = (pos->BBwhitepieces | pos->BBblackpieces);
 		BBattacks = Bmagic(square,BBoccupancy);
 		BBattacks = BBattacks & ~pos->BBblackpieces;
+		if (forqsearch) BBattacks = BBattacks & pos->BBwhitepieces;
 	}
 	while (BBattacks != 0) {
 		int movesquare = __builtin_ctzll(BBattacks);
 		BBattacks &= BBattacks - 1;
 		char cappiece = getPiece(pos,movesquare);
-		if (!forqsearch || (forqsearch && cappiece != '0')) {
-			moves[num_moves].from = square;
-			moves[num_moves].to = movesquare;
-			moves[num_moves].prom = 0;
-			moves[num_moves].cappiece = cappiece;
-			moves[num_moves].piece = piece;
-			num_moves++;
-		}
+		moves[num_moves].from = square;
+		moves[num_moves].to = movesquare;
+		moves[num_moves].prom = 0;
+		moves[num_moves].cappiece = cappiece;
+		moves[num_moves].piece = piece;
+		num_moves++;
 	}
 	return num_moves;
 }
@@ -189,24 +185,24 @@ int genRookMoves(struct position *pos, int square, struct move *moves, int forqs
 		U64 BBoccupancy = (pos->BBwhitepieces | pos->BBblackpieces);
 		BBattacks = Rmagic(square,BBoccupancy);
 		BBattacks = BBattacks & ~pos->BBwhitepieces;
+		if (forqsearch) BBattacks = BBattacks & pos->BBblackpieces;
 	}
 	else if (pos->tomove == BLACK) {
 		U64 BBoccupancy = (pos->BBwhitepieces | pos->BBblackpieces);
 		BBattacks = Rmagic(square,BBoccupancy);
 		BBattacks = BBattacks & ~pos->BBblackpieces;
+		if (forqsearch) BBattacks = BBattacks & pos->BBwhitepieces;
 	}
 	while (BBattacks != 0) {
 		int movesquare = __builtin_ctzll(BBattacks);
 		BBattacks &= BBattacks - 1;
 		char cappiece = getPiece(pos,movesquare);
-		if (!forqsearch || (forqsearch && cappiece != '0')) {
-			moves[num_moves].from = square;
-			moves[num_moves].to = movesquare;
-			moves[num_moves].prom = 0;
-			moves[num_moves].cappiece = cappiece;
-			moves[num_moves].piece = piece;
-			num_moves++;
-		}
+		moves[num_moves].from = square;
+		moves[num_moves].to = movesquare;
+		moves[num_moves].prom = 0;
+		moves[num_moves].cappiece = cappiece;
+		moves[num_moves].piece = piece;
+		num_moves++;
 	}
 	return num_moves;
 }
@@ -219,24 +215,24 @@ int genQueenMoves(struct position *pos, int square, struct move *moves, int forq
 		U64 BBoccupancy = (pos->BBwhitepieces | pos->BBblackpieces);
 		BBattacks = Rmagic(square,BBoccupancy) | Bmagic(square,BBoccupancy);
 		BBattacks = BBattacks & ~pos->BBwhitepieces;
+		if (forqsearch) BBattacks = BBattacks & pos->BBblackpieces;
 	}
 	else if (pos->tomove == BLACK) {
 		U64 BBoccupancy = (pos->BBwhitepieces | pos->BBblackpieces);
 		BBattacks = Rmagic(square,BBoccupancy) | Bmagic(square,BBoccupancy);
 		BBattacks = BBattacks & ~pos->BBblackpieces;
+		if (forqsearch) BBattacks = BBattacks & pos->BBwhitepieces;
 	}
 	while (BBattacks != 0) {
 		int movesquare = __builtin_ctzll(BBattacks);
 		BBattacks &= BBattacks - 1;
 		char cappiece = getPiece(pos,movesquare);
-		if (!forqsearch || (forqsearch && cappiece != '0')) {
-			moves[num_moves].from = square;
-			moves[num_moves].to = movesquare;
-			moves[num_moves].prom = 0;
-			moves[num_moves].cappiece = cappiece;
-			moves[num_moves].piece = piece;
-			num_moves++;
-		}
+		moves[num_moves].from = square;
+		moves[num_moves].to = movesquare;
+		moves[num_moves].prom = 0;
+		moves[num_moves].cappiece = cappiece;
+		moves[num_moves].piece = piece;
+		num_moves++;
 	}
 	return num_moves;
 }
