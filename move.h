@@ -23,11 +23,16 @@ static inline char* movetostr(struct move move) {
 	char startsquarerank = (char)(getrank(move.from) + 49);
 	char endsquarefile = (char)(getfile(move.to) + 97);
 	char endsquarerank = (char)(getrank(move.to) + 49);
+	int prom = 0;
+	if (move.prom == KNIGHT) prom = 'n';
+	else if (move.prom == BISHOP) prom = 'b';
+	else if (move.prom == ROOK) prom = 'r';
+	else if (move.prom == QUEEN) prom = 'q';
 	returnstring[0] = startsquarefile;
 	returnstring[1] = startsquarerank;
 	returnstring[2] = endsquarefile;
 	returnstring[3] = endsquarerank;
-	returnstring[4] = move.prom;
+	returnstring[4] = prom;
 	returnstring[5] = 0;
 	return strdup(returnstring);
 }

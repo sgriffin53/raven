@@ -14,6 +14,7 @@ int pieceval_mg(const char inpiece);
 int pieceval(const char inpiece);
 int evalBoard(struct position *pos);
 int taperedEval(struct position *pos);
+int taperedEval_old(struct position *pos);
 int isEndgame(struct position *pos);
 int mobility(struct position *pos, int side);
 struct mobreturn Nmobility(struct position *pos, int side);

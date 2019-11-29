@@ -168,9 +168,9 @@ void genLookups() {
 		
 		// kinglookup is 1 away
 		
-		BBkingfillLookup2[i] = BBkingattacks(BBkingLookup[i]);
-		BBkingfillLookup3[i] = BBkingattacks(BBkingfillLookup2[i]);
-		BBkingfillLookup4[i] = BBkingattacks(BBkingfillLookup3[i]);
+		BBkingfillLookup2[i] = BBkingattacks(BBkingLookup[i]) & ~BBkingLookup[i];
+		BBkingfillLookup3[i] = BBkingattacks(BBkingfillLookup2[i]) & ~BBkingfillLookup2[i];
+		BBkingfillLookup4[i] = BBkingattacks(BBkingfillLookup3[i]) & ~BBkingfillLookup3[i];
 		
 		// pawn shields
 		

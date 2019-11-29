@@ -27,7 +27,28 @@ void initZobrist() {
 		castleHash[i] = RAND_64;
 	}
 }
-int pieceintval(char inpiece) {
+int pieceintval(char inpiece, int colour) {
+	if (colour == BLACK) {
+		switch (inpiece) {
+			case PAWN: return 12;
+			case KNIGHT: return 1;
+			case BISHOP: return 2;
+			case ROOK: return 3;
+			case QUEEN: return 4;
+			case KING: return 5;
+		}
+	}
+	else if (colour == WHITE) {
+		switch (inpiece) {
+			case PAWN: return 6;
+			case KNIGHT: return 7;
+			case BISHOP: return 8;
+			case ROOK: return 9;
+			case QUEEN: return 10;
+			case KING: return 11;
+		}
+	}
+	/*
 	if (inpiece == 'p') return 12;
 	if (inpiece == 'n') return 1;
 	if (inpiece == 'b') return 2;
@@ -41,18 +62,20 @@ int pieceintval(char inpiece) {
 	if (inpiece == 'Q') return 10;
 	if (inpiece == 'K') return 11;
 	assert(0);
+	 */
 	return 0;
 }
 
 U64 generateHash(struct position *pos) {
 	assert(pos);
 	U64 zobrist = 0;
-	U64 BBoccupied = pos->BBblackpieces | pos->BBwhitepieces;
+	U64 BBoccupied = pos->colours[BLACK] | pos->colours[WHITE];
 	while (BBoccupied != 0) {
 		int square = __builtin_ctzll(BBoccupied);
 		BBoccupied &= BBoccupied - 1;
 		char sqpiece = getPiece(pos,square);
-		int piece = pieceintval(sqpiece);
+		int sqcol = getColour(pos, square);
+		int piece = pieceintval(sqpiece, sqcol);
 		zobrist ^= pieceHash[piece][square];
 	}
 	/*

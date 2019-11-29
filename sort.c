@@ -30,6 +30,15 @@ const int arrCenterManhattanDistancesort[64] = { // char is sufficient as well, 
 };
 
 int capval(char piece) {
+	switch (piece) {
+		case PAWN: return 1;
+		case BISHOP: return 2;
+		case KNIGHT: return 2;
+		case ROOK: return 3;
+		case QUEEN: return 4;
+		case KING: return 5;
+	}
+	/*
 	piece = tolower(piece);
 	if (piece == 'k') return 5;
 	if (piece == 'q') return 4;
@@ -37,6 +46,7 @@ int capval(char piece) {
 	if (piece == 'n') return 2;
 	if (piece == 'b') return 2;
 	if (piece == 'p') return 1;
+	 */
 	assert(0);
 	return 0;
 }
@@ -67,11 +77,11 @@ void sortMoves(struct position *pos, struct move *moves, const int num_moves, st
 			&& (moves[i].from == TTmove.from) && (moves[i].to == TTmove.to) && (moves[i].prom == TTmove.prom)) {
 				scores[i] = 5000000;
 		}
-		else if (cappiece != '0'
+		else if (cappiece != NONE
 			&& (capval(cappiece) >= capval(piece))) {
 				scores[i] = 1000000 + mvvlva(piece, cappiece);
 		}
-		else if (cappiece != '0'
+		else if (cappiece != NONE
 			&& capval(cappiece) < capval(piece)) {
 				scores[i] = 700000 + mvvlva(piece,cappiece);
 		}

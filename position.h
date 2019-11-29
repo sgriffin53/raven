@@ -10,6 +10,7 @@ typedef unsigned long long U64;
 #define MATE_SCORE 9999
 
 struct position {
+	/*
 	U64 BBwhitepieces;
 	U64 BBblackpieces;
 	U64 BBpawns;
@@ -18,6 +19,9 @@ struct position {
 	U64 BBrooks;
 	U64 BBqueens;
 	U64 BBkings;
+	 */
+	U64 pieces[6];
+	U64 colours[2];
 	int epsquare;
 	int WcastleQS;
 	int WcastleKS;
@@ -30,6 +34,8 @@ struct position {
 };
 
 #include "hash.h"
+
+enum PIECE{ PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING, NONE };
 
 enum SQUARE{A1,B1,C1,D1,E1,F1,G1,H1,
 			A2,B2,C2,D2,E2,F2,G2,H2,
@@ -49,7 +55,8 @@ void dspBB(U64 BB);
 void dspBBstr(char* BBstr,struct position pos);
 int strsquaretoidx(char square[]);
 char getPiece(struct position *pos,int sq);
-void setPiece(struct position *pos, int sq, char piece);
+int getColour(struct position *pos,int sq);
+void setPiece(struct position *pos, int sq, int colour, char piece);
 void dspBoard(struct position *pos);
 
 

@@ -273,10 +273,12 @@ static const int KingPSTEG_B[64] = {
 
 };
 
-static inline int PSTval(const char piece, const int square, const char gamestage) {
+static inline int PSTval(int colour, const char piece, const int square, const char gamestage) {
 	assert(piece);
 	assert(square >= 0 && square <= 63);
+	int score = 0;
 	if (gamestage == 'E') {
+		/*
 		if (piece == 'K') return KingPSTEG[square];
 		if (piece == 'k') return -KingPSTEG_B[square];
 		if (piece == 'Q') return QueenPSTEG[square];
@@ -289,9 +291,30 @@ static inline int PSTval(const char piece, const int square, const char gamestag
 		if (piece == 'b') return -BishopPSTEG_B[square];
 		if (piece == 'R') return RookPSTEG[square];
 		if (piece == 'r') return -RookPSTEG_B[square];
-
+		*/
+		if (colour == WHITE) {
+			switch (piece) {
+				case PAWN: score = PawnPSTEG[square]; break;
+				case KNIGHT: score = KnightPSTEG[square]; break;
+				case BISHOP: score = BishopPSTEG[square]; break;
+				case ROOK: score = RookPSTEG[square]; break;
+				case QUEEN: score = QueenPSTEG[square]; break;
+				case KING: score = KingPSTEG[square]; break;
+			}
+		}
+		else if (colour == BLACK) {
+			switch (piece) {
+				case PAWN: score = -PawnPSTEG_B[square]; break;
+				case KNIGHT: score = -KnightPSTEG_B[square]; break;
+				case BISHOP: score = -BishopPSTEG_B[square]; break;
+				case ROOK: score = -RookPSTEG_B[square]; break;
+				case QUEEN: score = -QueenPSTEG_B[square]; break;
+				case KING: score = -KingPSTEG_B[square]; break;
+			}
+		}
 	}
 	else {
+		/*
 		if (piece == 'K') return KingPSTMG[square];
 		if (piece == 'k') return -KingPSTMG_B[square];
 		if (piece == 'Q') return QueenPSTMG[square];
@@ -304,9 +327,29 @@ static inline int PSTval(const char piece, const int square, const char gamestag
 		if (piece == 'b') return -BishopPSTMG_B[square];
 		if (piece == 'R') return RookPSTMG[square];
 		if (piece == 'r') return -RookPSTMG_B[square];
-
+		*/
+		if (colour == WHITE) {
+		switch (piece) {
+				case PAWN: score = PawnPSTMG[square]; break;
+				case KNIGHT: score = KnightPSTMG[square]; break;
+				case BISHOP: score = BishopPSTMG[square]; break;
+				case ROOK: score = RookPSTMG[square]; break;
+				case QUEEN: score = QueenPSTMG[square]; break;
+				case KING: score = KingPSTMG[square]; break;
+			}
+		}
+		else if (colour == BLACK) {
+			switch (piece) {
+				case PAWN: score = -PawnPSTMG_B[square]; break;
+				case KNIGHT: score = -KnightPSTMG_B[square]; break;
+				case BISHOP: score = -BishopPSTMG_B[square]; break;
+				case ROOK: score = -RookPSTMG_B[square]; break;
+				case QUEEN: score = -QueenPSTMG_B[square]; break;
+				case KING: score = -KingPSTMG_B[square]; break;
+			}
+		}
 	}
-	return 0;
+	return score;
 }
 
 #endif

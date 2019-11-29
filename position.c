@@ -47,14 +47,14 @@ void parsefen(struct position *pos, const char *ofen) {
 		token = strtok(NULL, " ");
 	}
 	
-	pos->BBpawns = 0ULL;
-	pos->BBknights = 0ULL;
-	pos->BBbishops = 0ULL;
-	pos->BBrooks = 0ULL;
-	pos->BBqueens = 0ULL;
-	pos->BBkings = 0ULL;
-	pos->BBwhitepieces = 0ULL;
-	pos->BBblackpieces = 0ULL;
+	pos->pieces[PAWN] = 0ULL;
+	pos->pieces[KNIGHT] = 0ULL;
+	pos->pieces[BISHOP] = 0ULL;
+	pos->pieces[ROOK] = 0ULL;
+	pos->pieces[QUEEN] = 0ULL;
+	pos->pieces[KING] = 0ULL;
+	pos->colours[WHITE] = 0ULL;
+	pos->colours[BLACK] = 0ULL;
 	
 	
 	int j = 0;
@@ -67,64 +67,64 @@ void parsefen(struct position *pos, const char *ofen) {
 		int a = fileranktosquareidx(realfile,realrank);
 		switch (letter) {
 			case 'p': {
-				pos->BBpawns |= (1ULL << a);
-				pos->BBblackpieces |= (1ULL << a);
+				pos->pieces[PAWN] |= (1ULL << a);
+				pos->colours[BLACK] |= (1ULL << a);
 				break;
 			}
 			case 'n': {
-				pos->BBknights |= (1ULL << a);
-				pos->BBblackpieces |= (1ULL << a);
+				pos->pieces[KNIGHT] |= (1ULL << a);
+				pos->colours[BLACK] |= (1ULL << a);
 				break;
 			}
 			case 'b': {
-				pos->BBbishops |= (1ULL << a);
-				pos->BBblackpieces |= (1ULL << a);
+				pos->pieces[BISHOP] |= (1ULL << a);
+				pos->colours[BLACK] |= (1ULL << a);
 				break;
 			}
 			case 'r': {
-				pos->BBrooks |= (1ULL << a);
-				pos->BBblackpieces |= (1ULL << a);
+				pos->pieces[ROOK] |= (1ULL << a);
+				pos->colours[BLACK] |= (1ULL << a);
 				break;
 			}
 			case 'q': {
-				pos->BBqueens |= (1ULL << a);
-				pos->BBblackpieces |= (1ULL << a);
+				pos->pieces[QUEEN] |= (1ULL << a);
+				pos->colours[BLACK] |= (1ULL << a);
 				break;
 			}
 			case 'k': {
-				pos->BBkings |= (1ULL << a);
-				pos->BBblackpieces |= (1ULL << a);
+				pos->pieces[KING] |= (1ULL << a);
+				pos->colours[BLACK] |= (1ULL << a);
 				pos->Bkingpos = a;
 				break;
 			}
 			case 'P': {
-				pos->BBpawns |= (1ULL << a);
-				pos->BBwhitepieces |= (1ULL << a);
+				pos->pieces[PAWN] |= (1ULL << a);
+				pos->colours[WHITE] |= (1ULL << a);
 				break;
 			}
 			case 'N': {
-				pos->BBknights |= (1ULL << a);
-				pos->BBwhitepieces |= (1ULL << a);
+				pos->pieces[KNIGHT] |= (1ULL << a);
+				pos->colours[WHITE] |= (1ULL << a);
 				break;
 			}
 			case 'B': {
-				pos->BBbishops |= (1ULL << a);
-				pos->BBwhitepieces |= (1ULL << a);
+				pos->pieces[BISHOP] |= (1ULL << a);
+				pos->colours[WHITE] |= (1ULL << a);
 				break;
 			}
 			case 'R': {
-				pos->BBrooks |= (1ULL << a);
-				pos->BBwhitepieces |= (1ULL << a);
+				pos->pieces[ROOK] |= (1ULL << a);
+				pos->colours[WHITE] |= (1ULL << a);
 				break;
 			}
 			case 'Q': {
-				pos->BBqueens |= (1ULL << a);
-				pos->BBwhitepieces |= (1ULL << a);
+				pos->pieces[QUEEN] |= (1ULL << a);
+				pos->colours[WHITE] |= (1ULL << a);
 				break;
 			}
 			case 'K': {
-				pos->BBkings |= (1ULL << a);
-				pos->BBwhitepieces |= (1ULL << a);
+				pos->pieces[KING] |= (1ULL << a);
+				pos->colours[WHITE] |= (1ULL << a);
 				pos->Wkingpos = a;
 				break;
 			}
@@ -173,139 +173,161 @@ char getPiece(struct position *pos, int sq) {
 	assert(pos);
 	assert(sq >= 0 && sq <= 63);
 	U64 BBsquare = (1ULL << sq);
-	if (pos->BBpawns & BBsquare) {
-		if (pos->BBwhitepieces & BBsquare) return 'P';
+	for (int i = PAWN;i <= KING;i++) {
+		if (pos->pieces[i] & BBsquare) return i;
+	}
+	/*
+	if (pos->pieces[PAWN] & BBsquare) {
+		if (pos->colours[WHITE] & BBsquare) return 'P';
 		else return 'p';
 	}
-	if (pos->BBknights & BBsquare) {
-		if (pos->BBwhitepieces & BBsquare) return 'N';
+	if (pos->pieces[KNIGHT] & BBsquare) {
+		if (pos->colours[WHITE] & BBsquare) return 'N';
 		else return 'n';
 	}
-	if (pos->BBbishops & BBsquare) {
-		if (pos->BBwhitepieces & BBsquare) return 'B';
+	if (pos->pieces[BISHOP] & BBsquare) {
+		if (pos->colours[WHITE] & BBsquare) return 'B';
 		else return 'b';
 	}
-	if (pos->BBrooks & BBsquare) {
-		if (pos->BBwhitepieces & BBsquare) return 'R';
+	if (pos->pieces[ROOK] & BBsquare) {
+		if (pos->colours[WHITE] & BBsquare) return 'R';
 		else return 'r';
 	}
-	if (pos->BBqueens & BBsquare) {
-		if (pos->BBwhitepieces & BBsquare) return 'Q';
+	if (pos->pieces[QUEEN] & BBsquare) {
+		if (pos->colours[WHITE] & BBsquare) return 'Q';
 		else return 'q';
 	}
-	if (pos->BBkings & BBsquare) {
-		if (pos->BBwhitepieces & BBsquare) return 'K';
+	if (pos->pieces[KING] & BBsquare) {
+		if (pos->colours[WHITE] & BBsquare) return 'K';
 		else return 'k';
 	}
-	return '0';
+	 */
+	return NONE;
 }
-void setPiece(struct position *pos, int sq, char piece) {
+int getColour(struct position *pos, int sq) {
+	U64 BBsquare = (1ULL << sq);
+	for (int i = 0;i < 2;i++) {
+		if (pos->colours[i] & BBsquare) return i;
+	}
+	return NONE;
+}
+void setPiece(struct position *pos, int sq, int colour, char piece) {
 	assert(piece);
 	assert(pos);
 	assert(sq >= 0 && sq <= 63);
 	U64 BBsquare = (1ULL << sq);
 	//clear bitboard of old square
 	char oldpiece = getPiece(pos,sq);
+	/*
 	switch (oldpiece) {
 		case 'p':
-		case 'P': pos->BBpawns &= ~BBsquare; break;
+		case 'P': pos->pieces[PAWN] &= ~BBsquare; break;
 		case 'n':
-		case 'N': pos->BBknights &= ~BBsquare; break;
+		case 'N': pos->pieces[KNIGHT] &= ~BBsquare; break;
 		case 'b':
-		case 'B': pos->BBbishops &= ~BBsquare; break;
+		case 'B': pos->pieces[BISHOP] &= ~BBsquare; break;
 		case 'r':
-		case 'R': pos->BBrooks &= ~BBsquare; break;
+		case 'R': pos->pieces[ROOK] &= ~BBsquare; break;
 		case 'q':
-		case 'Q': pos->BBqueens &= ~BBsquare; break;
+		case 'Q': pos->pieces[QUEEN] &= ~BBsquare; break;
 		case 'k':
-		case 'K': pos->BBkings &= ~BBsquare; break;
+		case 'K': pos->pieces[KING] &= ~BBsquare; break;
 	}
+	 */
+	pos->pieces[oldpiece] &= ~BBsquare;
 	//clear white and black piece bitboards of that square
-	pos->BBwhitepieces &= ~BBsquare;
-	pos->BBblackpieces &= ~BBsquare;
+	pos->colours[WHITE] &= ~BBsquare;
+	pos->colours[BLACK] &= ~BBsquare;
+	/*
 	switch (piece) {
 		case 'p':
-		case 'P': pos->BBpawns |= BBsquare; break;
+		case 'P': pos->pieces[PAWN] |= BBsquare; break;
 		case 'n':
-		case 'N': pos->BBknights |= BBsquare; break;
+		case 'N': pos->pieces[KNIGHT] |= BBsquare; break;
 		case 'b':
-		case 'B': pos->BBbishops |= BBsquare; break;
+		case 'B': pos->pieces[BISHOP] |= BBsquare; break;
 		case 'r':
-		case 'R': pos->BBrooks |= BBsquare; break;
+		case 'R': pos->pieces[ROOK] |= BBsquare; break;
 		case 'q':
-		case 'Q': pos->BBqueens |= BBsquare; break;
-		case 'k': pos->BBkings |= BBsquare; pos->Bkingpos = sq; break;
-		case 'K': pos->BBkings |= BBsquare; pos->Wkingpos = sq; break;
+		case 'Q': pos->pieces[QUEEN] |= BBsquare; break;
+		case 'k': pos->pieces[KING] |= BBsquare; pos->Bkingpos = sq; break;
+		case 'K': pos->pieces[KING] |= BBsquare; pos->Wkingpos = sq; break;
 	}
-	if (piece >= 'A' && piece <= 'Z') {
-		pos->BBwhitepieces |= BBsquare;
+	 */
+	if (piece != NONE) pos->pieces[piece] |= BBsquare;
+	if (piece == KING) {
+		if (colour == WHITE) pos->Wkingpos = sq;
+		else if (colour == BLACK) pos->Bkingpos = sq;
 	}
-	else if (piece >= 'a' && piece <= 'z') pos->BBblackpieces |= BBsquare;
+	if (colour == WHITE) {
+		pos->colours[WHITE] |= BBsquare;
+	}
+	else if (colour == BLACK) pos->colours[BLACK] |= BBsquare;
 	
 }
 void dspBBstr(char* BBstr,struct position pos) {
 	if (strcmp(BBstr,"pawns") == 0) {
-		dspBB(pos.BBpawns);
+		dspBB(pos.pieces[PAWN]);
 	}
 	if (strcmp(BBstr,"knights") == 0) {
-		dspBB(pos.BBknights);
+		dspBB(pos.pieces[KNIGHT]);
 	}
 	if (strcmp(BBstr,"bishops") == 0) {
-		dspBB(pos.BBbishops);
+		dspBB(pos.pieces[BISHOP]);
 	}
 	if (strcmp(BBstr,"rooks") == 0) {
-		dspBB(pos.BBrooks);
+		dspBB(pos.pieces[ROOK]);
 	}
 	if (strcmp(BBstr,"queens") == 0) {
-		dspBB(pos.BBqueens);
+		dspBB(pos.pieces[QUEEN]);
 	}
 	if (strcmp(BBstr,"kings") == 0) {
-		dspBB(pos.BBkings);
+		dspBB(pos.pieces[KING]);
 	}
 	if (strcmp(BBstr,"Wpawns") == 0) {
-		dspBB((pos.BBpawns & pos.BBwhitepieces));
+		dspBB((pos.pieces[PAWN] & pos.colours[WHITE]));
 	}
 	if (strcmp(BBstr,"Wknights") == 0) {
-		dspBB((pos.BBknights & pos.BBwhitepieces));
+		dspBB((pos.pieces[KNIGHT] & pos.colours[WHITE]));
 	}
 	if (strcmp(BBstr,"Wbishops") == 0) {
-		dspBB((pos.BBbishops & pos.BBwhitepieces));
+		dspBB((pos.pieces[BISHOP] & pos.colours[WHITE]));
 	}
 	if (strcmp(BBstr,"Wrooks") == 0) {
-		dspBB((pos.BBrooks & pos.BBwhitepieces));
+		dspBB((pos.pieces[ROOK] & pos.colours[WHITE]));
 	}
 	if (strcmp(BBstr,"Wqueens") == 0) {
-		dspBB((pos.BBqueens & pos.BBwhitepieces));
+		dspBB((pos.pieces[QUEEN] & pos.colours[WHITE]));
 	}
 	if (strcmp(BBstr,"Wkings") == 0) {
-		dspBB((pos.BBkings & pos.BBwhitepieces));
+		dspBB((pos.pieces[KING] & pos.colours[WHITE]));
 	}
 	if (strcmp(BBstr,"Bpawns") == 0) {
-		dspBB((pos.BBpawns & pos.BBblackpieces));
+		dspBB((pos.pieces[PAWN] & pos.colours[BLACK]));
 	}
 	if (strcmp(BBstr,"Bknights") == 0) {
-		dspBB((pos.BBknights & pos.BBblackpieces));
+		dspBB((pos.pieces[KNIGHT] & pos.colours[BLACK]));
 	}
 	if (strcmp(BBstr,"Bbishops") == 0) {
-		dspBB((pos.BBbishops & pos.BBblackpieces));
+		dspBB((pos.pieces[BISHOP] & pos.colours[BLACK]));
 	}
 	if (strcmp(BBstr,"Brooks") == 0) {
-		dspBB((pos.BBrooks & pos.BBblackpieces));
+		dspBB((pos.pieces[ROOK] & pos.colours[BLACK]));
 	}
 	if (strcmp(BBstr,"Bqueens") == 0) {
-		dspBB((pos.BBqueens & pos.BBblackpieces));
+		dspBB((pos.pieces[QUEEN] & pos.colours[BLACK]));
 	}
 	if (strcmp(BBstr,"Bkings") == 0) {
-		dspBB((pos.BBkings & pos.BBblackpieces));
+		dspBB((pos.pieces[KING] & pos.colours[BLACK]));
 	}
 	if (strcmp(BBstr,"blackpieces") == 0) {
-		dspBB(pos.BBblackpieces);
+		dspBB(pos.colours[BLACK]);
 	}
 	if (strcmp(BBstr,"whitepieces") == 0) {
-		dspBB(pos.BBwhitepieces);
+		dspBB(pos.colours[WHITE]);
 	}
 	if (strcmp(BBstr,"pieces") == 0) {
-		dspBB((pos.BBwhitepieces | pos.BBblackpieces));
+		dspBB((pos.colours[WHITE] | pos.colours[BLACK]));
 	}
 }
 void dspBB(U64 BB) {
@@ -350,7 +372,14 @@ void dspBoard(struct position *pos) {
 		for (file = 0;file <= 7;file++) {
 			sq = fileranktosquareidx(file,rank);
 			char piece = getPiece(pos,sq);
-			if (piece == '0') piece = ' ';
+			if (piece == NONE) piece = ' ';
+			else if (piece == PAWN) piece = 'P';
+			else if (piece == KNIGHT) piece = 'N';
+			else if (piece == BISHOP) piece = 'B';
+			else if (piece == ROOK) piece = 'R';
+			else if (piece == QUEEN) piece = 'Q';
+			else if (piece == KING) piece = 'K';
+			if (getColour(pos, sq) == BLACK) piece = tolower(piece);
 			printf(" %c |",piece);
 		}
 		printf("\n");

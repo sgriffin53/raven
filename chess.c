@@ -83,6 +83,9 @@ int main() {
 		if (strcmp(splitstr[0],"test") == 0) {
 			runTestsAll();
 		}
+		if (strcmp(splitstr[0],"col") == 0) {
+			printf("%d\n",getColour(&pos, atoi(splitstr[1])));
+		}
 		else if (strcmp(splitstr[0],"moves") == 0) {
 			for (int i = 1;i < splitstrend;i++) {
 				// make move
@@ -101,6 +104,9 @@ int main() {
 		}
 		if (strcmp(splitstr[0],"eval") == 0) {
 			printf("%d\n",taperedEval(&pos));
+		}
+		if (strcmp(splitstr[0],"evalold") == 0) {
+			//printf("%d\n",taperedEval_old(&pos));
 		}
 		else if (strcmp(splitstr[0],"go") == 0) {
 			int searchdepth = 100;
@@ -185,7 +191,7 @@ int main() {
 			dspBoard(&pos);
 		}
 		if (strcmp(splitstr[0],"set") == 0) {
-			setPiece(&pos,atoi(splitstr[1]),splitstr[2][0]);;
+			//setPiece(&pos,atoi(splitstr[1]),splitstr[2][0]);;
 		}
 		if (strcmp(splitstr[0],"isready") == 0) {
 			printf("readyok\n");

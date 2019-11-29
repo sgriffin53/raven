@@ -26,7 +26,7 @@ void runTestsMakeMove() {
 	parsefen(&pos,"startpos");
 	printf("White normal move test: ");
 	makeMovestr("e2e4",&pos);
-	if ((getPiece(&pos,E4) == 'P') && (getPiece(&pos,E2) == '0')) {
+	if ((getPiece(&pos,E4) == PAWN) && (getPiece(&pos,E2) == NONE)) {
 		printf("Passed\n");
 	}
 	else printf("Failed\n");
@@ -35,7 +35,7 @@ void runTestsMakeMove() {
 	printf("Black normal move test: ");
 	makeMovestr("e2e4",&pos);
 	makeMovestr("e7e5",&pos);
-	if ((getPiece(&pos,E5) == 'p') && (getPiece(&pos,E7) == '0')) {
+	if ((getPiece(&pos,E5) == PAWN) && (getPiece(&pos,E7) == NONE)) {
 		printf("Passed\n");
 	}
 	else printf("Failed\n");
@@ -45,7 +45,7 @@ void runTestsMakeMove() {
 	makeMovestr("e2e5",&pos);
 	makeMovestr("d7d5",&pos);
 	makeMovestr("e5d6",&pos);
-	if ((getPiece(&pos,D6) == 'P') && (getPiece(&pos,D5) == '0')) {
+	if ((getPiece(&pos,D6) == PAWN) && (getPiece(&pos,D5) == NONE)) {
 		printf("Passed\n");
 	}
 	else printf("Failed\n");
@@ -56,7 +56,7 @@ void runTestsMakeMove() {
 	makeMovestr("d7d4",&pos);
 	makeMovestr("e2e4",&pos);
 	makeMovestr("d4e3",&pos);
-	if ((getPiece(&pos,E3) == 'p') && (getPiece(&pos,E4) == '0')) {
+	if ((getPiece(&pos,E3) == PAWN) && (getPiece(&pos,E4) == NONE)) {
 		printf("Passed\n");
 	}
 	else printf("Failed\n");
@@ -67,7 +67,7 @@ void runTestsMakeMove() {
 	makeMovestr("a7a6",&pos);
 	makeMovestr("e7f8r",&pos);
 	
-	if ((getPiece(&pos,F8) == 'R') && (getPiece(&pos,E7) == '0')) {
+	if ((getPiece(&pos,F8) == ROOK) && (getPiece(&pos,E7) == NONE)) {
 		printf("Passed\n");
 	}
 	else printf("Failed\n");
@@ -80,7 +80,7 @@ void runTestsMakeMove() {
 	makeMovestr("d2c1r",&pos);
 	
 	
-	if ((getPiece(&pos,C1) == 'r') && (getPiece(&pos,D2) == '0')) {
+	if ((getPiece(&pos,C1) == ROOK) && (getPiece(&pos,D2) == NONE)) {
 		printf("Passed\n");
 	}
 	else printf("Failed\n");
@@ -89,7 +89,7 @@ void runTestsMakeMove() {
 	printf("White kingside castling test: ");
 	makeMovestr("e1g1",&pos);
 	
-	if ((getPiece(&pos,G1) == 'K') && (getPiece(&pos,F1) == 'R')) {
+	if ((getPiece(&pos,G1) == KING) && (getPiece(&pos,F1) == ROOK)) {
 		printf("Passed\n");
 	}
 	else printf("Failed\n");
@@ -98,7 +98,7 @@ void runTestsMakeMove() {
 	printf("White queenside castling test: ");
 	makeMovestr("e1c1",&pos);
 	
-	if ((getPiece(&pos,C1) == 'K') && (getPiece(&pos,D1) == 'R')) {
+	if ((getPiece(&pos,C1) == KING) && (getPiece(&pos,D1) == ROOK)) {
 		printf("Passed\n");
 	}
 	else printf("Failed\n");
@@ -107,7 +107,7 @@ void runTestsMakeMove() {
 	printf("Black kingside castling test: ");
 	makeMovestr("e8g8",&pos);
 	
-	if ((getPiece(&pos,G8) == 'k') && (getPiece(&pos,F8) == 'r')) {
+	if ((getPiece(&pos,G8) == KING) && (getPiece(&pos,F8) == ROOK)) {
 		printf("Passed\n");
 	}
 	else printf("Failed\n");
@@ -116,7 +116,7 @@ void runTestsMakeMove() {
 	printf("Black queenside castling test: ");
 	makeMovestr("e8c8",&pos);
 	
-	if ((getPiece(&pos,C8) == 'k') && (getPiece(&pos,D8) == 'r')) {
+	if ((getPiece(&pos,C8) == KING) && (getPiece(&pos,D8) == ROOK)) {
 		printf("Passed\n");
 	}
 	else printf("Failed\n");
