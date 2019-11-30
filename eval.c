@@ -815,6 +815,45 @@ int taperedEval(struct position *pos) {
 		}
 	}
 	
+	
+	// bonus for knights in closed positions
+	// bonus for bishops in open positions
+	
+	U64 BBWrammed = southOne(pos->pieces[PAWN] & pos->colours[BLACK]) & (pos->pieces[PAWN] & pos->colours[WHITE]);
+	U64 BBBrammed = northOne(pos->pieces[PAWN] & pos->colours[WHITE]) & (pos->pieces[PAWN] & pos->colours[BLACK]);
+	
+	int rammedpairs = __builtin_popcountll(BBWrammed);
+	int nonrammedpawns = __builtin_popcountll(pos->pieces[PAWN] & ~BBWrammed & ~BBBrammed);
+	
+	// closedness is a number from -8 to 8, -8 being completely open, 8 being completely closed
+		
+	double closedness = rammedpairs * 2 + nonrammedpawns / 2 - 8;
+	
+	// white knight bonus
+	if (closedness > 0) {
+		openingEval += num_WN * (closedness / 8.0) * 20;
+		endgameEval += num_WN * (closedness / 8.0) * 20;
+	}
+	// white bishop bonus
+	if (closedness < 0) {
+		openingEval += num_WB * (-closedness / 8.0) * 20;
+		endgameEval += num_WB * (-closedness / 8.0) * 20;
+	}
+	// black knight bonus
+	
+	if (closedness > 0) {
+		openingEval -= num_BN * (closedness / 8.0) * 20;
+		endgameEval -= num_BN * (closedness / 8.0) * 20;
+	}
+	
+	// black bishop bonus
+	
+	if (closedness < 0) {
+		openingEval -= num_BB * (-closedness / 8.0) * 20;
+		endgameEval -= num_BB * (-closedness / 8.0) * 20;
+	}
+	
+	
 	// penalty for king on pawnless flank
 	
 	// white
@@ -942,10 +981,12 @@ int taperedEval(struct position *pos) {
 
 	// knight value decreases as pawns disappear
 	
+	/*
 	openingEval -= num_WN * (16 - (num_WP + num_BP)) * 4;
 	endgameEval -= num_WN * (16 - (num_WP + num_BP)) * 4;
 	openingEval += num_BN * (16 - (num_WP + num_BP)) * 4;
 	endgameEval += num_BN * (16 - (num_WP + num_BP)) * 4;
+	*/
 	
 	// bonus for minor pieces attacking enemy pieces not defended by pawns
 	
