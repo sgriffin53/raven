@@ -8,6 +8,7 @@ struct mobreturn {
 	int kingattackers;
 	int pstO;
 	int pstE;
+	int unsafe;
 };
 int pieceval_eg(const char inpiece);
 int pieceval_mg(const char inpiece);
