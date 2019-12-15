@@ -19,6 +19,8 @@
 #include "bitboards.h"
 #include "magicmoves.h"
 
+#define ONE_PLY 3
+
 int mate_in(int ply) {
 	return MATE_SCORE - ply;
 }
@@ -28,10 +30,10 @@ int mated_in(int ply) {
 int reduction(const struct move *move, const int depthleft, char cappiece, int legalmoves, int incheck, int givescheck, int ply) {
 	assert(move);
 	assert(depthleft >= 0);
-	if ((!incheck) && (legalmoves > 4) && (depthleft >= 3) && (move->prom == NONE) && (!givescheck)) {
+	if ((!incheck) && (legalmoves > 4) && (depthleft >= 3 * ONE_PLY) && (move->prom == NONE) && (!givescheck)) {
 		if (cappiece == NONE) {
-			if (depthleft >= 6) return 2;
-			return 1;
+			if (depthleft >= 6 * ONE_PLY) return 2 * ONE_PLY;
+			return 1 * ONE_PLY;
 		}
 	}
 
@@ -149,7 +151,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	if (isThreefold(pos)) return 0;
 	if (pos->halfmoves >= 100) return 0;
 	int incheck = isCheck(pos);
-	if (incheck) depthleft++;
+	if (incheck) depthleft += ONE_PLY;
 	if (depthleft <= 0) {
 		return qSearch(pos, alpha, beta, ply + 1, endtime);
 		//return taperedEval(pos);
@@ -203,24 +205,24 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	
 	int staticeval = taperedEval(pos);
 	
-	if (depthleft < 3 && !incheck && abs(beta) - 1 > -MATE_SCORE + 100) {
-		int eval_margin = 120 * depthleft;
+	if (depthleft < 3 * ONE_PLY && !incheck && abs(beta) - 1 > -MATE_SCORE + 100) {
+		int eval_margin = 120 * depthleft / ONE_PLY;
 		if (staticeval - eval_margin >= beta) return staticeval - eval_margin;
 	}
 	
 	// static null pruning (reverse futility pruning)
 	
 	if (!nullmove && beta <= MATE_SCORE) {
-		if (depthleft == 1 && staticeval - 300 > beta) return beta;
-		if (depthleft == 2 && staticeval - 525 > beta) return beta;
-		if (depthleft == 3 && staticeval - 900 > beta) depthleft--;
+		if (depthleft == 1 * ONE_PLY && staticeval - 300 > beta) return beta;
+		if (depthleft == 2 * ONE_PLY && staticeval - 525 > beta) return beta;
+		if (depthleft == 3 * ONE_PLY && staticeval - 900 > beta) depthleft -= ONE_PLY;
 	}
 	
 	// null move pruning
 	
 	// if (!nullmove && !isEndgame(pos) && !incheck && !(alpha != beta - 1)) {
 	
-	if (!nullmove && !incheck && ply != 0 && depthleft >= 3 && !isEndgame(pos)) {
+	if (!nullmove && !incheck && ply != 0 && depthleft >= 3 * ONE_PLY && !isEndgame(pos)) {
 		const int orighalfmoves = pos->halfmoves;
 		const int origepsquare = pos->epsquare;
 		pos->tomove = !pos->tomove;
@@ -228,15 +230,15 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		pos->epsquare = -1;
 		posstack[posstackend] = *pos;
 		posstackend++;
-		int verR = 3;
-		int R = 3;
-		const int val = -alphaBeta(pos,-beta,-beta+1, depthleft - 1 - R, 1, ply + 1, pv, endtime);
+		int verR = 3 * ONE_PLY;
+		int R = 3 * ONE_PLY;
+		const int val = -alphaBeta(pos,-beta,-beta+1, depthleft - ONE_PLY - R, 1, ply + 1, pv, endtime);
 		pos->tomove = !pos->tomove;
 		pos->halfmoves = orighalfmoves;
 		pos->epsquare = origepsquare;
 		posstackend--;
 		if (val >= origBeta || val >= beta) {
-			const int verification = alphaBeta(pos,beta - 1,beta, depthleft - 1 - verR, 1, ply + 1, pv, endtime); // alpha_beta(p, md, beta - 1, beta, d, false, false);
+			const int verification = alphaBeta(pos,beta - 1,beta, depthleft - ONE_PLY - verR, 1, ply + 1, pv, endtime); // alpha_beta(p, md, beta - 1, beta, d, false, false);
 			if (verification >= beta) return beta;
 		}
 	}
@@ -244,16 +246,16 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	int f_prune = 0;
 	
 	int fmargin[4] = { 0, 200, 300, 500 };
-	if (depthleft <= 3
+	if (depthleft <= 3 * ONE_PLY
 	&&  !incheck
 	&&   abs(alpha) < 9000
-	&&   staticeval + fmargin[depthleft] <= alpha)
+	&&   staticeval + fmargin[depthleft / ONE_PLY] <= alpha)
 		 f_prune = 1;	
 	
 	// IID
 	
-	if (TTmove.from == -1 && depthleft >= 7) {
-		int newdepth = 3;
+	if (TTmove.from == -1 && depthleft >= 7 * ONE_PLY) {
+		int newdepth = 3 * ONE_PLY;
 		int val = alphaBeta(pos, alpha, beta, newdepth, 0, ply + 1, pv, endtime);
 		TTdata = getTTentry(&TT, hash);
         if (TTdata.hash == hash) {
@@ -291,7 +293,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 				U64 BBenemypawns = BBpasserLookup[BLACK][curmove.from] & (pos->colours[WHITE] & pos->pieces[PAWN]);
 				if (!BBenemypawns) {
 					// pawn is passed
-					extension = 1;
+					extension = ONE_PLY;
 				}
 			}
 		}
@@ -303,22 +305,22 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 				U64 BBenemypawns = BBpasserLookup[WHITE][curmove.from] & (pos->colours[BLACK] & pos->pieces[PAWN]);
 				if (!BBenemypawns) {
 					// pawn is passed
-					extension = 1;
+					extension = ONE_PLY;
 				}
 			}
 		}
 		struct move lastmove = movestack[movestackend - 1];
 		if (pieceval(lastmove.cappiece) == pieceval(lastmove.piece) && curmove.to == lastmove.to) {
 			// recapture extension
-			extension = 1;
+			extension = ONE_PLY;
 		}
 		int r = 0;
 		int SEEvalue = SEEcapture(pos, curmove.from, curmove.to, pos->tomove);
-		if (SEEvalue < 0) r = 1; // reduce bad captures
+		if (SEEvalue < 0) r = ONE_PLY; // reduce bad captures
 		makeMove(&curmove,pos);
-		int score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 + extension - r, 0, ply + 1, pv, endtime);
+		int score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY + extension - r, 0, ply + 1, pv, endtime);
 		if (r > 0 && score > alpha) {
-			score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 + extension, 0, ply + 1, pv, endtime);
+			score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY + extension, 0, ply + 1, pv, endtime);
 		}
 		unmakeMove(pos);
 		legalmoves++;
@@ -335,7 +337,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 				killers[ply][1] = killers[ply][0];
 				killers[ply][0] = curmove;
 				//history[pos->tomove][curmove.from][curmove.to] += pow(2.0,(double)depthleft);
-				history[pos->tomove][curmove.from][curmove.to] += depthleft * depthleft;
+				history[pos->tomove][curmove.from][curmove.to] += (depthleft / ONE_PLY) * (depthleft / ONE_PLY);
 				countermoves[prevmove.from][prevmove.to] = curmove;
 			}
 			addTTentry(&TT, hash, origdepthleft, LOWERBOUND, bestmove, bestscore);
@@ -346,7 +348,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			// no beta cut off
 			if (curmove.cappiece == NONE) {
 				//butterfly[pos->tomove][curmove.from][curmove.to] += pow(2.0,(double)depthleft);
-				butterfly[pos->tomove][curmove.from][curmove.to] += depthleft * depthleft;
+				butterfly[pos->tomove][curmove.from][curmove.to] += (depthleft / ONE_PLY) * (depthleft / ONE_PLY);
 			}
 		}
 	}
@@ -360,7 +362,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	
 	// Prob Cut
 	
-	if (!beatsbeta && depthleft >= 5 && abs(beta) <= MATE_SCORE && staticeval + 100 >= beta + 100) {
+	if (!beatsbeta && depthleft >= 5 * ONE_PLY && abs(beta) <= MATE_SCORE && staticeval + 100 >= beta + 100) {
 		int rbeta = min(MATE_SCORE, beta + 100);
 		int probcutcount = 0;
 		for (int i = 0;i < num_moves;i++) {
@@ -373,7 +375,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			pos->tomove = !pos->tomove;
 			probcutcount++;
 			int probcutscore;
-			probcutscore = -alphaBeta(pos, -rbeta, -rbeta + 1, depthleft - 4, 0, ply + 1, pv, endtime);
+			probcutscore = -alphaBeta(pos, -rbeta, -rbeta + 1, depthleft - 4 * ONE_PLY, 0, ply + 1, pv, endtime);
 			unmakeMove(pos);
 			if (probcutscore >= rbeta) {
 				return probcutscore;
@@ -435,7 +437,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		
 		// SEE pruning
 		
-		if (depthleft <= 8 && bestscore > -MATE_SCORE && SEEcapture(pos, moves[i].from, moves[i].to, pos->tomove) <= -80 * depthleft * depthleft) {
+		if (depthleft <= 8 * ONE_PLY && bestscore > -MATE_SCORE && SEEcapture(pos, moves[i].from, moves[i].to, pos->tomove) <= -80 * (depthleft / ONE_PLY) * (depthleft / ONE_PLY)) {
 			continue;
 		}
 		int extension = 0;
@@ -477,7 +479,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 				U64 BBenemypawns = BBpasserLookup[BLACK][moves[i].from] & (pos->colours[WHITE] & pos->pieces[PAWN]);
 				if (!BBenemypawns) {
 					// pawn is passed
-					extension = 1;
+					extension = ONE_PLY;
 				}
 			}
 		}
@@ -491,7 +493,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 					//printf("passed %d\n", moves[i].from);
 					//dspBoard(pos);
 					// pawn is passed
-					extension = 1;
+					extension = ONE_PLY;
 				}
 			}
 		}
@@ -499,20 +501,20 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		struct move lastmove = movestack[movestackend - 2];
 		if (pieceval(lastmove.cappiece) == pieceval(lastmove.piece) && moves[i].to == lastmove.to) {
 			// recapture extension
-			extension = 1;
+			extension = ONE_PLY;
 		}
 		struct position lastpos = posstack[posstackend - 2];
 		int SEEvalue = SEEcapture(&lastpos, moves[i].from, moves[i].to, lastpos.tomove);
-		if (SEEvalue < 0) depthleft -= 1; // reduce bad captures
+		if (SEEvalue < 0) depthleft -= ONE_PLY; // reduce bad captures
 		 
 		// Search
 		//if (extension > 0) printf("%d ext\n", extension);
-		score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 - r + extension, 0, ply + 1, pv, endtime);
+		score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY - r + extension, 0, ply + 1, pv, endtime);
 		
 		// Redo search
 		
 		if (r > 0 && score > alpha) {
-			score = -alphaBeta(pos, -beta, -alpha, depthleft - 1 + extension, 0, ply + 1, pv, endtime);
+			score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY + extension, 0, ply + 1, pv, endtime);
 		}
 
 		// Unmake the move
@@ -536,7 +538,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 				killers[ply][1] = killers[ply][0];
 				killers[ply][0] = moves[i];
 				//history[pos->tomove][moves[i].from][moves[i].to] += pow(2.0,(double)depthleft);
-				history[pos->tomove][moves[i].from][moves[i].to] += depthleft * depthleft;
+				history[pos->tomove][moves[i].from][moves[i].to] += (depthleft / ONE_PLY) * (depthleft / ONE_PLY);
 				struct move prevmove = movestack[movestackend - 1];
 				countermoves[prevmove.from][prevmove.to] = moves[i];
 			}
@@ -546,7 +548,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			// no beta cut off
 			if (cappiece == NONE) {
 				//butterfly[pos->tomove][moves[i].from][moves[i].to] += pow(2.0,(double)depthleft);
-				butterfly[pos->tomove][moves[i].from][moves[i].to] += depthleft * depthleft;
+				butterfly[pos->tomove][moves[i].from][moves[i].to] += (depthleft / ONE_PLY) * (depthleft / ONE_PLY);
 			}
 		}
 		depthleft = allorigdepthleft;
@@ -716,7 +718,7 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 			if (expectedendtime > endtime) break;
 		}
 
-		score = alphaBeta(&pos, -MATE_SCORE, MATE_SCORE, d, 0, 0, &pv, endtime);
+		score = alphaBeta(&pos, -MATE_SCORE, MATE_SCORE, d * ONE_PLY, 0, 0, &pv, endtime);
 		
 		//Ignore the result if we ran out of time
 		if (d > 1 && clock() >= endtime) {
