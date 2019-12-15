@@ -12,6 +12,9 @@
 
 // Minor piece attack bonus
 
+int minorAttackBonus_mg[6] = {6, 14, 14, 20, 22, 0};
+int minorAttackBonus_eg[6] = {10, 18, 18, 28, 30, 0};
+/*
 int minorAttackBonus_mg(char piece) {
 	switch (piece) {
 		case PAWN: return 6;
@@ -32,7 +35,7 @@ int minorAttackBonus_eg(char piece) {
 		case KING: return 0;
 	}
 }
-
+*/
 // Piece mobility
 
 int knightMgMobility[9] = {-15, -5, -1, 2, 5, 7, 9, 11, 13};
@@ -1000,8 +1003,8 @@ int taperedEval(struct position *pos) {
 		U64 BBattacksB = Bmagic(square, BBoccupancy) & (pos->colours[WHITE] & pos->pieces[BISHOP]);
 		if (!BBattacksN && !BBattacksB) continue; // not attacked by minor piece
 		int piece = getPiece(pos, square);
-		openingEval += minorAttackBonus_mg(piece);
-		endgameEval += minorAttackBonus_eg(piece);
+		openingEval += minorAttackBonus_mg[piece];
+		endgameEval += minorAttackBonus_eg[piece];
 	}
 	
 	BBcopy = BBwhitepieces;
@@ -1017,8 +1020,8 @@ int taperedEval(struct position *pos) {
 		U64 BBattacksB = Bmagic(square, BBoccupancy) & (pos->colours[BLACK] & pos->pieces[BISHOP]);
 		if (!BBattacksN && !BBattacksB) continue; // not attacked by minor piece
 		int piece = getPiece(pos, square);
-		openingEval -= minorAttackBonus_mg(piece);
-		endgameEval -= minorAttackBonus_eg(piece);
+		openingEval -= minorAttackBonus_mg[piece];
+		endgameEval -= minorAttackBonus_eg[piece];
 	}
 	
 	int totalPhase = pawnPhase * 16 + knightPhase * 4 + bishopPhase*4 + rookPhase*4 + queenPhase*2;
