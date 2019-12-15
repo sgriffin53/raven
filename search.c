@@ -832,7 +832,7 @@ struct move get_smallest_attacker(struct position *pos, int square, int side) {
 		}
 	}
 	// Knights
-	U64 BBattacks = BBknightattacks(BBsquare);
+	U64 BBattacks = BBknightLookup[square];
 	if (BBattacks & BBmypieces & pos->pieces[KNIGHT]) {
 		if (side == WHITE) {
 			returnmove.from = __builtin_ctzll(BBattacks & pos->pieces[KNIGHT] & BBmypieces);
@@ -887,7 +887,7 @@ struct move get_smallest_attacker(struct position *pos, int square, int side) {
 			return returnmove;
 		}
 	}
-	BBattacks = BBkingattacks(BBsquare);
+	BBattacks = BBkingLookup[square];
 	if (BBattacks & BBmypieces & pos->pieces[KING]) {
 		if (side == WHITE) {
 			returnmove.from = __builtin_ctzll(BBattacks & pos->pieces[KING] & BBmypieces);

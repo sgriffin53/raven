@@ -4,6 +4,7 @@
 #include "bitboards.h"
 #include "hash.h"
 #include "magicmoves.h"
+#include "globals.h"
 
 int isCheck(struct position *pos) {
 	if (pos->tomove == WHITE) return isAttacked(pos, pos->Wkingpos, !pos->tomove);
@@ -20,14 +21,14 @@ int isAttacked(struct position *pos,int square, int colour) {
 		// check if black is being attacked by white king
 		U64 BBpiece = (1ULL << square); // get bitboard of piece on square
 		// get king attack squares
-		U64 BBattacks = BBkingattacks(BBpiece);
+		U64 BBattacks = BBkingLookup[square];
 		BBattacks = BBattacks & (pos->pieces[KING] & pos->colours[WHITE]);
 		if (BBattacks) {
 			// black piece being attacked by white king
 			return 1;
 		}
 		// get knight attack squares
-		BBattacks = BBknightattacks(BBpiece);
+		BBattacks = BBknightLookup[square];
 		// get attack squares that have white knights on them
 		BBattacks = BBattacks & (pos->pieces[KNIGHT] & pos->colours[WHITE]);
 		if (BBattacks) {
@@ -73,14 +74,14 @@ int isAttacked(struct position *pos,int square, int colour) {
 		// check if white is being attacked by black king
 		U64 BBpiece = (1ULL << square); // get bitboard of piece on square
 		// get king attack squares
-		U64 BBattacks = BBkingattacks(BBpiece);
+		U64 BBattacks = BBkingLookup[square];
 		BBattacks = BBattacks & (pos->pieces[KING] & pos->colours[BLACK]);
 		if (BBattacks) {
 			// white piece being attacked by black king
 			return 1;
 		}
 		// get knight attack squares
-		BBattacks = BBknightattacks(BBpiece);
+		BBattacks = BBknightLookup[square];
 		// get attack squares that have black knights on them
 		BBattacks = BBattacks & (pos->pieces[KNIGHT] & pos->colours[BLACK]);
 		if (BBattacks) {

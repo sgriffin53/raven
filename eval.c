@@ -10,19 +10,6 @@
 #include <stdlib.h>
 #include "search.h"
 
-static const int safety_table[9][30] =
-{
-/*0p*/{0,  0,  0,  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0},
-/*1p*/{0,  0,  0,  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0},
-/*2p*/{0,  1,  2,  4,   7,  11,  16,  22,  29,  37,  46,  56,  67,  79,  92, 106, 121, 137, 154, 172, 191, 211, 232, 254, 277, 301, 326, 352, 379, 400},
-/*3p*/{0,  2,  5,  9,  14,  20,  27,  35,  44,  54,  65,  77,  90, 104, 119, 135, 152, 170, 189, 209, 230, 252, 275, 299, 324, 350, 377, 400, 400, 400},
-/*4p*/{0,  4,  8, 13,  19,  26,  34,  43,  53,  64,  76,  89, 103, 118, 134, 151, 169, 188, 208, 229, 251, 274, 298, 323, 349, 376, 400, 400, 400, 400},
-/*5p*/{0,  8, 16, 25,  35,  46,  58,  71,  85, 100, 116, 133, 151, 170, 190, 211, 233, 256, 280, 305, 331, 358, 386, 400, 400, 400, 400, 400, 400, 400},
-/*6p*/{0, 16, 26, 37,  49,  62,  76,  91, 107, 124, 142, 161, 181, 202, 224, 247, 271, 296, 322, 349, 377, 400, 400, 400, 400, 400, 400, 400, 400, 400},
-/*7p*/{0, 32, 44, 57,  71,  86, 102, 119, 137, 156, 176, 197, 219, 242, 266, 291, 317, 344, 372, 400, 400, 400, 400, 400, 400, 400, 400, 400, 400, 400},
-/*8p*/{0, 64, 78, 93, 109, 126, 144, 163, 183, 204, 226, 249, 273, 298, 324, 351, 379, 400, 400, 400, 400, 400, 400, 400, 400, 400, 400, 400, 400, 400}
-};
-
 // Minor piece attack bonus
 
 int minorAttackBonus_mg(char piece) {
@@ -830,15 +817,19 @@ int taperedEval(struct position *pos) {
 	double closedness = rammedpairs * 2 + nonrammedpawns / 2 - 8;
 	
 	// white knight bonus
+	
 	if (closedness > 0) {
 		openingEval += num_WN * (closedness / 8.0) * 20;
 		endgameEval += num_WN * (closedness / 8.0) * 20;
 	}
+	
 	// white bishop bonus
+	
 	if (closedness < 0) {
 		openingEval += num_WB * (-closedness / 8.0) * 20;
 		endgameEval += num_WB * (-closedness / 8.0) * 20;
 	}
+	
 	// black knight bonus
 	
 	if (closedness > 0) {
@@ -1005,7 +996,7 @@ int taperedEval(struct position *pos) {
 		U64 BBdefendingpawns = BBpawnattacksW(1ULL << square) & (pos->colours[BLACK] & pos->pieces[PAWN]);
 		if (BBdefendingpawns) continue; // piece is defended by a pawn
 		// check if it's attacked by minor piece
-		U64 BBattacksN = BBknightattacks(1ULL << square) & (pos->colours[WHITE] & pos->pieces[KNIGHT]);
+		U64 BBattacksN = BBknightLookup[square] & (pos->colours[WHITE] & pos->pieces[KNIGHT]);
 		U64 BBattacksB = Bmagic(square, BBoccupancy) & (pos->colours[WHITE] & pos->pieces[BISHOP]);
 		if (!BBattacksN && !BBattacksB) continue; // not attacked by minor piece
 		int piece = getPiece(pos, square);
@@ -1022,7 +1013,7 @@ int taperedEval(struct position *pos) {
 		U64 BBdefendingpawns = BBpawnattacksB(1ULL << square) & (pos->colours[WHITE] & pos->pieces[PAWN]);
 		if (BBdefendingpawns) continue; // piece is defended by a pawn
 		// check if it's attacked by minor piece
-		U64 BBattacksN = BBknightattacks(1ULL << square) & (pos->colours[BLACK] & pos->pieces[KNIGHT]);
+		U64 BBattacksN = BBknightLookup[square] & (pos->colours[BLACK] & pos->pieces[KNIGHT]);
 		U64 BBattacksB = Bmagic(square, BBoccupancy) & (pos->colours[BLACK] & pos->pieces[BISHOP]);
 		if (!BBattacksN && !BBattacksB) continue; // not attacked by minor piece
 		int piece = getPiece(pos, square);
@@ -1333,6 +1324,7 @@ int evalBoard(struct position *pos) {
 
 	int material = white_pieces - black_pieces;
 	int score = material;
+	/*
 	U64 BBoccupied = (pos->colours[WHITE] | pos->colours[BLACK]);
 	while (BBoccupied != 0) {
 		int square = __builtin_ctzll(BBoccupied);
@@ -1348,6 +1340,7 @@ int evalBoard(struct position *pos) {
 		//}
 		score += pval;
 	}
+	 */
 	if (pos->tomove == BLACK) return -score;
 	else return score;
 	
