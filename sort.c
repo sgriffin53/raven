@@ -11,6 +11,7 @@
 #include "attacks.h"
 #include "makemove.h"
 #include "PST.h"
+#include "search.h"
 
 struct movescore {
 	struct move move;
@@ -60,9 +61,24 @@ void sortMoves(struct position *pos, struct move *moves, const int num_moves, st
 	assert(pos);
 	assert(num_moves < MAX_MOVES);
 	int scores[num_moves];
+	
+	int bestSEE = 0;
+	struct move bestSEEmove = {.to=-1, .from=-1, .prom=-1};
+	
+	// Order capture with highest SEE value (> 0) above other captures
+	// To do: Try ordering top 3 SEE captures
+	
+	for (int i = 0; i < num_moves; i++) {
+		if (moves[i].cappiece == NONE) continue;
+		int SEEval = SEEcapture(pos, moves[i].from, moves[i].to, pos->tomove);
+		if (SEEval > bestSEE) {
+			bestSEEmove = moves[i];
+			bestSEE = SEEval;
+		}
+	}
+	
 	// Score
 	for (int i = 0; i < num_moves; i++) {
-
 		scores[i] = 0;
 		char cappiece = moves[i].cappiece;
 		char piece = moves[i].piece;
@@ -76,6 +92,9 @@ void sortMoves(struct position *pos, struct move *moves, const int num_moves, st
 		if (TTmove.from != -1
 			&& (moves[i].from == TTmove.from) && (moves[i].to == TTmove.to) && (moves[i].prom == TTmove.prom)) {
 				scores[i] = 5000000;
+		}
+		else if (bestSEEmove.from == moves[i].from && bestSEEmove.to == moves[i].to && bestSEEmove.prom == moves[i].prom) {
+			scores[i] = 4000000;
 		}
 		else if (cappiece != NONE
 			&& (capval(cappiece) >= capval(piece))) {
