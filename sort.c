@@ -64,10 +64,9 @@ void sortMoves(struct position *pos, struct move *moves, const int num_moves, st
 	
 	int bestSEE = 0;
 	struct move bestSEEmove = {.to=-1, .from=-1, .prom=-1};
+	int SEEvalue[num_moves];
 	
 	// Order capture with highest SEE value (> 0) above other captures
-	// To do: Try ordering top 3 SEE captures
-	
 	for (int i = 0; i < num_moves; i++) {
 		if (moves[i].cappiece == NONE) continue;
 		int SEEval = SEEcapture(pos, moves[i].from, moves[i].to, pos->tomove);
@@ -75,6 +74,7 @@ void sortMoves(struct position *pos, struct move *moves, const int num_moves, st
 			bestSEEmove = moves[i];
 			bestSEE = SEEval;
 		}
+		SEEvalue[i] = SEEval;
 	}
 	
 	// Score
@@ -97,12 +97,12 @@ void sortMoves(struct position *pos, struct move *moves, const int num_moves, st
 			scores[i] = 4000000;
 		}
 		else if (cappiece != NONE
-			&& (capval(cappiece) >= capval(piece))) {
+			&& SEEvalue[i] >= 0) {
 				scores[i] = 1000000 + mvvlva(piece, cappiece);
 		}
 		else if (cappiece != NONE
-			&& capval(cappiece) < capval(piece)) {
-				scores[i] = 700000 + mvvlva(piece,cappiece);
+			&& SEEvalue[i] < 0) {
+				scores[i] = 700000 + mvvlva(piece, cappiece);
 		}
 		else if ((killers[ply][0].to == moves[i].to) && (killers[ply][0].from == moves[i].from) && (killers[ply][0].prom == moves[i].prom)) {
 			scores[i] = 900000;
