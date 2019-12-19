@@ -186,6 +186,9 @@ int taperedEval(struct position *pos) {
 	int WpassedRankBonus[8] = {0, 10, 10, 15, 25, 80, 120, 0};
 	int BpassedRankBonus[8] = {0, 120, 80, 25, 15, 10, 10, 0};
 	
+	int passedFileBonus_mg[8] = { 25, 11, -14, -14, -14, -14, 11, 25 };
+	int passedFileBonus_eg[8] = { 20, 15, 5, -7, -7, 5, 15, 20 };
+	
 	U64 BBwhitePP = 0ULL;
 	U64 BBblackPP = 0ULL;
 	
@@ -206,6 +209,10 @@ int taperedEval(struct position *pos) {
 			int bonus = WpassedRankBonus[startrank];
 			openingEval += 0.5 * bonus;
 			endgameEval += 1 * bonus;
+			
+			openingEval += passedFileBonus_mg[getfile(square)];
+			endgameEval += passedFileBonus_eg[getfile(square)];
+			
 			// give a bonus/penalty for opponent/friendly king distances to the passed pawn
 			
 			
@@ -267,6 +274,9 @@ int taperedEval(struct position *pos) {
 			int bonus = BpassedRankBonus[startrank];
 			openingEval -= 0.5 * bonus;
 			endgameEval -= 1 * bonus;
+			
+			openingEval -= passedFileBonus_mg[getfile(square)];
+			endgameEval -= passedFileBonus_eg[getfile(square)];
 			
 			// give a bonus/penalty for opponent/friendly king distances to the passed pawn
 			
