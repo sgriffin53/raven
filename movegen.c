@@ -450,6 +450,323 @@ int genPawnMoves(struct position *pos, int square, struct move *moves, int forqs
 	}
 	return num_moves;
 }
+int genAllPawnMoves(struct position *pos, int square, struct move *moves, int forqsearch) {
+	// generates all pawn moves
+	int num_moves = 0;
+	char piece;
+	if (pos->tomove == WHITE) {
+		piece = PAWN;
+		// double pushes
+		if (!forqsearch) {
+			U64 BBstartpawns = pos->colours[WHITE] & pos->pieces[PAWN] & BBrank2;
+			U64 BBdoublepushes = (BBstartpawns << 16) & ~(pos->colours[BLACK] | pos->colours[WHITE]);
+			while (BBdoublepushes) {
+				int targetsquare = __builtin_ctzll(BBdoublepushes);
+				BBdoublepushes &= BBdoublepushes - 1;
+				U64 BBrank3blocked = ((1ULL << targetsquare) >> 8) & (pos->colours[BLACK] | pos->colours[WHITE]);
+				if (BBrank3blocked) continue;
+				int sourcesquare = targetsquare - 16;
+				moves[num_moves].from = sourcesquare;
+				moves[num_moves].to = targetsquare;
+				moves[num_moves].prom = NONE;
+				moves[num_moves].cappiece = NONE;
+				moves[num_moves].piece = piece;
+				num_moves++;
+			}
+		}
+		// single pushes
+		
+		U64 BBpawns = pos->colours[WHITE] & pos->pieces[PAWN];
+		U64 BBsinglepushes = (BBpawns << 8) & ~(pos->colours[BLACK] | pos->colours[WHITE]);
+		while (BBsinglepushes) {
+			int targetsquare = __builtin_ctzll(BBsinglepushes);
+			BBsinglepushes &= BBsinglepushes - 1;
+			int sourcesquare = targetsquare - 8;
+			if (getrank(targetsquare) == 7) {
+					moves[num_moves].from = sourcesquare;
+					moves[num_moves].to = targetsquare;
+					moves[num_moves].prom = QUEEN;
+					moves[num_moves].cappiece = NONE;
+					moves[num_moves].piece = piece;
+					num_moves++;
+					moves[num_moves].from = sourcesquare;
+					moves[num_moves].to = targetsquare;
+					moves[num_moves].prom = ROOK;
+					moves[num_moves].cappiece = NONE;
+					moves[num_moves].piece = piece;
+					num_moves++;
+					moves[num_moves].from = sourcesquare;
+					moves[num_moves].to = targetsquare;
+					moves[num_moves].prom = BISHOP;
+					moves[num_moves].cappiece = NONE;
+					moves[num_moves].piece = piece;
+					num_moves++;
+					moves[num_moves].from = sourcesquare;
+					moves[num_moves].to = targetsquare;
+					moves[num_moves].prom = KNIGHT;
+					moves[num_moves].cappiece = NONE;
+					moves[num_moves].piece = piece;
+					num_moves++;
+			}
+			else {
+				if (!forqsearch) {
+					moves[num_moves].from = sourcesquare;
+					moves[num_moves].to = targetsquare;
+					moves[num_moves].prom = NONE;
+					moves[num_moves].cappiece = NONE;
+					moves[num_moves].piece = piece;
+					num_moves++;
+				}
+			}
+		}
+		
+		// left capture
+		
+		U64 BBleftcaptures = noWeOne(BBpawns) & pos->colours[BLACK];
+		while (BBleftcaptures) {
+			int targetsquare = __builtin_ctzll(BBleftcaptures);
+			BBleftcaptures &= BBleftcaptures - 1;
+			int sourcesquare = targetsquare - 7;
+			if (getrank(targetsquare) == 7) {
+				char cappiece = getPiece(pos,targetsquare);
+				moves[num_moves].from = sourcesquare;
+				moves[num_moves].to = targetsquare;
+				moves[num_moves].prom = QUEEN;
+				moves[num_moves].cappiece = cappiece;
+				moves[num_moves].piece = piece;
+				num_moves++;
+				moves[num_moves].from = sourcesquare;
+				moves[num_moves].to = targetsquare;
+				moves[num_moves].prom = ROOK;
+				moves[num_moves].cappiece = cappiece;
+				moves[num_moves].piece = piece;
+				num_moves++;
+				moves[num_moves].from = sourcesquare;
+				moves[num_moves].to = targetsquare;
+				moves[num_moves].prom = BISHOP;
+				moves[num_moves].cappiece = cappiece;
+				moves[num_moves].piece = piece;
+				num_moves++;
+				moves[num_moves].from = sourcesquare;
+				moves[num_moves].to = targetsquare;
+				moves[num_moves].prom = KNIGHT;
+				moves[num_moves].cappiece = cappiece;
+				moves[num_moves].piece = piece;
+				num_moves++;
+			}
+			else {
+				char cappiece = getPiece(pos,targetsquare);
+				moves[num_moves].from = sourcesquare;
+				moves[num_moves].to = targetsquare;
+				moves[num_moves].prom = NONE;
+				moves[num_moves].cappiece = cappiece;
+				moves[num_moves].piece = piece;
+				num_moves++;
+			}
+		}
+		
+		// right capture
+		
+		U64 BBrightcaptures = noEaOne(BBpawns) & pos->colours[BLACK];
+		while (BBrightcaptures) {
+			int targetsquare = __builtin_ctzll(BBrightcaptures);
+			BBrightcaptures &= BBrightcaptures - 1;
+			int sourcesquare = targetsquare - 9;
+			if (getrank(targetsquare) == 7) {
+				char cappiece = getPiece(pos,targetsquare);
+				moves[num_moves].from = sourcesquare;
+				moves[num_moves].to = targetsquare;
+				moves[num_moves].prom = QUEEN;
+				moves[num_moves].cappiece = cappiece;
+				moves[num_moves].piece = piece;
+				num_moves++;
+				moves[num_moves].from = sourcesquare;
+				moves[num_moves].to = targetsquare;
+				moves[num_moves].prom = ROOK;
+				moves[num_moves].cappiece = cappiece;
+				moves[num_moves].piece = piece;
+				num_moves++;
+				moves[num_moves].from = sourcesquare;
+				moves[num_moves].to = targetsquare;
+				moves[num_moves].prom = BISHOP;
+				moves[num_moves].cappiece = cappiece;
+				moves[num_moves].piece = piece;
+				num_moves++;
+				moves[num_moves].from = sourcesquare;
+				moves[num_moves].to = targetsquare;
+				moves[num_moves].prom = KNIGHT;
+				moves[num_moves].cappiece = cappiece;
+				moves[num_moves].piece = piece;
+				num_moves++;
+			}
+			else {
+				char cappiece = getPiece(pos,targetsquare);
+				moves[num_moves].from = sourcesquare;
+				moves[num_moves].to = targetsquare;
+				moves[num_moves].prom = NONE;
+				moves[num_moves].cappiece = cappiece;
+				moves[num_moves].piece = piece;
+				num_moves++;
+			}
+		}
+	}
+	else {
+		// black to move
+		piece = PAWN;
+		// double pushes
+		U64 BBstartpawns = pos->colours[BLACK] & pos->pieces[PAWN] & BBrank7;
+		U64 BBdoublepushes = (BBstartpawns >> 16) & ~(pos->colours[BLACK] | pos->colours[WHITE]);
+		if (!forqsearch) {
+			while (BBdoublepushes) {
+				int targetsquare = __builtin_ctzll(BBdoublepushes);
+				BBdoublepushes &= BBdoublepushes - 1;
+				U64 BBrank3blocked = ((1ULL << targetsquare) << 8) & (pos->colours[BLACK] | pos->colours[WHITE]);
+				if (BBrank3blocked) continue;
+				int sourcesquare = targetsquare + 16;
+				moves[num_moves].from = sourcesquare;
+				moves[num_moves].to = targetsquare;
+				moves[num_moves].prom = NONE;
+				moves[num_moves].cappiece = NONE;
+				moves[num_moves].piece = piece;
+				num_moves++;
+			}
+		}
+		// single pushes
+		
+		U64 BBpawns = pos->colours[BLACK] & pos->pieces[PAWN];
+		U64 BBsinglepushes = (BBpawns >> 8) & ~(pos->colours[BLACK] | pos->colours[WHITE]);
+		while (BBsinglepushes) {
+			int targetsquare = __builtin_ctzll(BBsinglepushes);
+			BBsinglepushes &= BBsinglepushes - 1;
+			int sourcesquare = targetsquare + 8;
+			if (getrank(targetsquare) == 0) {
+					moves[num_moves].from = sourcesquare;
+					moves[num_moves].to = targetsquare;
+					moves[num_moves].prom = QUEEN;
+					moves[num_moves].cappiece = NONE;
+					moves[num_moves].piece = piece;
+					num_moves++;
+					moves[num_moves].from = sourcesquare;
+					moves[num_moves].to = targetsquare;
+					moves[num_moves].prom = ROOK;
+					moves[num_moves].cappiece = NONE;
+					moves[num_moves].piece = piece;
+					num_moves++;
+					moves[num_moves].from = sourcesquare;
+					moves[num_moves].to = targetsquare;
+					moves[num_moves].prom = BISHOP;
+					moves[num_moves].cappiece = NONE;
+					moves[num_moves].piece = piece;
+					num_moves++;
+					moves[num_moves].from = sourcesquare;
+					moves[num_moves].to = targetsquare;
+					moves[num_moves].prom = KNIGHT;
+					moves[num_moves].cappiece = NONE;
+					moves[num_moves].piece = piece;
+					num_moves++;
+			}
+			else {
+				if (!forqsearch) {
+					moves[num_moves].from = sourcesquare;
+					moves[num_moves].to = targetsquare;
+					moves[num_moves].prom = 0;
+					moves[num_moves].cappiece = NONE;
+					moves[num_moves].piece = piece;
+					num_moves++;
+				}
+			}
+		}
+		// left capture
+		
+		U64 BBleftcaptures = soWeOne(BBpawns) & pos->colours[WHITE];
+		while (BBleftcaptures) {
+			int targetsquare = __builtin_ctzll(BBleftcaptures);
+			BBleftcaptures &= BBleftcaptures - 1;
+			int sourcesquare = targetsquare + 9;
+			if (getrank(targetsquare) == 0) {
+				char cappiece = getPiece(pos,targetsquare);
+				moves[num_moves].from = sourcesquare;
+				moves[num_moves].to = targetsquare;
+				moves[num_moves].prom = QUEEN;
+				moves[num_moves].cappiece = cappiece;
+				moves[num_moves].piece = piece;
+				num_moves++;
+				moves[num_moves].from = sourcesquare;
+				moves[num_moves].to = targetsquare;
+				moves[num_moves].prom = ROOK;
+				moves[num_moves].cappiece = cappiece;
+				moves[num_moves].piece = piece;
+				num_moves++;
+				moves[num_moves].from = sourcesquare;
+				moves[num_moves].to = targetsquare;
+				moves[num_moves].prom = BISHOP;
+				moves[num_moves].cappiece = cappiece;
+				moves[num_moves].piece = piece;
+				num_moves++;
+				moves[num_moves].from = sourcesquare;
+				moves[num_moves].to = targetsquare;
+				moves[num_moves].prom = KNIGHT;
+				moves[num_moves].cappiece = cappiece;
+				moves[num_moves].piece = piece;
+				num_moves++;
+			}
+			else {
+				char cappiece = getPiece(pos,targetsquare);
+				moves[num_moves].from = sourcesquare;
+				moves[num_moves].to = targetsquare;
+				moves[num_moves].prom = NONE;
+				moves[num_moves].cappiece = cappiece;
+				moves[num_moves].piece = piece;
+				num_moves++;
+			}
+		}
+		// right capture
+		
+		U64 BBrightcaptures = soEaOne(BBpawns) & pos->colours[WHITE];
+		while (BBrightcaptures) {
+			int targetsquare = __builtin_ctzll(BBrightcaptures);
+			BBrightcaptures &= BBrightcaptures - 1;
+			int sourcesquare = targetsquare + 7;
+			if (getrank(targetsquare) == 0) {
+				char cappiece = getPiece(pos,targetsquare);
+				moves[num_moves].from = sourcesquare;
+				moves[num_moves].to = targetsquare;
+				moves[num_moves].prom = QUEEN;
+				moves[num_moves].cappiece = cappiece;
+				moves[num_moves].piece = piece;
+				num_moves++;
+				moves[num_moves].from = sourcesquare;
+				moves[num_moves].to = targetsquare;
+				moves[num_moves].prom = ROOK;
+				moves[num_moves].cappiece = cappiece;
+				moves[num_moves].piece = piece;
+				num_moves++;
+				moves[num_moves].from = sourcesquare;
+				moves[num_moves].to = targetsquare;
+				moves[num_moves].prom = BISHOP;
+				moves[num_moves].cappiece = cappiece;
+				moves[num_moves].piece = piece;
+				num_moves++;
+				moves[num_moves].from = sourcesquare;
+				moves[num_moves].to = targetsquare;
+				moves[num_moves].prom = KNIGHT;
+				moves[num_moves].cappiece = cappiece;
+				moves[num_moves].piece = piece;
+				num_moves++;
+			}
+			else {
+				char cappiece = getPiece(pos,targetsquare);
+				moves[num_moves].from = sourcesquare;
+				moves[num_moves].to = targetsquare;
+				moves[num_moves].prom = NONE;
+				moves[num_moves].cappiece = cappiece;
+				moves[num_moves].piece = piece;
+				num_moves++;
+			}
+		}
+	}
+	return num_moves;
+}
 int genMoves(struct position *pos, struct move *moves, int forqsearch) {
 	assert(pos);
 	assert(moves);
@@ -513,12 +830,14 @@ int genMoves(struct position *pos, struct move *moves, int forqsearch) {
 	}
 	
 	
+	BBallpieces &= ~pos->pieces[PAWN];
+	
 	while (BBallpieces != 0) {
 		int square = __builtin_ctzll(BBallpieces);
 		char piece = getPiece(pos,square);
 		switch (piece) {
 			case KING: num_moves += genKingMoves(pos,square,&moves[num_moves], forqsearch); break;
-			case PAWN: num_moves += genPawnMoves(pos,square,&moves[num_moves], forqsearch); break;
+			//case PAWN: num_moves += genPawnMoves(pos,square,&moves[num_moves], forqsearch); break;
 			case KNIGHT: num_moves += genKnightMoves(pos,square,&moves[num_moves], forqsearch); break;
 			case BISHOP: num_moves += genBishopMoves(pos,square,&moves[num_moves], forqsearch); break;
 			case ROOK: num_moves += genRookMoves(pos,square,&moves[num_moves], forqsearch); break;
@@ -527,5 +846,11 @@ int genMoves(struct position *pos, struct move *moves, int forqsearch) {
 		}
 		BBallpieces &= BBallpieces - 1;
 	}
+	
+	U64 BBstmPawns = 0;
+	if (pos->tomove == WHITE) BBstmPawns = pos->colours[WHITE] & pos->pieces[PAWN];
+	else BBstmPawns = pos->colours[BLACK] & pos->pieces[PAWN];
+	if (BBstmPawns) num_moves += genAllPawnMoves(pos, 0, &moves[num_moves], forqsearch);
+	
 	return num_moves;
 }
