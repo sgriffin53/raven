@@ -10,6 +10,7 @@ U64 nodesSearched;
 U64 currenthash;
 struct TTtable TT;
 struct ETTtable ETT;
+struct PVTTtable PVTT;
 int numinstantbetacutoffs;
 int numbetacutoffs;
 int hashsize;
@@ -39,9 +40,5 @@ U64 BBpawnshieldLookup[2][64];
 U64 BBconnectedLookup[2][64];
 U64 BBinbetweenLookup[64][64];
 int movecount[1024];
-int TTmovescount;
-int pvsucceeded;
-int pvfailed;
-int pvtried;
 
 #endif

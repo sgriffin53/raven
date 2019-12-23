@@ -41,6 +41,8 @@ int main() {
 	clearTT(&TT);
 	initETT(&ETT);
 	clearETT(&ETT);
+	initPVTT(&PVTT);
+	clearPVTT(&PVTT);
 	origwtime = -1;
 	origbtime = -1;
 	movestackend = 0;
@@ -103,7 +105,7 @@ int main() {
 			movestogo = 25;
 		}
 		if (strcmp(splitstr[0],"eval") == 0) {
-			printf("%d\n",taperedEval(&pos));
+			//printf("%d\n",taperedEval(&pos));
 		}
 		if (strcmp(splitstr[0],"evalold") == 0) {
 			//printf("%d\n",taperedEval_old(&pos));

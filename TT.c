@@ -11,12 +11,37 @@
 void initETT(struct ETTtable *table) {
 	assert(table);
 	int ETTsizemb = 32;
-	const int totentries = (ETTsizemb*1024*1024) / sizeof(struct PTTentry);
+	const int totentries = (ETTsizemb*1024*1024) / sizeof(struct ETTentry);
 	table->entries = malloc(totentries * sizeof(struct ETTentry));
 	table->totentries = totentries;
 	assert(totentries > 0);
 }
-
+void initPVTT(struct PVTTtable *table) {
+	assert(table);
+	int PVTTsizemb = 32;
+	const int totentries = (PVTTsizemb*1024*1024) / sizeof(struct PVTTentry);
+	table->entries = malloc(totentries * sizeof(struct PVTTentry));
+	table->totentries = totentries;
+	assert(totentries > 0);
+}
+struct PVTTentry getPVTTentry(struct PVTTtable *table, U64 hash) {
+	assert(table);
+	assert(table->entries);
+	assert(table->totentries > 0);
+	int index = hash % table->totentries;
+	return table->entries[index];
+}
+void addPVTTentry(struct PVTTtable *table, U64 hash, struct move bestmove, int score) {
+	assert(table);
+	assert(table->entries);
+	assert(table->totentries > 0);
+	int index = hash % table->totentries;
+	struct PVTTentry newentry;
+	newentry.hash = hash;
+	newentry.bestmove = bestmove;
+	newentry.score = score;
+	table->entries[index] = newentry;
+}
 struct ETTentry getETTentry(struct ETTtable *table, U64 hash) {
 	assert(table);
 	assert(table->entries);
@@ -52,7 +77,7 @@ struct PTTentry getPTTentry(struct PTTtable *table, U64 hash) {
 	return table->entries[index];
 }
 
-void addPTTentry(struct PTTtable *table, U64 hash, int depth, U64 nodes) {
+void addPTTentry(struct PTTtable *table,U64 hash, int depth,U64 nodes) {
 	assert(table);
 	assert(table->entries);
 	assert(table->totentries > 0);
@@ -87,6 +112,13 @@ void clearETT(struct ETTtable *table) {
 	for (int i = 0;i < table->totentries;i++) {
 		table->entries[i].hash = 0;
 		table->entries[i].eval = 0;
+	}
+}
+void clearPVTT(struct PVTTtable *table) {
+	for (int i = 0;i < table->totentries;i++) {
+		struct move nomove = {.to=-1, .from=-1, .prom=-1 };
+		table->entries[i].bestmove = nomove;
+		table->entries[i].score = -999999;
 	}
 }
 void addTTentry(struct TTtable *table,U64 hash, int depth, int flag, struct move bestmove, int score) {

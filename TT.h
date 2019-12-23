@@ -8,6 +8,11 @@
 #define LOWERBOUND 2
 #define UPPERBOUND 3
 
+struct PVTTentry {
+	U64 hash;
+	struct move bestmove;
+	int score;
+};
 struct TTentry {
 	U64 hash;
 	int depth;
@@ -25,6 +30,11 @@ struct PTTentry {
 struct ETTentry {
 	U64 hash;
 	int eval;
+};
+
+struct PVTTtable {
+	struct PVTTentry *entries;
+	int totentries;
 };
 
 struct PTTtable {
@@ -56,6 +66,11 @@ void clearETT(struct ETTtable *table);
 struct PTTentry getPTTentry(struct PTTtable *table,U64 hash);
 struct ETTentry getETTentry(struct ETTtable *table,U64 hash);
 struct TTentry getTTentry(struct TTtable *table,U64 hash);
+
+void initPVTT(struct PVTTtable *table);
+struct PVTTentry getPVTTentry(struct PVTTtable *table, U64 hash);
+void addPVTTentry(struct PVTTtable *table, U64 hash, struct move bestmove, int score);
+void clearPVTT(struct PVTTtable *table);
 
 
 #endif
