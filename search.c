@@ -19,7 +19,7 @@
 #include "bitboards.h"
 #include "magicmoves.h"
 
-#define ONE_PLY 3
+#define ONE_PLY 4
 
 int mate_in(int ply) {
 	return MATE_SCORE - ply;
@@ -123,7 +123,9 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 		unmakeMove(pos);
 
 		if (score >= beta) {
-			if (TTdata.hash != hash) addTTentry(&TT, hash, 0, LOWERBOUND, moves[i], beta);
+			if (TTdata.hash != hash) {
+				if (beta != 0 && beta <= MATE_SCORE - 100 && beta >= -MATE_SCORE + 100) addTTentry(&TT, hash, 0, LOWERBOUND, moves[i], beta);
+			}
 			return beta;
 		}
 		if (score > alpha) {
@@ -132,7 +134,7 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 		}
 	}
 	if (bestmove.from != -1 && TTdata.hash != hash) {
-		addTTentry(&TT, hash, 0, EXACT, bestmove, alpha);
+		if (alpha != 0 && alpha <= MATE_SCORE - 100 && alpha >= -MATE_SCORE + 100) addTTentry(&TT, hash, 0, EXACT, bestmove, alpha);
 	}
 	return alpha;
 }
@@ -340,7 +342,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 				history[pos->tomove][curmove.from][curmove.to] += (depthleft / ONE_PLY) * (depthleft / ONE_PLY);
 				countermoves[prevmove.from][prevmove.to] = curmove;
 			}
-			addTTentry(&TT, hash, origdepthleft, LOWERBOUND, bestmove, bestscore);
+			if (bestscore != 0 && bestscore <= MATE_SCORE - 100 && bestscore >= -MATE_SCORE + 100) addTTentry(&TT, hash, origdepthleft, LOWERBOUND, bestmove, bestscore);
 			*pv = curmove;
 			return score;
 		}
@@ -516,7 +518,9 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		if (r > 0 && score > alpha) {
 			score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY + extension, 0, ply + 1, pv, endtime);
 		}
-
+		if (ply == 0) {
+			//printf("%s %d\n", movetostr(moves[i]), score);
+		}
 		// Unmake the move
 		
 		unmakeMove(pos);
@@ -575,7 +579,8 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	else {
 		newflag = EXACT;
 	}
-	addTTentry(&TT, hash, origdepthleft, newflag, bestmove, bestscore);
+	if (bestscore != 0 && bestscore <= MATE_SCORE - 100 && bestscore >= -MATE_SCORE + 100) addTTentry(&TT, hash, origdepthleft, newflag, bestmove, bestscore);
+	addPVTTentry(&PVTT, hash, bestmove, bestscore);
 	*pv = bestmove;
 	assert(bestmove.to >= 0 && bestmove.to <= 63 && bestmove.from >= 0 && bestmove.from <= 63);
 	return bestscore;
@@ -583,7 +588,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 struct pvline getPV(struct position *pos, int depth) {
 	struct pvline pvline;
 	U64 hash = generateHash(pos);
-	struct TTentry TTdata = getTTentry(&TT,hash);
+	struct PVTTentry TTdata = getPVTTentry(&PVTT,hash);
 	pvline.moves[0] = TTdata.bestmove;
 	pvline.size = 1;
 	int movesmade = 0;
@@ -602,7 +607,7 @@ struct pvline getPV(struct position *pos, int depth) {
 		}
 		pos->tomove = !pos->tomove;
 		hash = generateHash(pos);
-		TTdata = getTTentry(&TT,hash);
+		TTdata = getPVTTentry(&PVTT,hash);
 		if (TTdata.hash != hash) break;
 		pvline.moves[i] = TTdata.bestmove;
 		pvline.size++;
@@ -761,8 +766,16 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 		printf(" score cp %i", score);
 		struct pvline pvline = getPV(&pos,d);
 		printf(" pv");
-		for (int i = 0;i < pvline.size; i++) {
-			printf(" %s",movetostr(pvline.moves[i]));
+		int pvmatch = 0;
+		if (pvline.moves[0].from == bestmove.from && pvline.moves[0].to == bestmove.to && pvline.moves[0].prom == bestmove.prom) pvmatch = 1;
+		if (pvmatch) {
+			for (int i = 0;i < pvline.size; i++) {
+				printf(" %s",movetostr(pvline.moves[i]));
+			}
+		}
+		else {
+			// pv didn't match bestmove, just give bestmove to avoid returning illegal PVs
+			printf(" %s", movetostr(bestmove));
 		}
 		printf("\n");
 		lastsearchdepth = d;
