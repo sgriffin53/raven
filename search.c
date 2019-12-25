@@ -456,7 +456,6 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		pos->tomove = !pos->tomove;
 		
 		nodesSearched++;
-		//printf("%d ply: %d move: %s\n", moves[i].from, ply, movetostr(moves[i]));
 		int givescheck = isCheck(pos);
 		legalmoves++;
 		// futility pruning
@@ -637,7 +636,7 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 	// Timing code
 	const clock_t begin = clock();
 	clock_t endtime = clock() + (movetime / 1000.0 * CLOCKS_PER_SEC);
-	clock_t maxendtime = endtime + (movetime * 1 / 1000.0 * CLOCKS_PER_SEC);
+	clock_t maxendtime = endtime + (movetime * 0.40 / 1000.0 * CLOCKS_PER_SEC);
 	clock_t origendtime = endtime;
 	
 	assert(maxendtime > endtime);
