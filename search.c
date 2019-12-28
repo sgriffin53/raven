@@ -214,6 +214,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	
 	// static null pruning (reverse futility pruning)
 	
+	
 	if (!nullmove && beta <= MATE_SCORE) {
 		if (depthleft == 1 * ONE_PLY && staticeval - 300 > beta) return beta;
 		if (depthleft == 2 * ONE_PLY && staticeval - 525 > beta) return beta;
@@ -247,8 +248,9 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	
 	int f_prune = 0;
 	
-	int fmargin[4] = { 0, 200, 300, 500 };
-	if (depthleft <= 3 * ONE_PLY
+	//int fmargin[4] = { 0, 200, 300, 500 };
+	int fmargin[8] = {0, 150, 250, 350, 450, 550, 650, 750};
+	if (depthleft <= 7 * ONE_PLY
 	&&  !incheck
 	&&   abs(alpha) < 9000
 	&&   staticeval + fmargin[depthleft / ONE_PLY] <= alpha)
@@ -509,7 +511,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		if (SEEvalue < 0) depthleft -= ONE_PLY; // reduce bad captures
 		 
 		// Search
-		//if (extension > 0) printf("%d ext\n", extension);
+		
 		score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY - r + extension, 0, ply + 1, pv, endtime);
 		
 		// Redo search
@@ -517,9 +519,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		if (r > 0 && score > alpha) {
 			score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY + extension, 0, ply + 1, pv, endtime);
 		}
-		if (ply == 0) {
-			//printf("%s %d\n", movetostr(moves[i]), score);
-		}
+		
 		// Unmake the move
 		
 		unmakeMove(pos);
@@ -666,6 +666,7 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 	int lastscore = 0;
 	int lastlastscore = 0;
 	struct move pvlist[128];
+	
 	for(int d = 1; d <= searchdepth; ++d) {
 		
 		time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
