@@ -5,6 +5,7 @@
 #include "globals.h"
 #include "position.h"
 #include "hash.h"
+#include "bitboards.h"
 
 static inline int isThreefold(struct position *pos) {
 	assert(pos);
@@ -30,4 +31,33 @@ static inline int isThreefold(struct position *pos) {
 	return 0;
 }
 
+static inline int isInsufficientMaterial(struct position *pos) {
+	if (!(pos->pieces[PAWN] | pos->pieces[KNIGHT] | pos->pieces[BISHOP] | pos->pieces[ROOK] | pos->pieces[QUEEN])) {
+		// king vs king
+		return 1;
+	}
+	if (!(pos->pieces[PAWN] | pos->pieces[KNIGHT] | pos->pieces[ROOK] | pos->pieces[QUEEN])) {
+		if (__builtin_popcountll(pos->pieces[BISHOP]) == 1) {
+			// KB vs K
+			return 1;
+		}
+		else if (__builtin_popcountll(pos->colours[BLACK] & pos->pieces[BISHOP]) == 1 && __builtin_popcountll(pos->colours[WHITE] & pos->pieces[BISHOP]) == 1) {
+			if (pos->colours[BLACK] & pos->pieces[BISHOP] & BBlightsquares && pos->colours[WHITE] & pos->pieces[BISHOP] & BBlightsquares) {
+				// both have only LSB
+				return 1;
+			}
+			if (pos->colours[BLACK] & pos->pieces[BISHOP] & BBdarksquares && pos->colours[WHITE] & pos->pieces[BISHOP] & BBdarksquares) {
+				// both have only DSB
+				return 1;
+			}
+		}
+	}
+	if (!(pos->pieces[PAWN] | pos->pieces[BISHOP] | pos->pieces[ROOK] | pos->pieces[QUEEN])) {
+		if (__builtin_popcountll(pos->pieces[KNIGHT]) == 1) {
+			// KN vs K
+			return 1;
+		}
+	}
+	return 0;
+}
 #endif

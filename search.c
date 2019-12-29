@@ -152,6 +152,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	currenthash = 0;
 	if (isThreefold(pos)) return 0;
 	if (pos->halfmoves >= 100) return 0;
+	if (isInsufficientMaterial(pos)) return 0;
 	int incheck = isCheck(pos);
 	if (incheck) depthleft += ONE_PLY;
 	if (depthleft <= 0) {
