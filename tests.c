@@ -71,7 +71,7 @@ void runTestsFlip() {
 			numfailed++;
 		}
 		//printf("(%d, %d)\n", eval, neweval);
-		if (numentries % 10000 == 0) printf("%d entries tested.\n"); // give regular updates if we're loading a large file
+		if (numentries % 10000 == 0) printf("%d entries tested.\n", numentries); // give regular updates if we're loading a large file
 		numentries++;
 		
 	}
