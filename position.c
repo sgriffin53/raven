@@ -8,6 +8,31 @@
 #include "globals.h"
 #include "attacks.h"
 
+struct position flipBoard(struct position *pos) {
+	struct position newpos = *pos;
+	//dspBoard(&newpos);
+	for (int i = 0;i < 64;i++) {
+		int file = getfile(i);
+		int rank = getrank(i);
+		int newsquare = fileranktosquareidx(file, 7 - rank);
+		int col = !getColour(pos, i);
+		int piece = getPiece(pos, i);
+		if (piece == NONE) col = NONE;
+		if (piece == KING) {
+			if (!col == WHITE) {
+				newpos.Bkingpos = newsquare;
+			}
+			else if (!col == BLACK) {
+				newpos.Wkingpos = newsquare;
+			}
+		}
+		//printf("orig square: %d new square: %d col: %d piece: %d\n", i, newsquare, col, piece);
+		setPiece(&newpos, newsquare, col, piece);
+	}
+	newpos.tomove = !newpos.tomove;
+	return newpos;
+}
+
 int getrank(int square) {
 	assert(square >= 0 && square <= 63);
 	return square / 8;

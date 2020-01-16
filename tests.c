@@ -5,17 +5,88 @@
 #include "globals.h"
 #include "search.h"
 #include "makemove.h"
+#include "eval.h"
 
 void runTestsAll() {
+	runTestsFlip();
 	runTestsMakeMove();
 	testRunBetaCutoffs();
+}
+void runTestsFlip() {
+	
+	char path[256] = "tests\\flip.epd";
+	
+	char *token;
+	char splitstr[12][200];
+	
+    FILE *fp;
+    char str[1024];
+	
+    fp = fopen(path, "r");
+    if (fp == NULL){
+        printf("Could not open file %s",path);
+    }
+	
+	int numentries = 0;
+	int numpassed = 0;
+	int numfailed = 0;
+	
+	// read entries
+	 
+    while (fgets(str, 1024, fp) != NULL) {
+		//if (numentries >= 4000000) break; // limit number of entries
+        //printf("%s", str);
+		char fen[1024];
+		str[strcspn(str, "\n")] = 0;
+		//split str into tokens into splitstr by space
+		token = strtok(str," ");
+
+		int splitstrend = 0;
+		while (token != NULL) {
+			strcpy(splitstr[splitstrend],token);
+			splitstrend++;
+			token = strtok(NULL, " ");
+		}
+		
+		strcpy(fen,splitstr[0]);
+		strcat(fen, " ");
+		strcat(fen, splitstr[1]);
+		strcat(fen, " ");
+		strcat(fen, splitstr[2]);
+		strcat(fen, " ");
+		strcat(fen, splitstr[3]);
+		struct position pos;
+		parsefen(&pos, fen);
+		int eval = taperedEval(&pos);
+		pos = flipBoard(&pos);
+		int neweval = taperedEval(&pos);
+		//printf("%s [", fen);
+		if (eval == neweval) {
+			numpassed++;
+		//	printf("Passed] ");
+		}
+		else { 
+		//	printf("Failed] ");
+			printf("%s [Failed] (%d, %d)\n", fen, eval, neweval);
+			numfailed++;
+		}
+		//printf("(%d, %d)\n", eval, neweval);
+		if (numentries % 10000 == 0) printf("%d entries tested.\n"); // give regular updates if we're loading a large file
+		numentries++;
+		
+	}
+	printf("Tested %d positions\n", numentries);
+	printf("Passed: %d\n",numpassed);
+	printf("Failed: %d\n", numfailed);
+	printf("Total: %d\n",numentries);
+	fclose(fp);
 }
 void testRunBetaCutoffs() {
 	struct position pos;
 	numbetacutoffs = 0;
 	numinstantbetacutoffs = 0;
 	parsefen(&pos,"startpos");
-	search(pos,6,3000);
+	search(pos,13,13000);
 	printf("Beta cutoff rate: %.2f%%",(float)(numinstantbetacutoffs * (100 / (float)numbetacutoffs)));
 	printf("\n");
 }

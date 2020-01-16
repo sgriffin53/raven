@@ -4,5 +4,6 @@
 void runTestsAll();
 void runTestsMakeMove();
 void testRunBetaCutoffs();
+void runTestsFlip();
 
 #endif

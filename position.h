@@ -10,16 +10,6 @@ typedef unsigned long long U64;
 #define MATE_SCORE 9999
 
 struct position {
-	/*
-	U64 BBwhitepieces;
-	U64 BBblackpieces;
-	U64 BBpawns;
-	U64 BBknights;
-	U64 BBbishops;
-	U64 BBrooks;
-	U64 BBqueens;
-	U64 BBkings;
-	 */
 	U64 pieces[6];
 	U64 colours[2];
 	int epsquare;
@@ -46,7 +36,7 @@ enum SQUARE{A1,B1,C1,D1,E1,F1,G1,H1,
 			A7,B7,C7,D7,E7,F7,G7,H7,
 			A8,B8,C8,D8,E8,F8,G8,H8};
 
-
+struct position flipBoard(struct position *pos);
 int getrank(int square);
 int getfile(int square);
 void parsefen(struct position *pos, const char *ofen);
