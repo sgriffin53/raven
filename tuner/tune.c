@@ -7,6 +7,7 @@
 #include "../position.h"
 #include <time.h>
 #include <inttypes.h>
+#include <limits.h>
 
 float sigmoid(const float s, float k) {
     return 1.0 / (1.0 + pow(10, s * -k / 400.0));
