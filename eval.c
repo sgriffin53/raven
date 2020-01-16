@@ -147,8 +147,6 @@ int taperedEval(struct position *pos) {
 	endgameEval += white_pieces - black_pieces;
 	material += white_pieces - black_pieces;
 	
-	//printf("after material: %d %d\n", openingEval, endgameEval);
-	
 	U64 BBpawnsandkings = pos->pieces[PAWN] | pos->pieces[KING];
 	
 	while (BBpawnsandkings != 0) {
@@ -159,12 +157,9 @@ int taperedEval(struct position *pos) {
 		int col = getColour(pos, square);
 		pstvalO = PSTval(col, piece,square,'O');
 		pstvalE = PSTval(col, piece,square,'E');
-		//printf("square: %d pst vals: %d %d\n", square, pstvalO, pstvalE);
 		openingEval += pstvalO;
 		endgameEval += pstvalE;
 	}
-	
-	//printf("after first pst: %d %d\n", openingEval, endgameEval);
 		
 	// side to move bonus
 	
@@ -183,8 +178,8 @@ int taperedEval(struct position *pos) {
 	// passed pawns
 	
 
-	int WpassedRankBonus[8] = {0, 10, 10, 15, 25, 80, 120, 0};
-	int BpassedRankBonus[8] = {0, 120, 80, 25, 15, 10, 10, 0};
+	int WpassedRankBonus[8] = {0, 10, 10, 16, 26, 80, 120, 0};
+	int BpassedRankBonus[8] = {0, 120, 80, 26, 16, 10, 10, 0};
 	
 	int passedFileBonus_mg[8] = { 25, 11, -14, -14, -14, -14, 11, 25 };
 	int passedFileBonus_eg[8] = { 20, 15, 5, -7, -7, 5, 15, 20 };
@@ -231,7 +226,7 @@ int taperedEval(struct position *pos) {
 		
 		// pawn chain bonus
 		U64 BBpawnattacks = BBpawnEastAttacksB(BBpiece) | BBpawnWestAttacksB(BBpiece);
-		if ((BBpawnattacks & BBwhitepawns)) {
+		if ((BBpawnattacks & pos->colours[WHITE] & pos->pieces[PAWN])) {
 			openingEval += 20;
 			endgameEval += 20;
 		}
@@ -297,7 +292,7 @@ int taperedEval(struct position *pos) {
 		
 		// pawn chain bonus
 		U64 BBpawnattacks = BBpawnEastAttacksW(BBpiece) | BBpawnWestAttacksW(BBpiece);
-		if ((BBpawnattacks & BBblackpawns)) {
+		if ((BBpawnattacks & pos->colours[BLACK] & pos->pieces[PAWN])) {
 			openingEval -= 20;
 			endgameEval -= 20;
 		}
@@ -378,7 +373,7 @@ int taperedEval(struct position *pos) {
 	}
 	
 	// give bonus for kings being close to the winning side in endgames
-	
+	/*
 	int winningside;
 	if (isEndgame(pos)) {
 		if (material > 0) {
@@ -400,7 +395,8 @@ int taperedEval(struct position *pos) {
 			endgameEval -= (6 - dist) * 10;
 		}
 	}
-	 
+	*/
+	
 	// king and rook mate
 	
 	U64 BBwhitenonrookmaterial = (pos->pieces[PAWN] | pos->pieces[QUEEN] | pos->pieces[BISHOP] | pos->pieces[KNIGHT]) & pos->colours[WHITE];
@@ -832,29 +828,29 @@ int taperedEval(struct position *pos) {
 	// white knight bonus
 	
 	if (closedness > 0) {
-		openingEval += num_WN * (closedness / 8.0) * 20;
-		endgameEval += num_WN * (closedness / 8.0) * 20;
+		openingEval += num_WN * (int)(closedness / 8.0) * 20;
+		endgameEval += num_WN * (int)(closedness / 8.0) * 20;
 	}
 	
 	// white bishop bonus
 	
 	if (closedness < 0) {
-		openingEval += num_WB * (-closedness / 8.0) * 20;
-		endgameEval += num_WB * (-closedness / 8.0) * 20;
+		openingEval += num_WB * (int)(-closedness / 8.0) * 20;
+		endgameEval += num_WB * (int)(-closedness / 8.0) * 20;
 	}
 	
 	// black knight bonus
 	
 	if (closedness > 0) {
-		openingEval -= num_BN * (closedness / 8.0) * 20;
-		endgameEval -= num_BN * (closedness / 8.0) * 20;
+		openingEval -= num_BN * (int)(closedness / 8.0) * 20;
+		endgameEval -= num_BN * (int)(closedness / 8.0) * 20;
 	}
 	
 	// black bishop bonus
 	
 	if (closedness < 0) {
-		openingEval -= num_BB * (-closedness / 8.0) * 20;
-		endgameEval -= num_BB * (-closedness / 8.0) * 20;
+		openingEval -= num_BB * (int)(-closedness / 8.0) * 20;
+		endgameEval -= num_BB * (int)(-closedness / 8.0) * 20;
 	}
 	
 	
@@ -1264,97 +1260,6 @@ int isEndgame(struct position *pos) {
 	numpieces = __builtin_popcountll(BBpieces);
 	if (numpieces > 3) return 0;
 	return 1;
-	//BBoccupied = pos->colours[WHITE] | pos->colours[BLACK];
-	/*
-	U64 BBoccupied = pos->colours[WHITE];
-	if (pos->tomove == BLACK) BBoccupied = pos->colours[BLACK];
-	while (BBoccupied != 0) {
-		int square = __builtin_ctzll(BBoccupied);
-		//BBoccupied &= ~(1ULL << square);
-		BBoccupied &= BBoccupied - 1;
-		char piece = getPiece(pos,square);
-		if (pos->tomove == WHITE) {
-			if ((piece == 'N') || (piece == 'B') || (piece == 'R') || (piece == 'Q')) {
-				numpieces++;
-				if (numpieces > 3) return 0;
-			}
-		}
-		else {
-			if ((piece == 'n') || (piece == 'b') || (piece == 'r') || (piece == 'q')) {
-				numpieces++;
-				if (numpieces > 3) return 0;
-			}
-		}
-	}
-	 */
-	/*
-	for (int i=0;i<64;i++) {
-		char piece = getPiece(pos,i);
-		if (piece != '0') {
-			if (pos->tomove == WHITE) {
-				if ((piece == 'N') || (piece == 'B') || (piece == 'R') || (piece == 'Q')) {
-					numpieces++;
-					if (numpieces > 3) return 0;
-				}
-			}
-			else {
-				if ((piece == 'n') || (piece == 'b') || (piece == 'r') || (piece == 'q')) {
-					numpieces++;
-					if (numpieces > 3) return 0;
-				}
-			}
-		}
-	}
-	 */
 	if (numpieces <= 3) return 1;
 	return 0;
-}
-int evalBoard(struct position *pos) {
-	
-	int num_BP = __builtin_popcountll(pos->colours[BLACK] & pos->pieces[PAWN]);
-	int num_BN = __builtin_popcountll(pos->colours[BLACK] & pos->pieces[KNIGHT]);
-	int num_BB = __builtin_popcountll(pos->colours[BLACK] & pos->pieces[BISHOP]);
-	int num_BR = __builtin_popcountll(pos->colours[BLACK] & pos->pieces[ROOK]);
-	int num_BQ = __builtin_popcountll(pos->colours[BLACK] & pos->pieces[QUEEN]);
-	int num_WP = __builtin_popcountll(pos->colours[WHITE] & pos->pieces[PAWN]);
-	int num_WN = __builtin_popcountll(pos->colours[WHITE] & pos->pieces[KNIGHT]);
-	int num_WB = __builtin_popcountll(pos->colours[WHITE] & pos->pieces[BISHOP]);
-	int num_WR = __builtin_popcountll(pos->colours[WHITE] & pos->pieces[ROOK]);
-	int num_WQ = __builtin_popcountll(pos->colours[WHITE] & pos->pieces[QUEEN]);
-	
-	// Piece values
-    int white_pieces = num_WP*pieceval(PAWN)   +
-                       num_WN*pieceval(KNIGHT) +
-                       num_WB*pieceval(BISHOP) +
-                       num_WR*pieceval(ROOK)   +
-                       num_WQ*pieceval(QUEEN);
-
-    int black_pieces = num_BP*pieceval(PAWN)   +
-                       num_BN*pieceval(KNIGHT) +
-                       num_BB*pieceval(BISHOP) +
-                       num_BR*pieceval(ROOK)   +
-                       num_BQ*pieceval(QUEEN);
-
-	int material = white_pieces - black_pieces;
-	int score = material;
-	/*
-	U64 BBoccupied = (pos->colours[WHITE] | pos->colours[BLACK]);
-	while (BBoccupied != 0) {
-		int square = __builtin_ctzll(BBoccupied);
-		char piece = getPiece(pos,square);
-		int col = getColour(pos, square);
-		//BBoccupied &= ~(1ULL << square);
-		BBoccupied &= BBoccupied - 1;
-		int pstscoreO = PSTval(col, piece,square, 'O');
-		int pstscoreE = PSTval(col, piece,square,'E');
-		int pval = (pstscoreO + pstscoreE) / 2;
-		//if ((piece >= 'a') && (piece <= 'z')) {
-		//	pval = -pval;
-		//}
-		score += pval;
-	}
-	 */
-	if (pos->tomove == BLACK) return -score;
-	else return score;
-	
 }
