@@ -164,12 +164,12 @@ int taperedEval(struct position *pos) {
 	// side to move bonus
 	
 	if (pos->tomove == WHITE) {
-		openingEval += 20;
-		endgameEval += 20;
+		openingEval += 27;
+		endgameEval += 27;
 	}
 	else {
-		openingEval -= 20;
-		endgameEval -= 20;
+		openingEval -= 27;
+		endgameEval -= 27;
 	}
 	
 	
@@ -178,8 +178,11 @@ int taperedEval(struct position *pos) {
 	// passed pawns
 	
 
-	int WpassedRankBonus[8] = {0, 10, 10, 16, 26, 80, 120, 0};
-	int BpassedRankBonus[8] = {0, 120, 80, 26, 16, 10, 10, 0};
+	//int WpassedRankBonus[8] = {0, 10, 10, 16, 26, 80, 120, 0};
+	//int BpassedRankBonus[8] = {0, 120, 80, 26, 16, 10, 10, 0};
+	
+	int WpassedRankBonus[8] = { 0, 0, 0, 18, 52, 107, 185, 0 };
+	int BpassedRankBonus[8] = { 0, 185, 107, 52, 18, 0, 0, 0 };
 	
 	int passedFileBonus_mg[8] = { 25, 11, -14, -14, -14, -14, 11, 25 };
 	int passedFileBonus_eg[8] = { 20, 15, 5, -7, -7, 5, 15, 20 };
@@ -219,16 +222,16 @@ int taperedEval(struct position *pos) {
 			int mykingdisty = abs(getrank(pos->Wkingpos) - getrank(square));
 			int mykingdist = max(mykingdistx, mykingdisty);
 			
-			endgameEval += 14 * oppkingdist;
-			endgameEval += -11 * mykingdist;
+			endgameEval += 16 * oppkingdist;
+			endgameEval += -10 * mykingdist;
 			
 		}
 		
 		// pawn chain bonus
 		U64 BBpawnattacks = BBpawnEastAttacksB(BBpiece) | BBpawnWestAttacksB(BBpiece);
 		if ((BBpawnattacks & pos->colours[WHITE] & pos->pieces[PAWN])) {
-			openingEval += 20;
-			endgameEval += 20;
+			openingEval += 2;
+			endgameEval += 2;
 		}
 		
 		U64 BBfilemask = BBfileA << getfile(square);
@@ -238,8 +241,8 @@ int taperedEval(struct position *pos) {
 		U64 BBWpawnsonfile = BBfilemask & (pos->colours[WHITE] & pos->pieces[PAWN]);
 		U64 BBisdoubled = BBWpawnsonfile & (BBWpawnsonfile-1);
 		if (BBisdoubled) {
-			openingEval -= 16;
-			endgameEval -= 16;
+			openingEval -= 4;
+			endgameEval -= 4;
 		}
 		
 		
@@ -248,8 +251,8 @@ int taperedEval(struct position *pos) {
 		U64 BBleftpawns = westOne(BBfilemask) & (pos->colours[WHITE] & pos->pieces[PAWN]);
 		U64 BBrightpawns = eastOne(BBfilemask) & (pos->colours[WHITE] & pos->pieces[PAWN]);
 		if (BBleftpawns == 0 && BBrightpawns == 0) {
-			openingEval -= 6;
-			endgameEval -= 6;
+			openingEval -= 22;
+			endgameEval -= 22;
 		}
 
 		
@@ -284,8 +287,8 @@ int taperedEval(struct position *pos) {
 			int mykingdisty = abs(getrank(pos->Bkingpos) - getrank(square));
 			int mykingdist = max(mykingdistx, mykingdisty);
 			
-			endgameEval -= 14 * oppkingdist;
-			endgameEval -= -11 * mykingdist;
+			endgameEval -= 16 * oppkingdist;
+			endgameEval -= -10 * mykingdist;
 			
 		}
 		
@@ -293,8 +296,8 @@ int taperedEval(struct position *pos) {
 		// pawn chain bonus
 		U64 BBpawnattacks = BBpawnEastAttacksW(BBpiece) | BBpawnWestAttacksW(BBpiece);
 		if ((BBpawnattacks & pos->colours[BLACK] & pos->pieces[PAWN])) {
-			openingEval -= 20;
-			endgameEval -= 20;
+			openingEval -= 2;
+			endgameEval -= 2;
 		}
 		U64 BBfilemask = BBfileA << getfile(square);
 		
@@ -303,8 +306,8 @@ int taperedEval(struct position *pos) {
 		
 		U64 BBisdoubled = BBpawnsonfile & (BBpawnsonfile-1);
 		if (BBisdoubled) {
-			openingEval += 16;
-			endgameEval += 16;
+			openingEval += 4;
+			endgameEval += 4;
 		}
 		
 		// Isolated pawns
@@ -312,8 +315,8 @@ int taperedEval(struct position *pos) {
 		U64 BBleftpawns = westOne(BBfilemask) & (pos->colours[BLACK] & pos->pieces[PAWN]);
 		U64 BBrightpawns = eastOne(BBfilemask) & (pos->colours[BLACK] & pos->pieces[PAWN]);
 		if (BBleftpawns == 0 && BBrightpawns == 0) {
-			openingEval += 6;
-			endgameEval += 6;
+			openingEval += 22;
+			endgameEval += 22;
 		}
 	}
 	
@@ -473,8 +476,8 @@ int taperedEval(struct position *pos) {
 		if (!BBhostilepawns && getrank(pos->Bkingpos) != 7) continue;
 		// either hostile pawns on 7th rank or king is on 8th rank
 		
-		openingEval += 10;
-		endgameEval += 20;
+		openingEval += 0;
+		endgameEval += 57;
 	}
 	
 	while (BBblackqueens) {
@@ -486,8 +489,8 @@ int taperedEval(struct position *pos) {
 		if (!BBhostilepawns && getrank(pos->Wkingpos) != 0) continue;
 		// either hostile pawns on 7th rank or king is on 8th rank
 		
-		openingEval -= 10;
-		endgameEval -= 20;
+		openingEval -= 0;
+		endgameEval -= 57;
 	}
 	
 	while (BBwhiterooks) {
@@ -499,11 +502,12 @@ int taperedEval(struct position *pos) {
 		if (!BBhostilepawns && getrank(pos->Bkingpos) != 7) continue;
 		// either hostile pawns on 7th rank or king is on 8th rank
 		
-		openingEval += 20;
-		endgameEval += 40;
+		openingEval += 5;
+		endgameEval += 0;
 		
 		U64 BBfilemask = BBfileA << getfile(square);
 		
+		/*
 		// rooks on open files
 		U64 BBpawnsonfile = BBfilemask & pos->pieces[PAWN];
 		U64 BBBpawnsonfile = BBfilemask & pos->pieces[PAWN] & pos->colours[BLACK];
@@ -527,6 +531,7 @@ int taperedEval(struct position *pos) {
 			openingEval += 40;
 			endgameEval += 40;
 		}
+		 */
 	}
 	
 	while (BBblackrooks) {
@@ -538,9 +543,10 @@ int taperedEval(struct position *pos) {
 		if (!BBhostilepawns && getrank(pos->Wkingpos) != 0) continue;
 		// either hostile pawns on 7th rank or king is on 8th rank
 		
-		openingEval -= 20;
-		endgameEval -= 40;
+		openingEval -= 5;
+		endgameEval -= 0;
 		
+		/*
 		U64 BBfilemask = BBfileA << getfile(square);
 		
 		// rooks on open files
@@ -565,6 +571,7 @@ int taperedEval(struct position *pos) {
 			openingEval -= 40;
 			endgameEval -= 40;
 		}
+		 */
 	}
 	// loop to check for doubled pawns and rooks on open files
 	/*
@@ -663,24 +670,24 @@ int taperedEval(struct position *pos) {
 	int Wkingpos = pos->Wkingpos;
 	U64 BBpawnshield = BBpawnshieldLookup[WHITE][Wkingpos];
 	BBpawnshield &= (pos->colours[WHITE] & pos->pieces[PAWN]);
-	openingEval += 30 * __builtin_popcountll(BBpawnshield);
+	openingEval += 32 * __builtin_popcountll(BBpawnshield);
 	
 	// black pawn shield
 	
 	int Bkingpos = pos->Bkingpos;
 	BBpawnshield = BBpawnshieldLookup[BLACK][Bkingpos];
 	BBpawnshield &= (pos->colours[BLACK] & pos->pieces[PAWN]);
-	openingEval -= 30 * __builtin_popcountll(BBpawnshield);
+	openingEval -= 32 * __builtin_popcountll(BBpawnshield);
 	
 	// bishop pair bonus
 	
 	if (num_BB >= 2) {
-		openingEval -= 60;
-		endgameEval -= 60;
+		openingEval -= 36;
+		endgameEval -= 98;
 	}
 	if (num_WB >= 2) {
-		openingEval += 60;
-		endgameEval += 60;
+		openingEval += 36;
+		endgameEval += 98;
 	}
 	
 	// penalties for 8 or 0 pawns
@@ -697,21 +704,21 @@ int taperedEval(struct position *pos) {
 	// bonus for pawns in centre
 	
 	U64 BBWpiecesincentre = (pos->colours[WHITE] & pos->pieces[PAWN] & BBcentre);
-	openingEval += 20 * __builtin_popcountll(BBWpiecesincentre);
-	endgameEval += 20 * __builtin_popcountll(BBWpiecesincentre);
+	openingEval += 22 * __builtin_popcountll(BBWpiecesincentre);
+	endgameEval += 0 * __builtin_popcountll(BBWpiecesincentre);
 	
 	U64 BBBpiecesincentre = (pos->colours[BLACK] & pos->pieces[PAWN] & BBcentre);
-	openingEval -= 20 * __builtin_popcountll(BBBpiecesincentre);
-	endgameEval -= 20 * __builtin_popcountll(BBBpiecesincentre);
+	openingEval -= 22 * __builtin_popcountll(BBBpiecesincentre);
+	endgameEval -= 0 * __builtin_popcountll(BBBpiecesincentre);
 	
 	// bonus for pawns attacking the centre
 	
 	U64 BBWattackingcentre = BBpawnattacksW(pos->colours[WHITE] & pos->pieces[PAWN]) & BBcentre;
-	openingEval += 20 * __builtin_popcountll(BBWattackingcentre);
+	openingEval += 9 * __builtin_popcountll(BBWattackingcentre);
 	endgameEval += 10 * __builtin_popcountll(BBWattackingcentre);
 	
 	U64 BBBattackingcentre = BBpawnattacksB(pos->colours[BLACK] & pos->pieces[PAWN]) & BBcentre;
-	openingEval -= 20 * __builtin_popcountll(BBBattackingcentre);
+	openingEval -= 9 * __builtin_popcountll(BBBattackingcentre);
 	endgameEval -= 10 * __builtin_popcountll(BBBattackingcentre);
 	
 	// bonus for connected knights
@@ -721,8 +728,8 @@ int taperedEval(struct position *pos) {
 		U64 BBattacks = BBknightattacks(BBWknights);
 		U64 BBconnectedknights = BBattacks & BBWknights;
 		if (BBconnectedknights) {
-			openingEval += 25;
-			endgameEval += 25;
+			openingEval += 5;
+			endgameEval += 41;
 		}
 	}
 	// black
@@ -731,8 +738,8 @@ int taperedEval(struct position *pos) {
 		U64 BBattacks = BBknightattacks(BBBknights);
 		U64 BBconnectedknights = BBattacks & BBBknights;
 		if (BBconnectedknights) {
-			openingEval -= 25;
-			endgameEval -= 25;
+			openingEval -= 5;
+			endgameEval -= 41;
 		}
 	}
 	
@@ -765,8 +772,8 @@ int taperedEval(struct position *pos) {
 		//BBwhiteknights &= ~(1ULL << square);
 		BBwhiteknights &= BBwhiteknights - 1;
 		if ((BBpawnWestAttacksB(1ULL << square) & BBwhitepawns) || (BBpawnEastAttacksB(1ULL << square) & BBwhitepawns)) {
-			openingEval += 20;
-			endgameEval += 20;
+			openingEval += 15;
+			endgameEval += 27;
 		}
 	}
 	
@@ -778,8 +785,8 @@ int taperedEval(struct position *pos) {
 		//BBblackknights &= ~(1ULL << square);
 		BBblackknights &= BBblackknights - 1;
 		if ((BBpawnWestAttacksW(1ULL << square) & BBblackpawns) || (BBpawnEastAttacksW(1ULL << square) & BBblackpawns)) {
-			openingEval -= 20;
-			endgameEval -= 20;
+			openingEval -= 15;
+			endgameEval -= 27;
 		}
 	}
 	
@@ -793,8 +800,8 @@ int taperedEval(struct position *pos) {
 		//BBwhitebishops &= ~(1ULL << square);
 		BBwhitebishops &= BBwhitebishops - 1;
 		if ((BBpawnWestAttacksB(1ULL << square) & BBwhitepawns) || (BBpawnEastAttacksB(1ULL << square) & BBwhitepawns)) {
-			openingEval += 20;
-			endgameEval += 20;
+			openingEval += 10;
+			endgameEval += 9;
 		}
 	}
 	
@@ -806,8 +813,8 @@ int taperedEval(struct position *pos) {
 		//BBblackbishops &= ~(1ULL << square);
 		BBblackbishops &= BBblackbishops - 1;
 		if ((BBpawnWestAttacksW(1ULL << square) & BBblackpawns) || (BBpawnEastAttacksW(1ULL << square) & BBblackpawns)) {
-			openingEval -= 20;
-			endgameEval -= 20;
+			openingEval -= 10;
+			endgameEval -= 9;
 		}
 	}
 	
@@ -835,8 +842,8 @@ int taperedEval(struct position *pos) {
 	// white bishop bonus
 	
 	if (closedness < 0) {
-		openingEval += num_WB * (int)(-closedness / 8.0) * 20;
-		endgameEval += num_WB * (int)(-closedness / 8.0) * 20;
+		openingEval += num_WB * (int)(-closedness / 8.0) * 0;
+		endgameEval += num_WB * (int)(-closedness / 8.0) * 0;
 	}
 	
 	// black knight bonus
@@ -849,8 +856,8 @@ int taperedEval(struct position *pos) {
 	// black bishop bonus
 	
 	if (closedness < 0) {
-		openingEval -= num_BB * (int)(-closedness / 8.0) * 20;
-		endgameEval -= num_BB * (int)(-closedness / 8.0) * 20;
+		openingEval -= num_BB * (int)(-closedness / 8.0) * 0;
+		endgameEval -= num_BB * (int)(-closedness / 8.0) * 0;
 	}
 	
 	
