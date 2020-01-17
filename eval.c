@@ -87,23 +87,6 @@ const int arrCenterManhattanDistance[64] = { // char is sufficient as well, also
 int piecevalues[7] = { 110, 300, 300, 525, 900, 9999, 0 };
 int pieceval(const char inpiece) {
 	return piecevalues[inpiece];
-	/*
-	switch (inpiece) {
-		case 'p':
-		case 'P': return 110;
-		case 'n':
-		case 'N': return 300;
-		case 'b':
-		case 'B': return 300;
-		case 'r':
-		case 'R': return 525;
-		case 'q':
-		case 'Q': return 900;
-		case 'k':
-		case 'K': return 9999;
-	}
-	return 0;
-	 */
 }
 
 
@@ -181,8 +164,8 @@ int taperedEval(struct position *pos) {
 	//int WpassedRankBonus[8] = {0, 10, 10, 16, 26, 80, 120, 0};
 	//int BpassedRankBonus[8] = {0, 120, 80, 26, 16, 10, 10, 0};
 	
-	int WpassedRankBonus[8] = { 0, 0, 0, 18, 52, 107, 185, 0 };
-	int BpassedRankBonus[8] = { 0, 185, 107, 52, 18, 0, 0, 0 };
+	int WpassedRankBonus[8] = { 0, 0, 0, 18, 52, 108, 186, 0 };
+	int BpassedRankBonus[8] = { 0, 186, 108, 52, 18, 0, 0, 0 };
 	
 	int passedFileBonus_mg[8] = { 25, 11, -14, -14, -14, -14, 11, 25 };
 	int passedFileBonus_eg[8] = { 20, 15, 5, -7, -7, 5, 15, 20 };
@@ -539,7 +522,6 @@ int taperedEval(struct position *pos) {
 	while (BBblackrooks) {
 		int square = __builtin_ctzll(BBblackrooks);
 		BBblackrooks &= BBblackrooks - 1;
-		if (getrank(square) != 1) continue;
 		
 		
 		U64 BBfilemask = BBfileA << getfile(square);
@@ -570,6 +552,8 @@ int taperedEval(struct position *pos) {
 		// rooks on 7th rank
 		
 		// rook on 7th rank
+		
+		if (getrank(square) != 1) continue;
 		U64 BBhostilepawns = BBrank2 & pos->colours[WHITE] & pos->pieces[PAWN];
 		if (!BBhostilepawns && getrank(pos->Wkingpos) != 0) continue;
 		// either hostile pawns on 7th rank or king is on 8th rank
