@@ -496,18 +496,10 @@ int taperedEval(struct position *pos) {
 	while (BBwhiterooks) {
 		int square = __builtin_ctzll(BBwhiterooks);
 		BBwhiterooks &= BBwhiterooks - 1;
-		if (getrank(square) != 6) continue;
-		// rook on 7th rank
-		U64 BBhostilepawns = BBrank7 & pos->colours[BLACK] & pos->pieces[PAWN];
-		if (!BBhostilepawns && getrank(pos->Bkingpos) != 7) continue;
-		// either hostile pawns on 7th rank or king is on 8th rank
-		
-		openingEval += 5;
-		endgameEval += 0;
 		
 		U64 BBfilemask = BBfileA << getfile(square);
 		
-		/*
+		
 		// rooks on open files
 		U64 BBpawnsonfile = BBfilemask & pos->pieces[PAWN];
 		U64 BBBpawnsonfile = BBfilemask & pos->pieces[PAWN] & pos->colours[BLACK];
@@ -531,22 +523,25 @@ int taperedEval(struct position *pos) {
 			openingEval += 40;
 			endgameEval += 40;
 		}
-		 */
+		
+		// rooks on 7th rank
+		
+		if (getrank(square) != 6) continue;
+		// rook on 7th rank
+		U64 BBhostilepawns = BBrank7 & pos->colours[BLACK] & pos->pieces[PAWN];
+		if (!BBhostilepawns && getrank(pos->Bkingpos) != 7) continue;
+		// either hostile pawns on 7th rank or king is on 8th rank
+		
+		openingEval += 5;
+		endgameEval += 0;
 	}
 	
 	while (BBblackrooks) {
 		int square = __builtin_ctzll(BBblackrooks);
 		BBblackrooks &= BBblackrooks - 1;
 		if (getrank(square) != 1) continue;
-		// rook on 7th rank
-		U64 BBhostilepawns = BBrank2 & pos->colours[WHITE] & pos->pieces[PAWN];
-		if (!BBhostilepawns && getrank(pos->Wkingpos) != 0) continue;
-		// either hostile pawns on 7th rank or king is on 8th rank
 		
-		openingEval -= 5;
-		endgameEval -= 0;
 		
-		/*
 		U64 BBfilemask = BBfileA << getfile(square);
 		
 		// rooks on open files
@@ -571,7 +566,16 @@ int taperedEval(struct position *pos) {
 			openingEval -= 40;
 			endgameEval -= 40;
 		}
-		 */
+		
+		// rooks on 7th rank
+		
+		// rook on 7th rank
+		U64 BBhostilepawns = BBrank2 & pos->colours[WHITE] & pos->pieces[PAWN];
+		if (!BBhostilepawns && getrank(pos->Wkingpos) != 0) continue;
+		// either hostile pawns on 7th rank or king is on 8th rank
+		
+		openingEval -= 5;
+		endgameEval -= 0;
 	}
 	// loop to check for doubled pawns and rooks on open files
 	/*
