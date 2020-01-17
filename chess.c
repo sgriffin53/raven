@@ -21,6 +21,7 @@
 #include "bitboards.h"
 #include <limits.h>
 #include "misc.h"
+#include "tuner/tune.h"
 
 int main() {
 	setbuf(stdout, NULL);
@@ -83,10 +84,21 @@ int main() {
 			}
 		}
 		if (strcmp(splitstr[0],"test") == 0) {
-			runTestsAll();
+			if (strcmp(splitstr[1],"flip") == 0) {
+				runTestsFlip();
+			}
+			else runTestsAll();
+		}
+		if (strcmp(splitstr[0],"flip") == 0) {
+			pos = flipBoard(&pos);
+			printf("Flipped board\n");
+			//dspBoard(&pos);
 		}
 		if (strcmp(splitstr[0],"col") == 0) {
 			printf("%d\n",getColour(&pos, atoi(splitstr[1])));
+		}
+		if (strcmp(splitstr[0],"tune") == 0) {
+			tune();
 		}
 		else if (strcmp(splitstr[0],"moves") == 0) {
 			for (int i = 1;i < splitstrend;i++) {
@@ -105,7 +117,7 @@ int main() {
 			movestogo = 25;
 		}
 		if (strcmp(splitstr[0],"eval") == 0) {
-			//printf("%d\n",taperedEval(&pos));
+			printf("tapered: %d\n",taperedEval(&pos));
 		}
 		if (strcmp(splitstr[0],"evalold") == 0) {
 			//printf("%d\n",taperedEval_old(&pos));
