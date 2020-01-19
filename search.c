@@ -618,7 +618,7 @@ struct pvline getPV(struct position *pos, int depth) {
 	
 	return pvline;
 }
-struct move search(struct position pos, int searchdepth, int movetime) {
+struct move search(struct position pos, int searchdepth, int movetime, int strictmovetime) {
 	assert(searchdepth >= 0);
 	assert(movetime > 0);
 	// Reset stats
@@ -691,7 +691,7 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 		if (pos.tomove == BLACK) {
 			timeleftpercent = (double)btime * 100.0 / (double)origbtime; // time left as percentage of original time
 		}
-		if (d > 4 && abs(score - lastscore) >= 0 && !losingontime && timeleftpercent > 30.0) {
+		if (d > 4 && abs(score - lastscore) >= 0 && !losingontime && timeleftpercent > 30.0 && !strictmovetime) {
 			int timeschanged = 0;
 			
 			for (int i = d - 1;i >= 0 && i > d - 5;i--) {
@@ -716,7 +716,7 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 		
 		// Predict whether we have enough time for next search and break if not
 		
-		if (d > 1 && time_spentms > 30 && endtime == origendtime) {
+		if (d > 1 && time_spentms > 30 && endtime == origendtime && !strictmovetime) {
 			if (time_spent_prevms == 0) time_spent_prevms = 1;
 			//double factor = time_spentms / time_spent_prevms;
 			double expectedtime = time_spentms * 4;
@@ -763,7 +763,7 @@ struct move search(struct position pos, int searchdepth, int movetime) {
 		printf(" seldepth %i", seldepth);
 		printf(" nodes %" PRIu64, nodesSearched);
 		printf(" time %i", (int)(time_spent*1000));
-		printf(" nps %i", nps);
+		if (time_spent > 0) printf(" nps %i", nps);
 		printf(" score cp %i", score);
 		struct pvline pvline = getPV(&pos,d);
 		printf(" pv");

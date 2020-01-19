@@ -131,6 +131,7 @@ int main() {
 				searchdepth = atoi(splitstr[2]);
 			}
 			assert(searchdepth >= 1);
+			int strictmovetime = 0;
 			wtime = -1;
 			btime = -1;
 			for (int i = 1;i < splitstrend;i++) {
@@ -153,12 +154,13 @@ int main() {
 				if (btime != -1) movetime = btime / min(25, max(2, movestogo));
 			}
 			if (strcmp(splitstr[1],"movetime") == 0) {
-				movetime = atoi(splitstr[2]);
+				movetime = atoi(splitstr[2]) * .95;
+				strictmovetime = 1;
 			}
 
 			nodesSearched = 0;
 
-			search(pos,searchdepth,movetime);
+			search(pos,searchdepth,movetime, strictmovetime);
 
 		}
 		if (strcmp(splitstr[0],"perft") == 0) {
