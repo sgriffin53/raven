@@ -26,10 +26,24 @@ struct position flipBoard(struct position *pos) {
 				newpos.Wkingpos = newsquare;
 			}
 		}
-		//printf("orig square: %d new square: %d col: %d piece: %d\n", i, newsquare, col, piece);
 		setPiece(&newpos, newsquare, col, piece);
 	}
+	
+	// flip side to move
+	
 	newpos.tomove = !newpos.tomove;
+	
+	// flip castling rights
+	
+	int newWcastleKS = newpos.BcastleKS;
+	int newWcastleQS = newpos.BcastleQS;
+	int newBcastleKS = newpos.WcastleKS;
+	int newBcastleQS = newpos.WcastleQS;
+	newpos.WcastleKS = newWcastleKS;
+	newpos.WcastleQS = newWcastleQS;
+	newpos.BcastleKS = newBcastleKS;
+	newpos.BcastleQS = newBcastleQS;
+	
 	return newpos;
 }
 
