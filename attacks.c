@@ -18,8 +18,17 @@ int isAttacked(struct position *pos,int square, int colour) {
 
 	// check if being attacked by colour's king
 	U64 BBpiece = (1ULL << square); // get bitboard of piece on square
+	U64 BBattacks;
+	// pawn attacks
+	if (colour == WHITE) BBattacks = BBpawnattacksWFlipped(BBpiece);
+	else BBattacks = BBpawnattacksBFlipped(BBpiece);
+	BBattacks = BBattacks & (pos->pieces[PAWN] & pos->colours[colour]);
+	if (BBattacks) {
+		//piece being attacked by pawn
+		return 1;
+	}
 	// get king attack squares
-	U64 BBattacks = BBkingLookup[square];
+	BBattacks |= BBkingLookup[square];
 	BBattacks = BBattacks & (pos->pieces[KING] & pos->colours[colour]);
 	if (BBattacks) {
 		//piece being attacked by king
@@ -33,19 +42,11 @@ int isAttacked(struct position *pos,int square, int colour) {
 		//piece being attacked by knight
 		return 1;
 	}
-	// pawn attacks
-	if (colour == WHITE) BBattacks = BBpawnattacksWFlipped(BBpiece);
-	else BBattacks = BBpawnattacksBFlipped(BBpiece);
-	BBattacks = BBattacks & (pos->pieces[PAWN] & pos->colours[colour]);
-	if (BBattacks) {
-		//piece being attacked by pawn
-		return 1;
-	}
 	// rook attacks
 	U64 BBoccupancy = pos->colours[WHITE] | pos->colours[BLACK];
 	BBattacks = Rmagic(square,BBoccupancy);
 	BBattacks = BBattacks & ~pos->colours[!colour]; // mask out non colour pieces
-	BBattacks = BBattacks & (pos->pieces[ROOK] & pos->colours[colour]);
+	BBattacks = BBattacks & (pos->pieces[ROOK] | pos->pieces[QUEEN]) & pos->colours[colour];
 	if (BBattacks) {
 		//piece being attacked by rook
 		return 1;
@@ -53,11 +54,12 @@ int isAttacked(struct position *pos,int square, int colour) {
 	// bishop attacks
 	BBattacks = Bmagic(square,BBoccupancy);
 	BBattacks = BBattacks & ~pos->colours[!colour]; // mask out black pieces
-	BBattacks = BBattacks & (pos->pieces[BISHOP] & pos->colours[colour]);
+	BBattacks = BBattacks & (pos->pieces[BISHOP] | pos->pieces[QUEEN]) & pos->colours[colour];
 	if (BBattacks) {
 		//piece being attacked by bishop
 		return 1;
 	}
+	/*
 	// queen attacks
 	BBattacks = Bmagic(square,BBoccupancy) | Rmagic(square,BBoccupancy);
 	BBattacks = BBattacks & ~pos->colours[!colour]; // mask out black pieces
@@ -66,6 +68,7 @@ int isAttacked(struct position *pos,int square, int colour) {
 		//piece being attacked by queen
 		return 1;
 	}
+	 */
 	return 0;
 }
 
