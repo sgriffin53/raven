@@ -104,9 +104,6 @@ int main() {
 		if (strcmp(splitstr[0],"tune") == 0) {
 			tune();
 		}
-		if (strcmp(splitstr[0],"block") == 0) {
-			printf("%d\n", blockage(pos.Wkingpos, pos.Bkingpos, (pos.pieces[PAWN] & pos.colours[WHITE]), (pos.pieces[PAWN] & pos.colours[BLACK])));
-		}
 		else if (strcmp(splitstr[0],"moves") == 0) {
 			for (int i = 1;i < splitstrend;i++) {
 				// make move
