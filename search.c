@@ -298,7 +298,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 				U64 BBenemypawns = BBpasserLookup[BLACK][curmove.from] & (pos->colours[WHITE] & pos->pieces[PAWN]);
 				if (!BBenemypawns) {
 					// pawn is passed
-					extension = 0.5 * ONE_PLY;
+					extension = 1 * ONE_PLY;
 				}
 			}
 		}
@@ -310,7 +310,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 				U64 BBenemypawns = BBpasserLookup[WHITE][curmove.from] & (pos->colours[BLACK] & pos->pieces[PAWN]);
 				if (!BBenemypawns) {
 					// pawn is passed
-					extension = 0.5 * ONE_PLY;
+					extension = 1 * ONE_PLY;
 				}
 			}
 		}
@@ -483,7 +483,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 				U64 BBenemypawns = BBpasserLookup[BLACK][moves[i].from] & (pos->colours[WHITE] & pos->pieces[PAWN]);
 				if (!BBenemypawns) {
 					// pawn is passed
-					extension = 0.5 * ONE_PLY;
+					extension = 1 * ONE_PLY;
 				}
 			}
 		}
@@ -497,7 +497,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 					//printf("passed %d\n", moves[i].from);
 					//dspBoard(pos);
 					// pawn is passed
-					extension = 0.5 * ONE_PLY;
+					extension = 1 * ONE_PLY;
 				}
 			}
 		}
