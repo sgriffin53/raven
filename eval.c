@@ -10,32 +10,62 @@
 #include <stdlib.h>
 #include "search.h"
 
+// Evaluation values
+
+int SideToMove_mg = 27;
+int SideToMove_eg = 27;
+int OppKingProximity = 16;
+int MyKingProximity = -10;
+int PawnChain_mg = 2;
+int PawnChain_eg = 2;
+int DoubledPawn_mg = 4;
+int DoubledPawn_eg = 4;
+int IsolatedPawn_mg = 22;
+int IsolatedPawn_eg = 22;
+int ZeroOrEightPawns_mg = 10;
+int ZeroOrEightPawns_eg = 10;
+int PawnShield = 32;
+int PawnsInCentre_mg = 22;
+int PawnsInCentre_eg = 0;
+int PawnsAttackingCentre_mg = 9;
+int PawnsAttackingCentre_eg = 10;
+int ConnectedKnights_mg = 5;
+int ConnectedKnights_eg = 41;
+int KnightsProtectedByPawn_mg = 15;
+int KnightsProtectedByPawn_eg = 27;
+int ClosedKnights_mg = 20;
+int ClosedKnights_eg = 20;
+int BishopPair_mg = 36;
+int BishopPair_eg = 98;
+int BishopsProtectedByPawn_mg = 10;
+int BishopsProtectedByPawn_eg = 9;
+int OpenBishops_mg = 0;
+int OpenBishops_eg = 0;
+int RookOpenFile_mg = 48;
+int RookOpenFile_eg = 16;
+int RookSemiOpenFile_mg = 6;
+int RookSemiOpenFile_eg = 6;
+int RookSameFileQueen_mg = 40;
+int RookSameFileQueen_eg = 40;
+int RookOn7th_mg = 5;
+int RookOn7th_eg = 0;
+int QueenOn7th_mg = 0;
+int QueenOn7th_eg = 57;
+int KingPawnlessFlank_mg = 17;
+int KingPawnlessFlank_eg = 95;
+int ImbalanceFactor = 180;
+
+
+int FreePawnRankBonus[8] = {0, 0, 10, 20, 40, 60, 80, 120 };
+int PassedRankBonus[8] = { 0, 0, 0, 18, 52, 108, 186, 0 };
+int PassedFileBonus_mg[8] = { 25, 11, -14, -14, -14, -14, 11, 25 };
+int PassedFileBonus_eg[8] = { 20, 15, 5, -7, -7, 5, 15, 20 };
+
 // Minor piece attack bonus
 
 int minorAttackBonus_mg[6] = {6, 14, 14, 20, 22, 0};
 int minorAttackBonus_eg[6] = {10, 18, 18, 28, 30, 0};
-/*
-int minorAttackBonus_mg(char piece) {
-	switch (piece) {
-		case PAWN: return 6;
-		case KNIGHT: return 14;
-		case BISHOP: return 14;
-		case ROOK: return 20;
-		case QUEEN: return 22;
-		case KING: return 0;
-	}
-}
-int minorAttackBonus_eg(char piece) {
-	switch (piece) {
-		case PAWN: return 10;
-		case KNIGHT: return 18;
-		case BISHOP: return 18;
-		case ROOK: return 28;
-		case QUEEN: return 30;
-		case KING: return 0;
-	}
-}
-*/
+
 // Piece mobility
 
 int knightMgMobility[9] = {-15, -5, -1, 2, 5, 7, 9, 11, 13};
@@ -88,20 +118,7 @@ int piecevalues[7] = { 110, 300, 300, 525, 900, 9999, 0 };
 int pieceval(const char inpiece) {
 	return piecevalues[inpiece];
 }
-
-
-int taperedEval(struct position *pos) {
-	assert(pos);
-	int pawnPhase = 0;
-	int knightPhase = 1;
-	int bishopPhase = 1;
-	int rookPhase = 2;
-	int queenPhase = 4;
-	int openingEval = 0;
-	int endgameEval = 0;
-	int material = 0;
-	int pstvalO, pstvalE;
-	
+void evalMaterial(struct position *pos, int *openingEval, int *endgameEval) {
 	int num_BP = __builtin_popcountll(pos->colours[BLACK] & pos->pieces[PAWN]);
 	int num_BN = __builtin_popcountll(pos->colours[BLACK] & pos->pieces[KNIGHT]);
 	int num_BB = __builtin_popcountll(pos->colours[BLACK] & pos->pieces[BISHOP]);
@@ -126,9 +143,10 @@ int taperedEval(struct position *pos) {
                        num_BR*pieceval(ROOK)   +
                        num_BQ*pieceval(QUEEN);
 
-    openingEval += white_pieces - black_pieces;
-	endgameEval += white_pieces - black_pieces;
-	material += white_pieces - black_pieces;
+    *openingEval += white_pieces - black_pieces;
+	*endgameEval += white_pieces - black_pieces;
+}
+void evalKPPST(struct position *pos, int *openingEval, int *endgameEval) {
 	
 	U64 BBpawnsandkings = pos->pieces[PAWN] | pos->pieces[KING];
 	
@@ -138,42 +156,20 @@ int taperedEval(struct position *pos) {
 		BBpawnsandkings &= BBpawnsandkings - 1;
 		char piece = getPiece(pos,square);
 		int col = getColour(pos, square);
-		pstvalO = PSTval(col, piece,square,'O');
-		pstvalE = PSTval(col, piece,square,'E');
-		openingEval += pstvalO;
-		endgameEval += pstvalE;
-	}
-		
-	// side to move bonus
-	
-	if (pos->tomove == WHITE) {
-		openingEval += 27;
-		endgameEval += 27;
-	}
-	else {
-		openingEval -= 27;
-		endgameEval -= 27;
+		*openingEval += PSTval(col, piece,square,'O');
+		*endgameEval += PSTval(col, piece,square,'E');
 	}
 	
+}
+void evalPawns(struct position *pos, int *openingEval, int *endgameEval) {
 	
-	
-	
-	// passed pawns
-	
-
-	//int WpassedRankBonus[8] = {0, 10, 10, 16, 26, 80, 120, 0};
-	//int BpassedRankBonus[8] = {0, 120, 80, 26, 16, 10, 10, 0};
-	
-	int WpassedRankBonus[8] = { 0, 0, 0, 18, 52, 108, 186, 0 };
-	int BpassedRankBonus[8] = { 0, 186, 108, 52, 18, 0, 0, 0 };
-	
-	int passedFileBonus_mg[8] = { 25, 11, -14, -14, -14, -14, 11, 25 };
-	int passedFileBonus_eg[8] = { 20, 15, 5, -7, -7, 5, 15, 20 };
+	// Evaluate pawns
 	
 	U64 BBwhitePP = 0ULL;
 	U64 BBblackPP = 0ULL;
 	
 	U64 BBwhitepawns = (pos->colours[WHITE] & pos->pieces[PAWN]);
+	int num_WP = __builtin_popcountll(BBwhitepawns);
 	while (BBwhitepawns) {
 		
 		// passed pawns
@@ -187,12 +183,12 @@ int taperedEval(struct position *pos) {
 			// pawn is passed
 			
 			BBwhitePP |= square; // add square to bb of white passed pawns
-			int bonus = WpassedRankBonus[startrank];
-			openingEval += 0.5 * bonus;
-			endgameEval += 1 * bonus;
+			int bonus = PassedRankBonus[startrank];
+			*openingEval += (int)(0.5 * bonus);
+			*endgameEval += 1 * bonus;
 			
-			openingEval += passedFileBonus_mg[getfile(square)];
-			endgameEval += passedFileBonus_eg[getfile(square)];
+			*openingEval += PassedFileBonus_mg[getfile(square)];
+			*endgameEval += PassedFileBonus_eg[getfile(square)];
 			
 			// give a bonus/penalty for opponent/friendly king distances to the passed pawn
 			
@@ -205,16 +201,16 @@ int taperedEval(struct position *pos) {
 			int mykingdisty = abs(getrank(pos->Wkingpos) - getrank(square));
 			int mykingdist = max(mykingdistx, mykingdisty);
 			
-			endgameEval += 16 * oppkingdist;
-			endgameEval += -10 * mykingdist;
+			*endgameEval += OppKingProximity * oppkingdist;
+			*endgameEval += MyKingProximity * mykingdist;
 			
 		}
 		
 		// pawn chain bonus
 		U64 BBpawnattacks = BBpawnEastAttacksB(BBpiece) | BBpawnWestAttacksB(BBpiece);
 		if ((BBpawnattacks & pos->colours[WHITE] & pos->pieces[PAWN])) {
-			openingEval += 2;
-			endgameEval += 2;
+			*openingEval += PawnChain_mg;
+			*endgameEval += PawnChain_eg;
 		}
 		
 		U64 BBfilemask = BBfileA << getfile(square);
@@ -224,8 +220,8 @@ int taperedEval(struct position *pos) {
 		U64 BBWpawnsonfile = BBfilemask & (pos->colours[WHITE] & pos->pieces[PAWN]);
 		U64 BBisdoubled = BBWpawnsonfile & (BBWpawnsonfile-1);
 		if (BBisdoubled) {
-			openingEval -= 4;
-			endgameEval -= 4;
+			*openingEval -= DoubledPawn_mg;
+			*endgameEval -= DoubledPawn_eg;
 		}
 		
 		
@@ -234,14 +230,15 @@ int taperedEval(struct position *pos) {
 		U64 BBleftpawns = westOne(BBfilemask) & (pos->colours[WHITE] & pos->pieces[PAWN]);
 		U64 BBrightpawns = eastOne(BBfilemask) & (pos->colours[WHITE] & pos->pieces[PAWN]);
 		if (BBleftpawns == 0 && BBrightpawns == 0) {
-			openingEval -= 22;
-			endgameEval -= 22;
+			*openingEval -= IsolatedPawn_mg;
+			*endgameEval -= IsolatedPawn_eg;
 		}
 
 		
 	}
 	
 	U64 BBblackpawns = (pos->colours[BLACK] & pos->pieces[PAWN]);
+	int num_BP = __builtin_popcountll(BBblackpawns);
 	while (BBblackpawns) {
 		// passed pawns
 		int square = __builtin_ctzll(BBblackpawns);
@@ -252,12 +249,12 @@ int taperedEval(struct position *pos) {
 		U64 BBenemypawns = (BBpasserLookup[BLACK][square] & (pos->colours[WHITE] & pos->pieces[PAWN]));
 		if (BBenemypawns == 0) {
 			BBblackPP |= square;
-			int bonus = BpassedRankBonus[startrank];
-			openingEval -= 0.5 * bonus;
-			endgameEval -= 1 * bonus;
+			int bonus = PassedRankBonus[7 - startrank];
+			*openingEval -= (int)(0.5 * bonus);
+			*endgameEval -= 1 * bonus;
 			
-			openingEval -= passedFileBonus_mg[getfile(square)];
-			endgameEval -= passedFileBonus_eg[getfile(square)];
+			*openingEval -= PassedFileBonus_mg[getfile(square)];
+			*endgameEval -= PassedFileBonus_eg[getfile(square)];
 			
 			// give a bonus/penalty for opponent/friendly king distances to the passed pawn
 			
@@ -270,8 +267,8 @@ int taperedEval(struct position *pos) {
 			int mykingdisty = abs(getrank(pos->Bkingpos) - getrank(square));
 			int mykingdist = max(mykingdistx, mykingdisty);
 			
-			endgameEval -= 16 * oppkingdist;
-			endgameEval -= -10 * mykingdist;
+			*endgameEval -= OppKingProximity * oppkingdist;
+			*endgameEval -= MyKingProximity * mykingdist;
 			
 		}
 		
@@ -279,8 +276,8 @@ int taperedEval(struct position *pos) {
 		// pawn chain bonus
 		U64 BBpawnattacks = BBpawnEastAttacksW(BBpiece) | BBpawnWestAttacksW(BBpiece);
 		if ((BBpawnattacks & pos->colours[BLACK] & pos->pieces[PAWN])) {
-			openingEval -= 2;
-			endgameEval -= 2;
+			*openingEval -= PawnChain_mg;
+			*endgameEval -= PawnChain_eg;
 		}
 		U64 BBfilemask = BBfileA << getfile(square);
 		
@@ -289,8 +286,8 @@ int taperedEval(struct position *pos) {
 		
 		U64 BBisdoubled = BBpawnsonfile & (BBpawnsonfile-1);
 		if (BBisdoubled) {
-			openingEval += 4;
-			endgameEval += 4;
+			*openingEval += DoubledPawn_mg;
+			*endgameEval += DoubledPawn_eg;
 		}
 		
 		// Isolated pawns
@@ -298,15 +295,13 @@ int taperedEval(struct position *pos) {
 		U64 BBleftpawns = westOne(BBfilemask) & (pos->colours[BLACK] & pos->pieces[PAWN]);
 		U64 BBrightpawns = eastOne(BBfilemask) & (pos->colours[BLACK] & pos->pieces[PAWN]);
 		if (BBleftpawns == 0 && BBrightpawns == 0) {
-			openingEval += 22;
-			endgameEval += 22;
+			*openingEval += IsolatedPawn_mg;
+			*endgameEval += IsolatedPawn_eg;
 		}
 	}
 	
 	// give a bonus for free passed pawns
 	// pawns on the 6th or 7th rank that can advance without losing material
-	
-	int freepawnrankbonus[8] = {0, 0, 10, 20, 40, 60, 80, 120 };
 	
 	U64 BBwhitePPon4to7rank = (BBwhitePP & (BBrank4 | BBrank5 | BBrank6 | BBrank7));
 	while (BBwhitePPon4to7rank) {
@@ -327,8 +322,8 @@ int taperedEval(struct position *pos) {
 		}
 		if (freepath) {
 			// pawn has a free path to advance to promotion
-			openingEval += freepawnrankbonus[getrank(square)];
-			endgameEval += freepawnrankbonus[getrank(square)];
+			*openingEval += FreePawnRankBonus[getrank(square)];
+			*endgameEval += FreePawnRankBonus[getrank(square)];
 		}
 	}
 	
@@ -353,304 +348,22 @@ int taperedEval(struct position *pos) {
 		}
 		if (freepath) {
 			// pawn has a free path to advance to promotion
-			openingEval -= freepawnrankbonus[7 - getrank(square)];
-			endgameEval -= freepawnrankbonus[7 - getrank(square)];
+			*openingEval -= FreePawnRankBonus[7 - getrank(square)];
+			*endgameEval -= FreePawnRankBonus[7 - getrank(square)];
 		}
 	}
 	
-	// give bonus for kings being close to the winning side in endgames
-	/*
-	int winningside;
-	if (isEndgame(pos)) {
-		if (material > 0) {
-			winningside = WHITE;
-		}
-		else if (material < 0) winningside = BLACK;
-		if (winningside == WHITE) {
-			endgameEval += arrCenterManhattanDistance[pos->Bkingpos] * 10;
-			int xdist = abs(getfile(pos->Wkingpos) - getfile(pos->Bkingpos));
-			int ydist = abs(getrank(pos->Wkingpos) - getrank(pos->Bkingpos));
-			int dist = max(xdist, ydist);
-			endgameEval += (6 - dist) * 10;
-		}
-		else if (winningside == BLACK) {
-			endgameEval -= arrCenterManhattanDistance[pos->Wkingpos] * 10;
-			int xdist = abs(getfile(pos->Wkingpos) - getfile(pos->Bkingpos));
-			int ydist = abs(getrank(pos->Wkingpos) - getrank(pos->Bkingpos));
-			int dist = max(xdist, ydist);
-			endgameEval -= (6 - dist) * 10;
-		}
+	// penalties for 8 or 0 pawns
+	
+	if (num_WP == 0 || num_WP == 8) {
+		*openingEval -= ZeroOrEightPawns_mg;
+		*endgameEval -= ZeroOrEightPawns_eg;
 	}
-	*/
-	
-	// king and rook mate
-	
-	U64 BBwhitenonrookmaterial = (pos->pieces[PAWN] | pos->pieces[QUEEN] | pos->pieces[BISHOP] | pos->pieces[KNIGHT]) & pos->colours[WHITE];
-	U64 BBblackmaterial = (pos->pieces[PAWN] | pos->pieces[QUEEN] | pos->pieces[BISHOP] | pos->pieces[KNIGHT] | pos->pieces[ROOK]) & pos->colours[BLACK];
-	if  (!BBwhitenonrookmaterial && !BBblackmaterial && num_WR == 1) {
-		// KR vs K endgame, white has the rook
-		// give a bonus for the enemy king's centre manhattan distance
-		int xdist = abs(getfile(pos->Wkingpos) - getfile(pos->Bkingpos));
-		int ydist = abs(getrank(pos->Wkingpos) - getrank(pos->Bkingpos));
-		
-		if (xdist == 2 && ydist == 0) {
-			// king is opposing enemy king two files away
-			endgameEval += 200;
-			// check if enemy king is on same file as rook
-			int square = __builtin_ctzll(pos->colours[WHITE] & pos->pieces[ROOK]);
-			if (getfile(pos->Bkingpos) == getfile(square)) {
-				endgameEval += 300;
-			}
-		}
-		if (ydist == 2 && xdist == 0) {
-			// king is opposing enemy king two ranks away
-			endgameEval += 200;
-			// check if enemy king is on same rank as rook
-			int square = __builtin_ctzll(pos->colours[WHITE] & pos->pieces[ROOK]);
-			if (getrank(pos->Bkingpos) == getrank(square)) {
-				endgameEval += 300;
-			}
-		}
-	} 
-	U64 BBblacknonrookmaterial = (pos->pieces[PAWN] | pos->pieces[QUEEN] | pos->pieces[BISHOP] | pos->pieces[KNIGHT]) & pos->colours[BLACK];
-	U64 BBwhitematerial = (pos->pieces[PAWN] | pos->pieces[QUEEN] | pos->pieces[BISHOP] | pos->pieces[KNIGHT] | pos->pieces[ROOK]) & pos->colours[WHITE];
-	if  (!BBblacknonrookmaterial == 1 && !BBwhitematerial && num_BR == 1) {
-		// KR vs K endgame, black has the rook
-		
-		// give a bonus for the enemy king's centre manhattan distance
-		
-		int xdist = abs(getfile(pos->Wkingpos) - getfile(pos->Bkingpos));
-		int ydist = abs(getrank(pos->Wkingpos) - getrank(pos->Bkingpos));
-		
-		if (xdist == 2 && ydist == 0) {
-			// king is opposing enemy king two files away
-			endgameEval -= 200;
-			// check if enemy king is on same file as rook
-			int square = __builtin_ctzll(pos->colours[BLACK] & pos->pieces[ROOK]);
-			if (getfile(pos->Wkingpos) == getfile(square)) {
-				endgameEval -= 300;
-			}
-		}
-		if (ydist == 2 && xdist == 0) {
-			// king is opposing enemy king two ranks away
-			endgameEval -= 200;
-			// check if enemy king is on same rank as rook
-			int square = __builtin_ctzll(pos->colours[BLACK] & pos->pieces[ROOK]);
-			if (getrank(pos->Wkingpos) == getrank(square)) {
-				endgameEval -= 300;
-			}
-		}
-	} 
-	
-	// bonus for rooks/queens being on 7th rank
-	
-	U64 BBwhitequeens = pos->colours[WHITE] & pos->pieces[QUEEN];
-	U64 BBblackqueens = pos->colours[BLACK] & pos->pieces[QUEEN];
-	
-	U64 BBwhiterooks = pos->colours[WHITE] & pos->pieces[ROOK];
-	U64 BBblackrooks = pos->colours[BLACK] & pos->pieces[ROOK];
-	
-	while (BBwhitequeens) {
-		int square = __builtin_ctzll(BBwhitequeens);
-		BBwhitequeens &= BBwhitequeens - 1;
-		if (getrank(square) != 6) continue;
-		// queen on 7th rank
-		U64 BBhostilepawns = BBrank7 & pos->colours[BLACK] & pos->pieces[PAWN];
-		if (!BBhostilepawns && getrank(pos->Bkingpos) != 7) continue;
-		// either hostile pawns on 7th rank or king is on 8th rank
-		
-		openingEval += 0;
-		endgameEval += 57;
+	if (num_BP == 0 || num_BP == 8) {
+		*openingEval += ZeroOrEightPawns_mg;
+		*endgameEval += ZeroOrEightPawns_eg;
 	}
 	
-	while (BBblackqueens) {
-		int square = __builtin_ctzll(BBblackqueens);
-		BBblackqueens &= BBblackqueens - 1;
-		if (getrank(square) != 1) continue;
-		// queen on 7th rank
-		U64 BBhostilepawns = BBrank2 & pos->colours[WHITE] & pos->pieces[PAWN];
-		if (!BBhostilepawns && getrank(pos->Wkingpos) != 0) continue;
-		// either hostile pawns on 7th rank or king is on 8th rank
-		
-		openingEval -= 0;
-		endgameEval -= 57;
-	}
-	
-	while (BBwhiterooks) {
-		int square = __builtin_ctzll(BBwhiterooks);
-		BBwhiterooks &= BBwhiterooks - 1;
-		
-		U64 BBfilemask = BBfileA << getfile(square);
-		
-		
-		// rooks on open files
-		U64 BBpawnsonfile = BBfilemask & pos->pieces[PAWN];
-		U64 BBBpawnsonfile = BBfilemask & pos->pieces[PAWN] & pos->colours[BLACK];
-		U64 BBWpawnsonfile = BBfilemask & pos->pieces[PAWN] & pos->colours[WHITE];
-		// white rook on open file
-		if (BBpawnsonfile == 0) {
-			// white rook on open file
-			openingEval += 48;
-			endgameEval += 16;
-		}
-		if ((BBWpawnsonfile == 0) && (BBBpawnsonfile)) {
-			// white rook on semi-open file with black pawns
-			openingEval += 6;
-			endgameEval += 6;
-		}
-		
-		// rook on same file as queen
-		
-		U64 BBBqueensonfile = BBfilemask & (pos->pieces[QUEEN] & pos->colours[BLACK]);
-		if (BBBqueensonfile) {
-			openingEval += 40;
-			endgameEval += 40;
-		}
-		
-		// rooks on 7th rank
-		
-		if (getrank(square) != 6) continue;
-		// rook on 7th rank
-		U64 BBhostilepawns = BBrank7 & pos->colours[BLACK] & pos->pieces[PAWN];
-		if (!BBhostilepawns && getrank(pos->Bkingpos) != 7) continue;
-		// either hostile pawns on 7th rank or king is on 8th rank
-		
-		openingEval += 5;
-		endgameEval += 0;
-	}
-	
-	while (BBblackrooks) {
-		int square = __builtin_ctzll(BBblackrooks);
-		BBblackrooks &= BBblackrooks - 1;
-		
-		
-		U64 BBfilemask = BBfileA << getfile(square);
-		
-		// rooks on open files
-		U64 BBpawnsonfile = BBfilemask & pos->pieces[PAWN];
-		U64 BBBpawnsonfile = BBfilemask & pos->pieces[PAWN] & pos->colours[BLACK];
-		U64 BBWpawnsonfile = BBfilemask & pos->pieces[PAWN] & pos->colours[WHITE];
-		// black rook on open file
-		if (BBpawnsonfile == 0) {
-			// black rook on open file
-			openingEval -= 48;
-			endgameEval -= 16;
-		}
-		if ((BBBpawnsonfile == 0) && (BBWpawnsonfile)) {
-			// black rook on semi-open file with white pawns
-			openingEval -= 6;
-			endgameEval -= 6;
-		}
-		// rook on same file as queen
-		
-		U64 BBWqueensonfile = BBfilemask & (pos->pieces[QUEEN] & pos->colours[WHITE]);
-		if (BBWqueensonfile) {
-			openingEval -= 40;
-			endgameEval -= 40;
-		}
-		
-		// rooks on 7th rank
-		
-		// rook on 7th rank
-		
-		if (getrank(square) != 1) continue;
-		U64 BBhostilepawns = BBrank2 & pos->colours[WHITE] & pos->pieces[PAWN];
-		if (!BBhostilepawns && getrank(pos->Wkingpos) != 0) continue;
-		// either hostile pawns on 7th rank or king is on 8th rank
-		
-		openingEval -= 5;
-		endgameEval -= 0;
-	}
-	// loop to check for doubled pawns and rooks on open files
-	/*
-	for (int i = 0;i < 8;i++) {
-		// doubled pawns
-		// white pawns
-		U64 BBfilemask = BBfileA << i;
-		
-		U64 BBWpawnsonfile = BBfilemask & (pos->colours[WHITE] & pos->pieces[PAWN]);
-		
-		U64 BBisdoubled = BBWpawnsonfile & (BBWpawnsonfile-1);
-		if (BBisdoubled) {
-			openingEval -= 16;
-			endgameEval -= 16;
-		}
-		// black pawns
-		U64 Bpieces[PAWN]onfile = BBfilemask & (pos->colours[BLACK] & pos->pieces[PAWN]);
-		BBisdoubled = Bpieces[PAWN]onfile & (Bpieces[PAWN]onfile-1);
-		if (BBisdoubled) {
-			openingEval += 16;
-			endgameEval += 16;
-		}
-		
-		
-		// isolated pawns
-
-		if (BBWpawnsonfile) {
-			U64 BBleftpawns = westOne(BBfilemask) & (pos->colours[WHITE] & pos->pieces[PAWN]);
-			U64 BBrightpawns = eastOne(BBfilemask) & (pos->colours[WHITE] & pos->pieces[PAWN]);
-			if (BBleftpawns == 0 && BBrightpawns == 0) {
-				openingEval -= 6;
-				endgameEval -= 6;
-			}
-		}
-		if (Bpieces[PAWN]onfile) {
-			U64 BBleftpawns = westOne(BBfilemask) & (pos->colours[BLACK] & pos->pieces[PAWN]);
-			U64 BBrightpawns = eastOne(BBfilemask) & (pos->colours[BLACK] & pos->pieces[PAWN]);
-			if (BBleftpawns == 0 && BBrightpawns == 0) {
-				openingEval += 6;
-				endgameEval += 6;
-			}
-		}
-		
-		// rooks on open files
-		U64 pieces[PAWN]onfile = BBfilemask & pos->pieces[PAWN];
-		// white rook on open file
-		U64 BBWrooksonfile = BBfilemask & (pos->pieces[ROOK] & pos->colours[WHITE]);
-		if (BBWrooksonfile) {
-			if (pieces[PAWN]onfile == 0) {
-				// white rook on open file
-				openingEval += 48;
-				endgameEval += 16;
-			}
-			if ((BBWpawnsonfile == 0) && (Bpieces[PAWN]onfile)) {
-				// white rook on semi-open file with black pawns
-				openingEval += 6;
-				endgameEval += 6;
-			}
-		}
-		// black rooks on open file
-		U64 Bpieces[ROOK]onfile = BBfilemask & (pos->pieces[ROOK] & pos->colours[BLACK]);
-		if (Bpieces[ROOK]onfile) {
-			if (pieces[PAWN]onfile == 0) {
-				// black rook on open file
-				openingEval -= 48;
-				endgameEval -= 16;
-			}
-			if ((Bpieces[PAWN]onfile == 0) && (BBWpawnsonfile)) {
-				// black rook on semi-open file with white pawns
-				openingEval -= 6;
-				endgameEval -= 6;
-			}
-		}
-
-		// rooks on same file as queen
-		U64 BBWqueensonfile = BBfilemask & (pos->pieces[QUEEN] & pos->colours[WHITE]);
-		U64 Bpieces[QUEEN]onfile = BBfilemask & (pos->pieces[QUEEN] & pos->colours[BLACK]);
-		if (BBWrooksonfile) {
-			if (Bpieces[QUEEN]onfile) {
-				openingEval += 40;
-				endgameEval += 40;
-			}
-		}
-		if (Bpieces[ROOK]onfile) {
-			if (BBWqueensonfile) {
-				openingEval -= 40;
-				endgameEval -= 40;
-			}
-		}
-	}
-	*/
 	// pawn shield
 	
 	// white pawn shield
@@ -658,56 +371,40 @@ int taperedEval(struct position *pos) {
 	int Wkingpos = pos->Wkingpos;
 	U64 BBpawnshield = BBpawnshieldLookup[WHITE][Wkingpos];
 	BBpawnshield &= (pos->colours[WHITE] & pos->pieces[PAWN]);
-	openingEval += 32 * __builtin_popcountll(BBpawnshield);
+	*openingEval += PawnShield * __builtin_popcountll(BBpawnshield);
 	
 	// black pawn shield
 	
 	int Bkingpos = pos->Bkingpos;
 	BBpawnshield = BBpawnshieldLookup[BLACK][Bkingpos];
 	BBpawnshield &= (pos->colours[BLACK] & pos->pieces[PAWN]);
-	openingEval -= 32 * __builtin_popcountll(BBpawnshield);
-	
-	// bishop pair bonus
-	
-	if (num_BB >= 2) {
-		openingEval -= 36;
-		endgameEval -= 98;
-	}
-	if (num_WB >= 2) {
-		openingEval += 36;
-		endgameEval += 98;
-	}
-	
-	// penalties for 8 or 0 pawns
-	
-	if (num_WP == 0 || num_WP == 8) {
-		openingEval -= 10;
-		endgameEval -= 10;
-	}
-	if (num_BP == 0 || num_BP == 8) {
-		openingEval += 10;
-		endgameEval += 10;
-	}
+	*openingEval -= PawnShield * __builtin_popcountll(BBpawnshield);
 	
 	// bonus for pawns in centre
 	
 	U64 BBWpiecesincentre = (pos->colours[WHITE] & pos->pieces[PAWN] & BBcentre);
-	openingEval += 22 * __builtin_popcountll(BBWpiecesincentre);
-	endgameEval += 0 * __builtin_popcountll(BBWpiecesincentre);
+	*openingEval += PawnsInCentre_mg * __builtin_popcountll(BBWpiecesincentre);
+	*endgameEval += PawnsInCentre_eg * __builtin_popcountll(BBWpiecesincentre);
 	
 	U64 BBBpiecesincentre = (pos->colours[BLACK] & pos->pieces[PAWN] & BBcentre);
-	openingEval -= 22 * __builtin_popcountll(BBBpiecesincentre);
-	endgameEval -= 0 * __builtin_popcountll(BBBpiecesincentre);
+	*openingEval -= PawnsInCentre_mg * __builtin_popcountll(BBBpiecesincentre);
+	*endgameEval -= PawnsInCentre_eg * __builtin_popcountll(BBBpiecesincentre);
 	
 	// bonus for pawns attacking the centre
 	
 	U64 BBWattackingcentre = BBpawnattacksW(pos->colours[WHITE] & pos->pieces[PAWN]) & BBcentre;
-	openingEval += 9 * __builtin_popcountll(BBWattackingcentre);
-	endgameEval += 10 * __builtin_popcountll(BBWattackingcentre);
+	*openingEval += PawnsAttackingCentre_mg * __builtin_popcountll(BBWattackingcentre);
+	*endgameEval += PawnsAttackingCentre_eg * __builtin_popcountll(BBWattackingcentre);
 	
 	U64 BBBattackingcentre = BBpawnattacksB(pos->colours[BLACK] & pos->pieces[PAWN]) & BBcentre;
-	openingEval -= 9 * __builtin_popcountll(BBBattackingcentre);
-	endgameEval -= 10 * __builtin_popcountll(BBBattackingcentre);
+	*openingEval -= PawnsAttackingCentre_mg * __builtin_popcountll(BBBattackingcentre);
+	*endgameEval -= PawnsAttackingCentre_eg * __builtin_popcountll(BBBattackingcentre);
+	
+}
+void evalKnights(struct position *pos, int *openingEval, int *endgameEval) {
+	
+	int num_BN = __builtin_popcountll(pos->colours[BLACK] & pos->pieces[KNIGHT]);
+	int num_WN = __builtin_popcountll(pos->colours[WHITE] & pos->pieces[KNIGHT]);
 	
 	// bonus for connected knights
 	// white
@@ -716,8 +413,8 @@ int taperedEval(struct position *pos) {
 		U64 BBattacks = BBknightattacks(BBWknights);
 		U64 BBconnectedknights = BBattacks & BBWknights;
 		if (BBconnectedknights) {
-			openingEval += 5;
-			endgameEval += 41;
+			*openingEval += ConnectedKnights_mg;
+			*endgameEval += ConnectedKnights_eg;
 		}
 	}
 	// black
@@ -726,33 +423,18 @@ int taperedEval(struct position *pos) {
 		U64 BBattacks = BBknightattacks(BBBknights);
 		U64 BBconnectedknights = BBattacks & BBBknights;
 		if (BBconnectedknights) {
-			openingEval -= 5;
-			endgameEval -= 41;
+			*openingEval -= ConnectedKnights_mg;
+			*endgameEval -= ConnectedKnights_eg;
 		}
 	}
 	
-	// bonus for trading when ahead in material
-	
-	int whitematval = num_WN * pieceval(KNIGHT) + num_WB * pieceval(BISHOP) + num_WR * pieceval(ROOK) + num_WQ * pieceval(QUEEN);
-	int blackmatval = num_BN * pieceval(KNIGHT) + num_BB * pieceval(BISHOP) + num_BR * pieceval(ROOK) + num_BQ * pieceval(QUEEN);
-	if (whitematval > blackmatval) {
-		double matimb = 1.0 - (blackmatval / whitematval);
-		openingEval += matimb * 180;
-		endgameEval += matimb * 180;
-	}
-	
-	else if (blackmatval > whitematval) {
-		double matimb = 1.0 - (whitematval / blackmatval);
-		openingEval -= matimb * 180;
-		endgameEval -= matimb * 180;
-	}
 	
 	// knights protected by pawns
 	
 	// white
 	
-	BBwhitepawns = (pos->colours[WHITE] & pos->pieces[PAWN]);
-	BBblackpawns = (pos->colours[BLACK] & pos->pieces[PAWN]);
+	U64 BBwhitepawns = (pos->colours[WHITE] & pos->pieces[PAWN]);
+	U64 BBblackpawns = (pos->colours[BLACK] & pos->pieces[PAWN]);
 	
 	U64 BBwhiteknights = (pos->colours[WHITE] & pos->pieces[KNIGHT]);
 	while (BBwhiteknights) {
@@ -760,8 +442,8 @@ int taperedEval(struct position *pos) {
 		//BBwhiteknights &= ~(1ULL << square);
 		BBwhiteknights &= BBwhiteknights - 1;
 		if ((BBpawnWestAttacksB(1ULL << square) & BBwhitepawns) || (BBpawnEastAttacksB(1ULL << square) & BBwhitepawns)) {
-			openingEval += 15;
-			endgameEval += 27;
+			*openingEval += KnightsProtectedByPawn_mg;
+			*endgameEval += KnightsProtectedByPawn_eg;
 		}
 	}
 	
@@ -773,39 +455,10 @@ int taperedEval(struct position *pos) {
 		//BBblackknights &= ~(1ULL << square);
 		BBblackknights &= BBblackknights - 1;
 		if ((BBpawnWestAttacksW(1ULL << square) & BBblackpawns) || (BBpawnEastAttacksW(1ULL << square) & BBblackpawns)) {
-			openingEval -= 15;
-			endgameEval -= 27;
+			*openingEval -= KnightsProtectedByPawn_mg;
+			*endgameEval -= KnightsProtectedByPawn_eg;
 		}
 	}
-	
-	// bishops protected by pawns
-	
-	// white
-	
-	U64 BBwhitebishops = (pos->colours[WHITE] & pos->pieces[BISHOP]);
-	while (BBwhitebishops) {
-		int square = __builtin_ctzll(BBwhitebishops);
-		//BBwhitebishops &= ~(1ULL << square);
-		BBwhitebishops &= BBwhitebishops - 1;
-		if ((BBpawnWestAttacksB(1ULL << square) & BBwhitepawns) || (BBpawnEastAttacksB(1ULL << square) & BBwhitepawns)) {
-			openingEval += 10;
-			endgameEval += 9;
-		}
-	}
-	
-	// black
-	
-	U64 BBblackbishops = (pos->colours[BLACK] & pos->pieces[BISHOP]);
-	while (BBblackbishops) {
-		int square = __builtin_ctzll(BBblackbishops);
-		//BBblackbishops &= ~(1ULL << square);
-		BBblackbishops &= BBblackbishops - 1;
-		if ((BBpawnWestAttacksW(1ULL << square) & BBblackpawns) || (BBpawnEastAttacksW(1ULL << square) & BBblackpawns)) {
-			openingEval -= 10;
-			endgameEval -= 9;
-		}
-	}
-	
 	
 	// bonus for knights in closed positions
 	// bonus for bishops in open positions
@@ -823,31 +476,286 @@ int taperedEval(struct position *pos) {
 	// white knight bonus
 	
 	if (closedness > 0) {
-		openingEval += num_WN * (int)(closedness / 8.0) * 20;
-		endgameEval += num_WN * (int)(closedness / 8.0) * 20;
-	}
-	
-	// white bishop bonus
-	
-	if (closedness < 0) {
-		openingEval += num_WB * (int)(-closedness / 8.0) * 0;
-		endgameEval += num_WB * (int)(-closedness / 8.0) * 0;
+		*openingEval += num_WN * (int)(closedness / 8.0) * ClosedKnights_mg;
+		*endgameEval += num_WN * (int)(closedness / 8.0) * ClosedKnights_eg;
 	}
 	
 	// black knight bonus
 	
 	if (closedness > 0) {
-		openingEval -= num_BN * (int)(closedness / 8.0) * 20;
-		endgameEval -= num_BN * (int)(closedness / 8.0) * 20;
+		*openingEval -= num_BN * (int)(closedness / 8.0) * ClosedKnights_mg;
+		*endgameEval -= num_BN * (int)(closedness / 8.0) * ClosedKnights_eg;
+	}
+}
+void evalBishops(struct position *pos, int *openingEval, int *endgameEval) {
+	
+	U64 BBwhitepawns = (pos->colours[WHITE] & pos->pieces[PAWN]);
+	U64 BBblackpawns = (pos->colours[BLACK] & pos->pieces[PAWN]);
+	
+		
+	int num_BB = __builtin_popcountll(pos->colours[BLACK] & pos->pieces[BISHOP]);
+	int num_WB = __builtin_popcountll(pos->colours[WHITE] & pos->pieces[BISHOP]);
+	
+	// bishop pair bonus
+	
+	if (num_BB >= 2) {
+		*openingEval -= BishopPair_mg;
+		*endgameEval -= BishopPair_eg;
+	}
+	if (num_WB >= 2) {
+		*openingEval += BishopPair_mg;
+		*endgameEval += BishopPair_eg;
+	}
+	
+
+	// bishops protected by pawns
+	
+	// white
+	
+	U64 BBwhitebishops = (pos->colours[WHITE] & pos->pieces[BISHOP]);
+	while (BBwhitebishops) {
+		int square = __builtin_ctzll(BBwhitebishops);
+		//BBwhitebishops &= ~(1ULL << square);
+		BBwhitebishops &= BBwhitebishops - 1;
+		if ((BBpawnWestAttacksB(1ULL << square) & BBwhitepawns) || (BBpawnEastAttacksB(1ULL << square) & BBwhitepawns)) {
+			*openingEval += BishopsProtectedByPawn_mg;
+			*endgameEval += BishopsProtectedByPawn_eg;
+		}
+	}
+	
+	// black
+	
+	U64 BBblackbishops = (pos->colours[BLACK] & pos->pieces[BISHOP]);
+	while (BBblackbishops) {
+		int square = __builtin_ctzll(BBblackbishops);
+		//BBblackbishops &= ~(1ULL << square);
+		BBblackbishops &= BBblackbishops - 1;
+		if ((BBpawnWestAttacksW(1ULL << square) & BBblackpawns) || (BBpawnEastAttacksW(1ULL << square) & BBblackpawns)) {
+			*openingEval -= BishopsProtectedByPawn_mg;
+			*endgameEval -= BishopsProtectedByPawn_eg;
+		}
+	}
+	
+	// bonus for knights in closed positions
+	// bonus for bishops in open positions
+	
+	U64 BBWrammed = southOne(pos->pieces[PAWN] & pos->colours[BLACK]) & (pos->pieces[PAWN] & pos->colours[WHITE]);
+	U64 BBBrammed = northOne(pos->pieces[PAWN] & pos->colours[WHITE]) & (pos->pieces[PAWN] & pos->colours[BLACK]);
+	
+	int rammedpairs = __builtin_popcountll(BBWrammed);
+	int nonrammedpawns = __builtin_popcountll(pos->pieces[PAWN] & ~BBWrammed & ~BBBrammed);
+	
+	// closedness is a number from -8 to 8, -8 being completely open, 8 being completely closed
+		
+	double closedness = rammedpairs * 2 + nonrammedpawns / 2 - 8;
+	
+	// white bishop bonus
+	
+	if (closedness < 0) {
+		openingEval += num_WB * (int)(-closedness / 8.0) * OpenBishops_mg;
+		endgameEval += num_WB * (int)(-closedness / 8.0) * OpenBishops_eg;
 	}
 	
 	// black bishop bonus
 	
 	if (closedness < 0) {
-		openingEval -= num_BB * (int)(-closedness / 8.0) * 0;
-		endgameEval -= num_BB * (int)(-closedness / 8.0) * 0;
+		openingEval -= num_BB * (int)(-closedness / 8.0) * OpenBishops_mg;
+		endgameEval -= num_BB * (int)(-closedness / 8.0) * OpenBishops_eg;
 	}
 	
+}
+void evalKRmate(struct position *pos, int *openingEval, int *endgameEval) {
+	
+	int num_BR = __builtin_popcountll(pos->colours[BLACK] & pos->pieces[ROOK]);
+	int num_WR = __builtin_popcountll(pos->colours[WHITE] & pos->pieces[ROOK]);
+	
+	// king and rook mate
+	
+	U64 BBwhitenonrookmaterial = (pos->pieces[PAWN] | pos->pieces[QUEEN] | pos->pieces[BISHOP] | pos->pieces[KNIGHT]) & pos->colours[WHITE];
+	U64 BBblackmaterial = (pos->pieces[PAWN] | pos->pieces[QUEEN] | pos->pieces[BISHOP] | pos->pieces[KNIGHT] | pos->pieces[ROOK]) & pos->colours[BLACK];
+	if  (!BBwhitenonrookmaterial && !BBblackmaterial && num_WR == 1) {
+		// KR vs K endgame, white has the rook
+		// give a bonus for the enemy king's centre manhattan distance
+		int xdist = abs(getfile(pos->Wkingpos) - getfile(pos->Bkingpos));
+		int ydist = abs(getrank(pos->Wkingpos) - getrank(pos->Bkingpos));
+		
+		if (xdist == 2 && ydist == 0) {
+			// king is opposing enemy king two files away
+			*endgameEval += 200;
+			// check if enemy king is on same file as rook
+			int square = __builtin_ctzll(pos->colours[WHITE] & pos->pieces[ROOK]);
+			if (getfile(pos->Bkingpos) == getfile(square)) {
+				*endgameEval += 300;
+			}
+		}
+		if (ydist == 2 && xdist == 0) {
+			// king is opposing enemy king two ranks away
+			*endgameEval += 200;
+			// check if enemy king is on same rank as rook
+			int square = __builtin_ctzll(pos->colours[WHITE] & pos->pieces[ROOK]);
+			if (getrank(pos->Bkingpos) == getrank(square)) {
+				*endgameEval += 300;
+			}
+		}
+	} 
+	U64 BBblacknonrookmaterial = (pos->pieces[PAWN] | pos->pieces[QUEEN] | pos->pieces[BISHOP] | pos->pieces[KNIGHT]) & pos->colours[BLACK];
+	U64 BBwhitematerial = (pos->pieces[PAWN] | pos->pieces[QUEEN] | pos->pieces[BISHOP] | pos->pieces[KNIGHT] | pos->pieces[ROOK]) & pos->colours[WHITE];
+	if  (!BBblacknonrookmaterial == 1 && !BBwhitematerial && num_BR == 1) {
+		// KR vs K endgame, black has the rook
+		
+		// give a bonus for the enemy king's centre manhattan distance
+		
+		int xdist = abs(getfile(pos->Wkingpos) - getfile(pos->Bkingpos));
+		int ydist = abs(getrank(pos->Wkingpos) - getrank(pos->Bkingpos));
+		
+		if (xdist == 2 && ydist == 0) {
+			// king is opposing enemy king two files away
+			*endgameEval -= 200;
+			// check if enemy king is on same file as rook
+			int square = __builtin_ctzll(pos->colours[BLACK] & pos->pieces[ROOK]);
+			if (getfile(pos->Wkingpos) == getfile(square)) {
+				*endgameEval -= 300;
+			}
+		}
+		if (ydist == 2 && xdist == 0) {
+			// king is opposing enemy king two ranks away
+			*endgameEval -= 200;
+			// check if enemy king is on same rank as rook
+			int square = __builtin_ctzll(pos->colours[BLACK] & pos->pieces[ROOK]);
+			if (getrank(pos->Wkingpos) == getrank(square)) {
+				*endgameEval -= 300;
+			}
+		}
+	} 
+}
+void evalRooks(struct position *pos, int *openingEval, int *endgameEval) {
+	
+	// bonus for rooks being on 7th rank or (semi-)open files
+	
+	U64 BBwhiterooks = pos->colours[WHITE] & pos->pieces[ROOK];
+	U64 BBblackrooks = pos->colours[BLACK] & pos->pieces[ROOK];
+	
+	while (BBwhiterooks) {
+		int square = __builtin_ctzll(BBwhiterooks);
+		BBwhiterooks &= BBwhiterooks - 1;
+		
+		U64 BBfilemask = BBfileA << getfile(square);
+		
+		
+		// rooks on open files
+		U64 BBpawnsonfile = BBfilemask & pos->pieces[PAWN];
+		U64 BBBpawnsonfile = BBfilemask & pos->pieces[PAWN] & pos->colours[BLACK];
+		U64 BBWpawnsonfile = BBfilemask & pos->pieces[PAWN] & pos->colours[WHITE];
+		// white rook on open file
+		if (BBpawnsonfile == 0) {
+			// white rook on open file
+			*openingEval += RookOpenFile_mg;
+			*endgameEval += RookOpenFile_eg;
+		}
+		if ((BBWpawnsonfile == 0) && (BBBpawnsonfile)) {
+			// white rook on semi-open file with black pawns
+			*openingEval += RookSemiOpenFile_mg;
+			*endgameEval += RookSemiOpenFile_eg;
+		}
+		
+		// rook on same file as queen
+		
+		U64 BBBqueensonfile = BBfilemask & (pos->pieces[QUEEN] & pos->colours[BLACK]);
+		if (BBBqueensonfile) {
+			*openingEval += RookSameFileQueen_mg;
+			*endgameEval += RookSameFileQueen_eg;
+		}
+		
+		// rooks on 7th rank
+		
+		if (getrank(square) != 6) continue;
+		// rook on 7th rank
+		U64 BBhostilepawns = BBrank7 & pos->colours[BLACK] & pos->pieces[PAWN];
+		if (!BBhostilepawns && getrank(pos->Bkingpos) != 7) continue;
+		// either hostile pawns on 7th rank or king is on 8th rank
+		
+		*openingEval += RookOn7th_mg;
+		*endgameEval += RookOn7th_eg;
+	}
+	
+	while (BBblackrooks) {
+		int square = __builtin_ctzll(BBblackrooks);
+		BBblackrooks &= BBblackrooks - 1;
+		
+		
+		U64 BBfilemask = BBfileA << getfile(square);
+		
+		// rooks on open files
+		U64 BBpawnsonfile = BBfilemask & pos->pieces[PAWN];
+		U64 BBBpawnsonfile = BBfilemask & pos->pieces[PAWN] & pos->colours[BLACK];
+		U64 BBWpawnsonfile = BBfilemask & pos->pieces[PAWN] & pos->colours[WHITE];
+		// black rook on open file
+		if (BBpawnsonfile == 0) {
+			// black rook on open file
+			*openingEval -= RookOpenFile_mg;
+			*endgameEval -= RookOpenFile_eg;
+		}
+		if ((BBBpawnsonfile == 0) && (BBWpawnsonfile)) {
+			// black rook on semi-open file with white pawns
+			*openingEval -= RookSemiOpenFile_mg;
+			*endgameEval -= RookSemiOpenFile_eg;
+		}
+		// rook on same file as queen
+		
+		U64 BBWqueensonfile = BBfilemask & (pos->pieces[QUEEN] & pos->colours[WHITE]);
+		if (BBWqueensonfile) {
+			*openingEval -= RookSameFileQueen_mg;
+			*endgameEval -= RookSameFileQueen_eg;
+		}
+		
+		// rooks on 7th rank
+		
+		// rook on 7th rank
+		
+		if (getrank(square) != 1) continue;
+		U64 BBhostilepawns = BBrank2 & pos->colours[WHITE] & pos->pieces[PAWN];
+		if (!BBhostilepawns && getrank(pos->Wkingpos) != 0) continue;
+		// either hostile pawns on 7th rank or king is on 8th rank
+		
+		*openingEval -= RookOn7th_mg;
+		*endgameEval -= RookOn7th_eg;
+	}
+}
+
+void evalQueens(struct position *pos, int *openingEval, int *endgameEval) {
+	
+	// bonus for rooks/queens being on 7th rank
+	
+	U64 BBwhitequeens = pos->colours[WHITE] & pos->pieces[QUEEN];
+	U64 BBblackqueens = pos->colours[BLACK] & pos->pieces[QUEEN];
+	
+	while (BBwhitequeens) {
+		int square = __builtin_ctzll(BBwhitequeens);
+		BBwhitequeens &= BBwhitequeens - 1;
+		if (getrank(square) != 6) continue;
+		// queen on 7th rank
+		U64 BBhostilepawns = BBrank7 & pos->colours[BLACK] & pos->pieces[PAWN];
+		if (!BBhostilepawns && getrank(pos->Bkingpos) != 7) continue;
+		// either hostile pawns on 7th rank or king is on 8th rank
+		
+		*openingEval += QueenOn7th_mg;
+		*endgameEval += QueenOn7th_eg;
+	}
+	
+	while (BBblackqueens) {
+		int square = __builtin_ctzll(BBblackqueens);
+		BBblackqueens &= BBblackqueens - 1;
+		if (getrank(square) != 1) continue;
+		// queen on 7th rank
+		U64 BBhostilepawns = BBrank2 & pos->colours[WHITE] & pos->pieces[PAWN];
+		if (!BBhostilepawns && getrank(pos->Wkingpos) != 0) continue;
+		// either hostile pawns on 7th rank or king is on 8th rank
+		
+		*openingEval -= QueenOn7th_mg;
+		*endgameEval -= QueenOn7th_eg;
+	}
+}
+void evalKings(struct position *pos, int *openingEval, int *endgameEval) {
 	
 	// penalty for king on pawnless flank
 	
@@ -864,8 +772,8 @@ int taperedEval(struct position *pos) {
 			BBflank = BBfileF | BBfileG | BBfileH;
 		}
 		if (!(BBflank & pos->pieces[PAWN])) {
-			openingEval -= 17;
-			endgameEval -= 95;
+			*openingEval -= KingPawnlessFlank_mg;
+			*endgameEval -= KingPawnlessFlank_eg;
 		}
 	}
 	
@@ -882,10 +790,13 @@ int taperedEval(struct position *pos) {
 			BBflank = BBfileF | BBfileG | BBfileH;
 		}
 		if (!(BBflank & pos->pieces[PAWN])) {
-			openingEval += 17;
-			endgameEval += 95;
+			*openingEval += KingPawnlessFlank_mg;
+			*endgameEval += KingPawnlessFlank_eg;
 		}
 	}
+	
+}
+void evalMobility(struct position *pos, int *openingEval, int *endgameEval) {
 	
 	int kingattackers = 0;
 	int kingattacks = 0;
@@ -895,95 +806,87 @@ int taperedEval(struct position *pos) {
 	
 	struct mobreturn WNmobility = Nmobility(pos,WHITE);
 	idx = max(0, WNmobility.mobility - WNmobility.unsafe * 2);
-	openingEval += knightMgMobility[idx];
-	endgameEval += knightEgMobility[idx];
-	openingEval += WNmobility.pstO;
-	endgameEval += WNmobility.pstE;
+	*openingEval += knightMgMobility[idx];
+	*endgameEval += knightEgMobility[idx];
+	*openingEval += WNmobility.pstO;
+	*endgameEval += WNmobility.pstE;
 	kingattacks +=  WNmobility.kingattacks;
 	kingattackers += WNmobility.kingattackers;
 	
 	struct mobreturn WBmobility = Bmobility(pos,WHITE);
 	idx = max(0, WBmobility.mobility - WBmobility.unsafe * 2);
-	openingEval += bishopMgMobility[idx];
-	endgameEval += bishopEgMobility[idx];
-	openingEval += WBmobility.pstO;
-	endgameEval += WBmobility.pstE;
+	*openingEval += bishopMgMobility[idx];
+	*endgameEval += bishopEgMobility[idx];
+	*openingEval += WBmobility.pstO;
+	*endgameEval += WBmobility.pstE;
 	kingattacks += WBmobility.kingattacks;
 	kingattackers += WBmobility.kingattackers;
 	
 	struct mobreturn WRmobility = Rmobility(pos,WHITE);
 	idx = max(0, WRmobility.mobility - WRmobility.unsafe * 2);
-	openingEval += rookMgMobility[idx];
-	endgameEval += rookEgMobility[idx];
-	openingEval += WRmobility.pstO;
-	endgameEval += WRmobility.pstE;
+	*openingEval += rookMgMobility[idx];
+	*endgameEval += rookEgMobility[idx];
+	*openingEval += WRmobility.pstO;
+	*endgameEval += WRmobility.pstE;
 	kingattacks += 2 * WRmobility.kingattacks;
 	kingattackers += WRmobility.kingattackers;
 	
 	struct mobreturn WQmobility = Qmobility(pos,WHITE);
 	idx = max(0, WQmobility.mobility - WQmobility.unsafe * 2);
-	openingEval += queenMgMobility[idx];
-	endgameEval += queenEgMobility[idx];
-	openingEval += WQmobility.pstO;
-	endgameEval += WQmobility.pstE;
+	*openingEval += queenMgMobility[idx];
+	*endgameEval += queenEgMobility[idx];
+	*openingEval += WQmobility.pstO;
+	*endgameEval += WQmobility.pstE;
 	kingattacks += 4 * WQmobility.kingattacks;
 	kingattackers += WQmobility.kingattackers;
 	
-	openingEval += safety_table[kingattackers][kingattacks];
-	endgameEval += safety_table[kingattackers][kingattacks];
+	*openingEval += safety_table[kingattackers][kingattacks];
+	*endgameEval += safety_table[kingattackers][kingattacks];
 	
 	kingattacks = 0;
 	kingattackers = 0;
 	// black
 	struct mobreturn BNmobility = Nmobility(pos,BLACK);
 	idx = max(0, BNmobility.mobility - BNmobility.unsafe * 2);
-	openingEval -= knightMgMobility[idx];
-	endgameEval -= knightEgMobility[idx];
-	openingEval += BNmobility.pstO;
-	endgameEval += BNmobility.pstE;
+	*openingEval -= knightMgMobility[idx];
+	*endgameEval -= knightEgMobility[idx];
+	*openingEval += BNmobility.pstO;
+	*endgameEval += BNmobility.pstE;
 	kingattacks += BNmobility.kingattacks;
 	kingattackers += BNmobility.kingattackers;
 	
 	struct mobreturn BBmobility = Bmobility(pos,BLACK);
 	idx = max(0, BBmobility.mobility - BBmobility.unsafe * 2);
-	openingEval -= bishopMgMobility[idx];
-	endgameEval -= bishopEgMobility[idx];
-	openingEval += BBmobility.pstO;
-	endgameEval += BBmobility.pstE;
+	*openingEval -= bishopMgMobility[idx];
+	*endgameEval -= bishopEgMobility[idx];
+	*openingEval += BBmobility.pstO;
+	*endgameEval += BBmobility.pstE;
 	kingattacks += BBmobility.kingattacks;
 	kingattackers += BBmobility.kingattackers;
 	
 	struct mobreturn BRmobility = Rmobility(pos,BLACK);
 	idx = max(0, BRmobility.mobility - BRmobility.unsafe * 2);
-	openingEval -= rookMgMobility[idx];
-	endgameEval -= rookEgMobility[idx];
-	openingEval += BRmobility.pstO;
-	endgameEval += BRmobility.pstE;
+	*openingEval -= rookMgMobility[idx];
+	*endgameEval -= rookEgMobility[idx];
+	*openingEval += BRmobility.pstO;
+	*endgameEval += BRmobility.pstE;
 	kingattacks += 2 * BRmobility.kingattacks;
 	kingattackers += BRmobility.kingattackers;
 	
 	struct mobreturn BQmobility = Qmobility(pos,BLACK);
 	idx = max(0, BQmobility.mobility - BQmobility.unsafe * 2);
-	openingEval -= queenMgMobility[idx];
-	endgameEval -= queenEgMobility[idx];
-	openingEval += BQmobility.pstO;
-	endgameEval += BQmobility.pstE;
+	*openingEval -= queenMgMobility[idx];
+	*endgameEval -= queenEgMobility[idx];
+	*openingEval += BQmobility.pstO;
+	*endgameEval += BQmobility.pstE;
 	kingattacks += 4 * BQmobility.kingattacks;
 	kingattackers += BQmobility.kingattackers;
 	
-	openingEval -= safety_table[kingattackers][kingattacks];
-	endgameEval -= safety_table[kingattackers][kingattacks];
-
-	// knight value decreases as pawns disappear
-	
-	/*
-	openingEval -= num_WN * (16 - (num_WP + num_BP)) * 4;
-	endgameEval -= num_WN * (16 - (num_WP + num_BP)) * 4;
-	openingEval += num_BN * (16 - (num_WP + num_BP)) * 4;
-	endgameEval += num_BN * (16 - (num_WP + num_BP)) * 4;
-	*/
-	
-	// bonus for minor pieces attacking enemy pieces not defended by pawns
+	*openingEval -= safety_table[kingattackers][kingattacks];
+	*endgameEval -= safety_table[kingattackers][kingattacks];
+}
+void evalMinorAttacks(struct position *pos, int *openingEval, int *endgameEval) {
+		// bonus for minor pieces attacking enemy pieces not defended by pawns
 	
 	// white
 	
@@ -1004,8 +907,8 @@ int taperedEval(struct position *pos) {
 		U64 BBattacksB = Bmagic(square, BBoccupancy) & (pos->colours[WHITE] & pos->pieces[BISHOP]);
 		if (!BBattacksN && !BBattacksB) continue; // not attacked by minor piece
 		int piece = getPiece(pos, square);
-		openingEval += minorAttackBonus_mg[piece];
-		endgameEval += minorAttackBonus_eg[piece];
+		*openingEval += minorAttackBonus_mg[piece];
+		*endgameEval += minorAttackBonus_eg[piece];
 	}
 	
 	BBcopy = BBwhitepieces;
@@ -1021,9 +924,56 @@ int taperedEval(struct position *pos) {
 		U64 BBattacksB = Bmagic(square, BBoccupancy) & (pos->colours[BLACK] & pos->pieces[BISHOP]);
 		if (!BBattacksN && !BBattacksB) continue; // not attacked by minor piece
 		int piece = getPiece(pos, square);
-		openingEval -= minorAttackBonus_mg[piece];
-		endgameEval -= minorAttackBonus_eg[piece];
+		*openingEval -= minorAttackBonus_mg[piece];
+		*endgameEval -= minorAttackBonus_eg[piece];
 	}
+	
+}
+void evalMaterialImbalance(struct position *pos, int *openingEval, int *endgameEval) {
+	
+	int num_BN = __builtin_popcountll(pos->colours[BLACK] & pos->pieces[KNIGHT]);
+	int num_BB = __builtin_popcountll(pos->colours[BLACK] & pos->pieces[BISHOP]);
+	int num_BR = __builtin_popcountll(pos->colours[BLACK] & pos->pieces[ROOK]);
+	int num_BQ = __builtin_popcountll(pos->colours[BLACK] & pos->pieces[QUEEN]);
+	int num_WN = __builtin_popcountll(pos->colours[WHITE] & pos->pieces[KNIGHT]);
+	int num_WB = __builtin_popcountll(pos->colours[WHITE] & pos->pieces[BISHOP]);
+	int num_WR = __builtin_popcountll(pos->colours[WHITE] & pos->pieces[ROOK]);
+	int num_WQ = __builtin_popcountll(pos->colours[WHITE] & pos->pieces[QUEEN]);
+	
+	int whitematval = num_WN * pieceval(KNIGHT) + num_WB * pieceval(BISHOP) + num_WR * pieceval(ROOK) + num_WQ * pieceval(QUEEN);
+	int blackmatval = num_BN * pieceval(KNIGHT) + num_BB * pieceval(BISHOP) + num_BR * pieceval(ROOK) + num_BQ * pieceval(QUEEN);
+	if (whitematval > blackmatval) {
+		double matimb = 1.0 - (blackmatval / whitematval);
+		*openingEval += matimb * ImbalanceFactor;
+		*endgameEval += matimb * ImbalanceFactor;
+	}
+	
+	else if (blackmatval > whitematval) {
+		double matimb = 1.0 - (whitematval / blackmatval);
+		*openingEval -= matimb * ImbalanceFactor;
+		*endgameEval -= matimb * ImbalanceFactor;
+	}
+}
+int finalEval(struct position *pos, int *openingEval, int *endgameEval) {
+	
+	// get number of pieces for calculating phase for final eval
+	
+	int num_BP = __builtin_popcountll(pos->colours[BLACK] & pos->pieces[PAWN]);
+	int num_BN = __builtin_popcountll(pos->colours[BLACK] & pos->pieces[KNIGHT]);
+	int num_BB = __builtin_popcountll(pos->colours[BLACK] & pos->pieces[BISHOP]);
+	int num_BR = __builtin_popcountll(pos->colours[BLACK] & pos->pieces[ROOK]);
+	int num_BQ = __builtin_popcountll(pos->colours[BLACK] & pos->pieces[QUEEN]);
+	int num_WP = __builtin_popcountll(pos->colours[WHITE] & pos->pieces[PAWN]);
+	int num_WN = __builtin_popcountll(pos->colours[WHITE] & pos->pieces[KNIGHT]);
+	int num_WB = __builtin_popcountll(pos->colours[WHITE] & pos->pieces[BISHOP]);
+	int num_WR = __builtin_popcountll(pos->colours[WHITE] & pos->pieces[ROOK]);
+	int num_WQ = __builtin_popcountll(pos->colours[WHITE] & pos->pieces[QUEEN]);
+	
+	int pawnPhase = 0;
+	int knightPhase = 1;
+	int bishopPhase = 1;
+	int rookPhase = 2;
+	int queenPhase = 4;
 	
 	int totalPhase = pawnPhase * 16 + knightPhase * 4 + bishopPhase*4 + rookPhase*4 + queenPhase*2;
 	int phase = totalPhase;
@@ -1041,10 +991,63 @@ int taperedEval(struct position *pos) {
 
 	phase = (phase * 256 + (totalPhase / 2)) / totalPhase;
 	
-	int eval = ((openingEval * (256 - phase)) + (endgameEval * phase)) / 256;
+	int eval = ((*openingEval * (256 - phase)) + (*endgameEval * phase)) / 256;
 
 	if (pos->tomove == BLACK) eval = -eval;
 	return eval;
+}
+int taperedEval(struct position *pos) {
+	assert(pos);
+	
+	int openingEval = 0;
+	int endgameEval = 0;
+	
+	// side to move bonus
+	
+	if (pos->tomove == WHITE) {
+		openingEval += SideToMove_mg;
+		endgameEval += SideToMove_eg;
+	}
+	else {
+		openingEval -= SideToMove_mg;
+		endgameEval -= SideToMove_eg;
+	}
+	
+	evalMaterial(pos, &openingEval, &endgameEval);
+	
+	// Get king and pawn PST values
+	// Other piece PSTs get calculated with mobility
+	
+	evalKPPST(pos, &openingEval, &endgameEval);
+	
+	// evaluate pieces
+	
+	evalPawns(pos, &openingEval, &endgameEval);
+	evalKnights(pos, &openingEval, &endgameEval);
+	evalBishops(pos, &openingEval, &endgameEval);
+	evalRooks(pos, &openingEval, &endgameEval);
+	evalQueens(pos, &openingEval, &endgameEval);
+	evalKings(pos, &openingEval, &endgameEval);
+	
+	// mop up evaluation for basic checkmate
+	
+	evalKRmate(pos, &openingEval, &endgameEval);
+	
+	// mobility
+	
+	evalMobility(pos, &openingEval, &endgameEval);
+	
+	// minor attacks
+	
+	evalMinorAttacks(pos, &openingEval, &endgameEval);
+	
+	// bonus for trading when ahead in material
+	
+	evalMaterialImbalance(pos, &openingEval, &endgameEval);
+	
+	// combine opening and endgame eval into final evaluation
+	
+	return finalEval(pos, &openingEval, &endgameEval);
 }
 
 struct mobreturn Nmobility(struct position *pos, int side) {

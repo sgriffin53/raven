@@ -4,6 +4,7 @@
 #include "position.h"
 struct mobreturn {
 	int mobility;
+	int mobility2; //number of squares that can be reached in 2 moves but not 1
 	int kingattacks;
 	int kingattackers;
 	int pstO;
@@ -39,5 +40,21 @@ struct mobreturn Qmobility(struct position *pos, int side);
 int minorAttackBonus_mg[6];
 int minorAttackBonus_eg[6];
 int count_attackers(struct position *pos, int square, int side);
+int blockage(int Wkingpos, int Bkingpos, U64 wPawns, U64 bPawns);
+
+void evalMaterial(struct position *pos, int *openingEval, int *endgameEval);
+void evalKPPST(struct position *pos, int *openingEval, int *endgameEval);
+void evalPawns(struct position *pos, int *openingEval, int *endgameEval);
+void evalKnights(struct position *pos, int *openingEval, int *endgameEval);
+void evalBishops(struct position *pos, int *openingEval, int *endgameEval);
+void evalKRmate(struct position *pos, int *openingEval, int *endgameEval);
+void evalRooks(struct position *pos, int *openingEval, int *endgameEval);
+void evalQueens(struct position *pos, int *openingEval, int *endgameEval);
+void evalKings(struct position *pos, int *openingEval, int *endgameEval);
+void evalMobility(struct position *pos, int *openingEval, int *endgameEval);
+void evalMinorAttacks(struct position *pos, int *openingEval, int *endgameEval);
+void evalMaterialImbalance(struct position *pos, int *openingEval, int *endgameEval);
+int finalEval(struct position *pos, int *openingEval, int *endgameEval);
+
 
 #endif
