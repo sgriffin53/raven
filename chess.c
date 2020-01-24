@@ -88,7 +88,7 @@ int main() {
 			if (strcmp(splitstr[1],"flip") == 0) {
 				runTestsFlip();
 			}
-			if (strcmp(splitstr[1],"nps") == 0) {
+			else if (strcmp(splitstr[1],"nps") == 0) {
 				runTestsNPS();
 			}
 			else runTestsAll();
