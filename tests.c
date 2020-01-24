@@ -1,5 +1,6 @@
 
 #include <stdio.h>
+#include <time.h>
 #include "tests.h"
 #include "position.h"
 #include "globals.h"
@@ -12,8 +13,77 @@ void runTestsAll() {
 	runTestsMakeMove();
 	testRunBetaCutoffs();
 }
+void runTestsNPS() {
+	printf("Running NPS test.\n");
+	char path[256] = "tests\\nps30.epd";
+	
+	char *token;
+	char splitstr[12][200];
+	
+    FILE *fp;
+    char str[1024];
+	
+    fp = fopen(path, "r");
+    if (fp == NULL){
+        printf("Could not open file %s",path);
+    }
+	U64 totbetacutoffs;
+	U64 totinstantbetacutoffs;
+	int numentries = 0;
+	
+	// read entries
+	
+	totNodesSearched = 0;
+	clock_t start = clock();
+	silentsearch = 1;
+	
+    while (fgets(str, 1024, fp) != NULL) {
+		//if (numentries >= 4000000) break; // limit number of entries
+        //printf("%s", str);
+		char fen[1024];
+		str[strcspn(str, "\n")] = 0;
+		//split str into tokens into splitstr by space
+		token = strtok(str," ");
+
+		int splitstrend = 0;
+		while (token != NULL) {
+			strcpy(splitstr[splitstrend],token);
+			splitstrend++;
+			token = strtok(NULL, " ");
+		}
+		
+		strcpy(fen,splitstr[0]);
+		strcat(fen, " ");
+		strcat(fen, splitstr[1]);
+		strcat(fen, " ");
+		strcat(fen, splitstr[2]);
+		strcat(fen, " ");
+		strcat(fen, splitstr[3]);
+		struct position pos;
+		parsefen(&pos, fen);
+		struct move pv = search(pos, 11, 100000, 1);
+		totNodesSearched += nodesSearched;
+		totbetacutoffs += (U64)numbetacutoffs;
+		totinstantbetacutoffs += (U64)numinstantbetacutoffs;
+		if (numentries % 5 == 0 && numentries > 0) printf("%d positions searched, %lu nodes.\n", numentries, totNodesSearched); // give regular updates if we're loading a large file
+		numentries++;
+		
+	}
+	clock_t end = clock();
+	double time_spent = (double)(end - start) / CLOCKS_PER_SEC;
+	int time_spentms = (int)(time_spent * 1000);
+	int nps = totNodesSearched / time_spent;
+	printf("Tested %d positions\n", numentries);
+	printf("nodes Searched: %lu\n",totNodesSearched);
+	printf("Time: %d\n", time_spentms / 1000);
+	printf("NPS: %d\n", nps);
+	printf("Beta cutoff rate: %.2f%%",(float)(totinstantbetacutoffs * (100 / (float)totbetacutoffs)));
+	fclose(fp);
+	silentsearch = 0;
+}
 void runTestsFlip() {
 	
+	printf("Running colour flipping test.\n");
 	char path[256] = "tests\\flip.epd";
 	
 	char *token;
@@ -71,7 +141,7 @@ void runTestsFlip() {
 			numfailed++;
 		}
 		//printf("(%d, %d)\n", eval, neweval);
-		if (numentries % 10000 == 0) printf("%d entries tested.\n", numentries); // give regular updates if we're loading a large file
+		if (numentries % 10000 == 0 && numentries > 0) printf("%d entries tested.\n", numentries); // give regular updates if we're loading a large file
 		numentries++;
 		
 	}
@@ -86,7 +156,7 @@ void testRunBetaCutoffs() {
 	numbetacutoffs = 0;
 	numinstantbetacutoffs = 0;
 	parsefen(&pos,"startpos");
-	search(pos,13,13000);
+	search(pos,13,13000,0);
 	printf("Beta cutoff rate: %.2f%%",(float)(numinstantbetacutoffs * (100 / (float)numbetacutoffs)));
 	printf("\n");
 }

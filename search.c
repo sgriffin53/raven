@@ -298,7 +298,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 				U64 BBenemypawns = BBpasserLookup[BLACK][curmove.from] & (pos->colours[WHITE] & pos->pieces[PAWN]);
 				if (!BBenemypawns) {
 					// pawn is passed
-					extension = ONE_PLY;
+					extension = 0.5 * ONE_PLY;
 				}
 			}
 		}
@@ -310,7 +310,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 				U64 BBenemypawns = BBpasserLookup[WHITE][curmove.from] & (pos->colours[BLACK] & pos->pieces[PAWN]);
 				if (!BBenemypawns) {
 					// pawn is passed
-					extension = ONE_PLY;
+					extension = 0.5 * ONE_PLY;
 				}
 			}
 		}
@@ -483,7 +483,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 				U64 BBenemypawns = BBpasserLookup[BLACK][moves[i].from] & (pos->colours[WHITE] & pos->pieces[PAWN]);
 				if (!BBenemypawns) {
 					// pawn is passed
-					extension = ONE_PLY;
+					extension = 0.5 * ONE_PLY;
 				}
 			}
 		}
@@ -497,7 +497,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 					//printf("passed %d\n", moves[i].from);
 					//dspBoard(pos);
 					// pawn is passed
-					extension = ONE_PLY;
+					extension = 0.5 * ONE_PLY;
 				}
 			}
 		}
@@ -758,37 +758,40 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 		time_spentms = (int)(time_spent*1000);
 		int nps = nodesSearched / time_spent;
 		// Info string
-		printf("info");
-		printf(" depth %i", d);
-		printf(" seldepth %i", seldepth);
-		printf(" nodes %" PRIu64, nodesSearched);
-		printf(" time %i", (int)(time_spent*1000));
-		if (time_spent > 0) printf(" nps %i", nps);
-		printf(" score cp %i", score);
-		struct pvline pvline = getPV(&pos,d);
-		printf(" pv");
-		int pvmatch = 0;
-		if (pvline.moves[0].from == bestmove.from && pvline.moves[0].to == bestmove.to && pvline.moves[0].prom == bestmove.prom) pvmatch = 1;
-		if (pvmatch) {
-			for (int i = 0;i < pvline.size; i++) {
-				printf(" %s",movetostr(pvline.moves[i]));
+		if (!silentsearch) {
+			printf("info");
+			printf(" depth %i", d);
+			printf(" seldepth %i", seldepth);
+			printf(" nodes %" PRIu64, nodesSearched);
+			printf(" time %i", (int)(time_spent*1000));
+			if (time_spent > 0) printf(" nps %i", nps);
+			printf(" score cp %i", score);
+			struct pvline pvline = getPV(&pos,d);
+			printf(" pv");
+			int pvmatch = 0;
+			if (pvline.moves[0].from == bestmove.from && pvline.moves[0].to == bestmove.to && pvline.moves[0].prom == bestmove.prom) pvmatch = 1;
+			if (pvmatch) {
+				for (int i = 0;i < pvline.size; i++) {
+					printf(" %s",movetostr(pvline.moves[i]));
+				}
 			}
+			else {
+				// pv didn't match bestmove, just give bestmove to avoid returning illegal PVs
+				printf(" %s", movetostr(bestmove));
+			}
+			printf("\n");
 		}
-		else {
-			// pv didn't match bestmove, just give bestmove to avoid returning illegal PVs
-			printf(" %s", movetostr(bestmove));
-		}
-		printf("\n");
 		lastsearchdepth = d;
 		if (score == MATE_SCORE || score == -MATE_SCORE) break;
 	}
 	time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
 	time_spentms = (int)(time_spent*1000);
 	
-	printf("info time %d", time_spentms);
-	printf("\n");
-	printf("bestmove %s\n", movetostr(bestmove));
-
+	if (!silentsearch) {
+		printf("info time %d", time_spentms);
+		printf("\n");
+		printf("bestmove %s\n", movetostr(bestmove));
+	}
 	return bestmove;
 }
 int SEEcapture(struct position *pos, int from, int to, int side) {

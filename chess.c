@@ -49,6 +49,7 @@ int main() {
 	movestackend = 0;
 	hashstackend = 0;
 	movestogo = 25;
+	silentsearch = 0;
 	
 	genLookups(); // generate king and knight lookup tables
 	
@@ -87,6 +88,9 @@ int main() {
 			if (strcmp(splitstr[1],"flip") == 0) {
 				runTestsFlip();
 			}
+			if (strcmp(splitstr[1],"nps") == 0) {
+				runTestsNPS();
+			}
 			else runTestsAll();
 		}
 		if (strcmp(splitstr[0],"flip") == 0) {
@@ -99,6 +103,9 @@ int main() {
 		}
 		if (strcmp(splitstr[0],"tune") == 0) {
 			tune();
+		}
+		if (strcmp(splitstr[0],"block") == 0) {
+			printf("%d\n", blockage(pos.Wkingpos, pos.Bkingpos, (pos.pieces[PAWN] & pos.colours[WHITE]), (pos.pieces[PAWN] & pos.colours[BLACK])));
 		}
 		else if (strcmp(splitstr[0],"moves") == 0) {
 			for (int i = 1;i < splitstrend;i++) {
@@ -188,7 +195,7 @@ int main() {
 		}
 		if (strcmp(splitstr[0],"legalmoves") == 0) {
 			struct move moves[MAX_MOVES];
-			int num_moves = genMoves(&pos,moves, 1);
+			int num_moves = genMoves(&pos,moves, 0);
 			int j;
 			printf("%d num moves\n",num_moves);
 			printf("%d --\n",num_moves);
