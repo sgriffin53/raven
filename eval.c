@@ -12,45 +12,45 @@
 
 // Evaluation values
 
-int SideToMove_mg = 27;
+int SideToMove_mg = 24;
 int SideToMove_eg = 27;
 int OppKingProximity = 16;
 int MyKingProximity = -10;
-int PawnChain_mg = 2;
+int PawnChain_mg = 4;
 int PawnChain_eg = 2;
-int DoubledPawn_mg = 4;
-int DoubledPawn_eg = 4;
+int DoubledPawn_mg = 8;
+int DoubledPawn_eg = 7;
 int IsolatedPawn_mg = 22;
-int IsolatedPawn_eg = 22;
+int IsolatedPawn_eg = 20;
 int ZeroOrEightPawns_mg = 10;
 int ZeroOrEightPawns_eg = 10;
-int PawnShield = 32;
-int PawnsInCentre_mg = 22;
+int PawnShield = 27;
+int PawnsInCentre_mg = 14;
 int PawnsInCentre_eg = 0;
 int PawnsAttackingCentre_mg = 9;
-int PawnsAttackingCentre_eg = 10;
-int ConnectedKnights_mg = 5;
-int ConnectedKnights_eg = 41;
-int KnightsProtectedByPawn_mg = 15;
-int KnightsProtectedByPawn_eg = 27;
-int ClosedKnights_mg = 20;
-int ClosedKnights_eg = 20;
-int BishopPair_mg = 36;
-int BishopPair_eg = 98;
-int BishopsProtectedByPawn_mg = 10;
-int BishopsProtectedByPawn_eg = 9;
+int PawnsAttackingCentre_eg = 8;
+int ConnectedKnights_mg = 2;
+int ConnectedKnights_eg = 37;
+int KnightsProtectedByPawn_mg = 7;
+int KnightsProtectedByPawn_eg = 16;
+int ClosedKnights_mg = 50;
+int ClosedKnights_eg = 50;
+int BishopPair_mg = 28;
+int BishopPair_eg = 106;
+int BishopsProtectedByPawn_mg = 6;
+int BishopsProtectedByPawn_eg = 12;
 int OpenBishops_mg = 0;
 int OpenBishops_eg = 0;
-int RookOpenFile_mg = 48;
-int RookOpenFile_eg = 16;
-int RookSemiOpenFile_mg = 6;
-int RookSemiOpenFile_eg = 6;
-int RookSameFileQueen_mg = 40;
-int RookSameFileQueen_eg = 40;
-int RookOn7th_mg = 5;
-int RookOn7th_eg = 0;
+int RookOpenFile_mg = 60;
+int RookOpenFile_eg = 2;
+int RookSemiOpenFile_mg = 27;
+int RookSemiOpenFile_eg = 24;
+int RookSameFileQueen_mg = 20;
+int RookSameFileQueen_eg = 0;
+int RookOn7th_mg = 0;
+int RookOn7th_eg = 11;
 int QueenOn7th_mg = 0;
-int QueenOn7th_eg = 57;
+int QueenOn7th_eg = 35;
 int KingPawnlessFlank_mg = 17;
 int KingPawnlessFlank_eg = 95;
 int ImbalanceFactor = 180;
@@ -797,6 +797,8 @@ void evalKings(struct position *pos, int *openingEval, int *endgameEval) {
 	
 }
 void evalMobility(struct position *pos, int *openingEval, int *endgameEval) {
+	
+	// Evaluates mobility, king attackers, and NBRQ PST
 	
 	int kingattackers = 0;
 	int kingattacks = 0;
