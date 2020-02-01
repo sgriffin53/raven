@@ -367,7 +367,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	
 	// Prob Cut
 	
-	if (!beatsbeta && depthleft >= 5 * ONE_PLY && abs(beta) <= MATE_SCORE && staticeval + 100 >= beta + 100) {
+	if (!beatsbeta && depthleft >= 5 * ONE_PLY && abs(beta) <= MATE_SCORE && staticeval >= beta) {
 		int rbeta = min(MATE_SCORE, beta + 100);
 		int probcutcount = 0;
 		for (int i = 0;i < num_moves;i++) {
@@ -435,7 +435,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		
 		double cutoffpercent = ((double)histval * 100.0 / (double)(histval + butterflyval));
 		
-		if (!isTTmove && moves[i].cappiece == NONE && !isKiller
+		if (depthleft <= 12 && !isTTmove && moves[i].cappiece == NONE && !isKiller
 			&& bestmove.from != -1 && legalmoves >= 1 && (histval + butterflyval) > histmargin && cutoffpercent < 1.25 && ply != 0) {
 			continue;
 		}
