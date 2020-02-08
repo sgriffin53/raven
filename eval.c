@@ -183,7 +183,16 @@ void evalPawns(struct position *pos, int *openingEval, int *endgameEval) {
 			// pawn is passed
 			
 			BBwhitePP |= square; // add square to bb of white passed pawns
+			
 			int bonus = PassedRankBonus[startrank];
+			
+			// blockage of stop square
+			
+			int stopsquare = fileranktosquareidx(getfile(square), startrank + 1);
+			if ((1ULL << stopsquare) & pos->colours[BLACK] & (pos->pieces[BISHOP] | pos->pieces[KNIGHT] | pos->pieces[KING])) {
+				bonus = PassedRankBonus[startrank - 1];
+			}
+			
 			*openingEval += (int)(0.5 * bonus);
 			*endgameEval += 1 * bonus;
 			
@@ -249,7 +258,16 @@ void evalPawns(struct position *pos, int *openingEval, int *endgameEval) {
 		U64 BBenemypawns = (BBpasserLookup[BLACK][square] & (pos->colours[WHITE] & pos->pieces[PAWN]));
 		if (BBenemypawns == 0) {
 			BBblackPP |= square;
+			
 			int bonus = PassedRankBonus[7 - startrank];
+			
+			// blockage of stop square
+			
+			int stopsquare = fileranktosquareidx(getfile(square), startrank - 1);
+			if ((1ULL << stopsquare) & pos->colours[WHITE] & (pos->pieces[BISHOP] | pos->pieces[KNIGHT] | pos->pieces[KING])) {
+				bonus = PassedRankBonus[7 - startrank - 1];
+			}
+			
 			*openingEval -= (int)(0.5 * bonus);
 			*endgameEval -= 1 * bonus;
 			
