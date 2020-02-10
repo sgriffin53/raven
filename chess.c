@@ -221,7 +221,7 @@ int main() {
 		}
 
 		else if (strcmp(splitstr[0],"uci") == 0) {
-			printf("id name Raven 0.70\nid author Steve Griffin\n");
+			printf("id name Raven 0.80\nid author Steve Griffin\n");
 			printf("option name Hash type spin default 32 min 32 max 256\n");
 			printf("uciok\n");
 		}
