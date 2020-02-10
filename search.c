@@ -637,7 +637,7 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 	// Timing code
 	const clock_t begin = clock();
 	clock_t endtime = clock() + (movetime / 1000.0 * CLOCKS_PER_SEC);
-	clock_t maxendtime = endtime + (movetime * 0.40 / 1000.0 * CLOCKS_PER_SEC);
+	clock_t maxendtime = endtime + (movetime * 0.30 / 1000.0 * CLOCKS_PER_SEC);
 	clock_t origendtime = endtime;
 	
 	assert(maxendtime > endtime);
@@ -691,6 +691,7 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 		if (pos.tomove == BLACK) {
 			timeleftpercent = (double)btime * 100.0 / (double)origbtime; // time left as percentage of original time
 		}
+		
 		if (d > 4 && abs(score - lastscore) >= 0 && !losingontime && timeleftpercent > 30.0 && !strictmovetime) {
 			int timeschanged = 0;
 			
