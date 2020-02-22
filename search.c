@@ -275,6 +275,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	int searchedTTmove = 0;
 	int beatsbeta = 0;
 	int legalmoves = 0;
+	int quiets = 0;
 	int extension = 0;
 	struct move premoves[4];
 	int num_premoves = 0;
@@ -323,12 +324,26 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		int SEEvalue = SEEcapture(pos, curmove.from, curmove.to, pos->tomove);
 		if (SEEvalue < 0) r = ONE_PLY; // reduce bad captures
 		makeMove(&curmove,pos);
+		legalmoves++;
+		if (curmove.cappiece == NONE) quiets++;
+		
+		if (curmove.cappiece == NONE && quiets <= 4) {
+			
+
+			int histval = history[pos->tomove][curmove.from][curmove.to];
+			int butterflyval = butterfly[pos->tomove][curmove.from][curmove.to];
+			double cutoffpercent = ((double)histval * 100.0 / (double)(histval + butterflyval));
+			
+			if (cutoffpercent >= 80.0 && (histval + butterflyval) >= 2500) {
+				extension = ONE_PLY;
+			}
+		}
 		int score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY + extension - r, 0, ply + 1, pv, endtime);
 		if (r > 0 && score > alpha) {
 			score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY + extension, 0, ply + 1, pv, endtime);
 		}
 		unmakeMove(pos);
-		legalmoves++;
+		
 		if (score > bestscore) {
 			bestscore = score;
 			bestmove = curmove;
@@ -337,6 +352,8 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			alpha = score;
 		}
 		if (alpha >= beta) {
+			numbetacutoffs++;
+			if (legalmoves == 1) numinstantbetacutoffs++;
 			beatsbeta = 1;
 			if (curmove.cappiece == NONE) {
 				killers[ply][1] = killers[ply][0];
@@ -461,6 +478,14 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		nodesSearched++;
 		int givescheck = isCheck(pos);
 		legalmoves++;
+		
+		if (curmove.cappiece == NONE) quiets++;
+		
+		if (curmove.cappiece == NONE && quiets <= 4) {
+			if (cutoffpercent >= 80.0 && (histval + butterflyval) >= 2500) {
+				extension = ONE_PLY;
+			}
+		}
 		// futility pruning
 		
 		if (f_prune
@@ -494,8 +519,6 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 				// pawn is on rank 2-5
 				U64 BBenemypawns = BBpasserLookup[WHITE][moves[i].from] & (pos->colours[BLACK] & pos->pieces[PAWN]);
 				if (!BBenemypawns) {
-					//printf("passed %d\n", moves[i].from);
-					//dspBoard(pos);
 					// pawn is passed
 					extension = 1 * ONE_PLY;
 				}
@@ -809,13 +832,8 @@ int SEE(struct position *pos, int square, int side) {
 	int value = 0;
 	struct move capmove = get_smallest_attacker(pos, square, side);
 	int cappiece = getPiece(pos, square);
-	//printf("%c\n",capmove.piece);
-	//dspBoard(pos);
 	if (capmove.piece != -1) {
-		//dspBoard(pos);
 		makeMove(&capmove, pos);
-		//printf("made move %s\n", movetostr(capmove));
-		//dspBoard(pos);
 		value = max(0, pieceval(cappiece) - SEE(pos, square, !side));
 		unmakeMove(pos);
 	}
