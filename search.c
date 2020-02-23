@@ -335,6 +335,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			double cutoffpercent = ((double)histval * 100.0 / (double)(histval + butterflyval));
 			
 			if (cutoffpercent >= 80.0 && (histval + butterflyval) >= 2500) {
+				// extend early quiet moves with good history
 				extension = ONE_PLY;
 			}
 		}
@@ -479,13 +480,15 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		int givescheck = isCheck(pos);
 		legalmoves++;
 		
-		if (curmove.cappiece == NONE) quiets++;
+		if (moves[i].cappiece == NONE) quiets++;
 		
-		if (curmove.cappiece == NONE && quiets <= 4) {
+		
+		if (depthleft <= 8 * ONE_PLY && moves[i].cappiece == NONE && quiets <= 4) {
 			if (cutoffpercent >= 80.0 && (histval + butterflyval) >= 2500) {
 				extension = ONE_PLY;
 			}
 		}
+		 
 		// futility pruning
 		
 		if (f_prune
