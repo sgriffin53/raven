@@ -76,6 +76,8 @@ void parsefen(struct position *pos, const char *ofen) {
 	pos->WcastleQS = 0;
 	pos->BcastleKS = 0;
 	pos->BcastleQS = 0;
+	pos->Wcastled = 0;
+	pos->Bcastled = 0;
 	
 	
 	int n = 0;

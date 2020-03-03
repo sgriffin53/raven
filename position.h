@@ -17,6 +17,8 @@ struct position {
 	int WcastleKS;
 	int BcastleKS;
 	int BcastleQS;
+	int Wcastled;
+	int Bcastled;
 	int tomove;
 	int Wkingpos;
 	int Bkingpos;

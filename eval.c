@@ -572,15 +572,15 @@ void evalBishops(struct position *pos, int *openingEval, int *endgameEval) {
 	// white bishop bonus
 	
 	if (closedness < 0) {
-		openingEval += num_WB * (int)(-closedness / 8.0) * OpenBishops_mg;
-		endgameEval += num_WB * (int)(-closedness / 8.0) * OpenBishops_eg;
+		*openingEval += num_WB * (int)(-closedness / 8.0) * OpenBishops_mg;
+		*endgameEval += num_WB * (int)(-closedness / 8.0) * OpenBishops_eg;
 	}
 	
 	// black bishop bonus
 	
 	if (closedness < 0) {
-		openingEval -= num_BB * (int)(-closedness / 8.0) * OpenBishops_mg;
-		endgameEval -= num_BB * (int)(-closedness / 8.0) * OpenBishops_eg;
+		*openingEval -= num_BB * (int)(-closedness / 8.0) * OpenBishops_mg;
+		*endgameEval -= num_BB * (int)(-closedness / 8.0) * OpenBishops_eg;
 	}
 	
 }
@@ -1119,6 +1119,15 @@ int taperedEval(struct position *pos) {
 	else {
 		openingEval -= SideToMove_mg;
 		endgameEval -= SideToMove_eg;
+	}
+	
+	// penalty for not being castled and not having castling rights
+	
+	if (!pos->Wcastled && !pos->WcastleQS && !pos->WcastleKS) {
+		openingEval -= 30;
+	}
+	if (!pos->Bcastled && !pos->BcastleQS && !pos->BcastleKS) {
+		openingEval += 30;
 	}
 	
 	evalMaterial(pos, &openingEval, &endgameEval);

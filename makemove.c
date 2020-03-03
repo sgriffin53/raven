@@ -93,6 +93,7 @@ void makeMove(const struct move *move, struct position *pos) {
 			setPiece(pos,G1, colour, KING);
 			setPiece(pos,F1, colour, ROOK);
 			setPiece(pos,H1, NONE, NONE);
+			pos->Wcastled = 1;
 		}
 
 		if ((fromsquare == E1) && (tosquare == C1)) { // white queenside castling
@@ -100,6 +101,7 @@ void makeMove(const struct move *move, struct position *pos) {
 			setPiece(pos,C1, colour, KING);
 			setPiece(pos,D1, colour, ROOK);
 			setPiece(pos,A1, NONE, NONE);
+			pos->Wcastled = 1;
 		}
 	}
 	else if (piece == KING && colour == BLACK) { // black king
@@ -111,12 +113,14 @@ void makeMove(const struct move *move, struct position *pos) {
 			setPiece(pos,G8, colour, KING);
 			setPiece(pos,F8, colour, ROOK);
 			setPiece(pos,H8, NONE, NONE);
+			pos->Bcastled = 1;
 		}
 		if ((fromsquare == E8) && (tosquare == C8)) { // black queenside castling
 			setPiece(pos,E8, NONE, NONE);
 			setPiece(pos,C8, colour, KING);
 			setPiece(pos,D8, colour, ROOK);
 			setPiece(pos,A8, NONE, NONE);
+			pos->Bcastled = 1;
 		}
 	}
 	if (piece == ROOK && colour == BLACK) {
