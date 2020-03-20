@@ -43,8 +43,8 @@ int reduction(const struct move *move, const int depthleft, char cappiece, int l
 void clearKillers(int ply) {
 	struct move nomove = {.to=-1,.from=-1,.prom=-1,.cappiece=-1};
 	for (int i = 0;i < ply;i++) {
-		killers[ply][0] = nomove;
-		killers[ply][1] = nomove;
+		killers[i][0] = nomove;
+		killers[i][1] = nomove;
 	}
 }
 void clearHistory() {
@@ -508,18 +508,20 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 				}
 			}
 		}
-		 
+		
 		struct move lastmove = movestack[movestackend - 2];
 		if (pieceval(lastmove.cappiece) == pieceval(lastmove.piece) && moves[i].to == lastmove.to) {
 			// recapture extension
 			extension = ONE_PLY;
 		}
+		 
 		struct position lastpos = posstack[posstackend - 2];
 		int SEEvalue = SEEcapture(&lastpos, moves[i].from, moves[i].to, lastpos.tomove);
 		if (SEEvalue < 0) depthleft -= ONE_PLY; // reduce bad captures
 		 
 		// Search
 		
+
 		score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY - r + extension, 0, ply + 1, pv, endtime);
 		
 		// Redo search
@@ -527,7 +529,6 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		if (r > 0 && score > alpha) {
 			score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY + extension, 0, ply + 1, pv, endtime);
 		}
-		
 		// Unmake the move
 		
 		unmakeMove(pos);
