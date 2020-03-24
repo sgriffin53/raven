@@ -497,7 +497,10 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			}
 		}
 		int r = reduction(&moves[i], depthleft, cappiece, legalmoves, incheck, givescheck, ply);
-		
+		if (cutoffpercent >= 20.0 && r == 2 * ONE_PLY) {
+			// limit reduction of moves with good history to one ply
+			r = ONE_PLY;
+		}
 		if (moves[i].piece == PAWN && pos->tomove == WHITE) {
 			U64 BBarea = BBrank2 | BBrank3 | BBrank4 | BBrank5;
 			U64 BBpiece = 1ULL << moves[i].from;
