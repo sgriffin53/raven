@@ -74,14 +74,19 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 	else hash = currenthash;
 	struct TTentry TTdata = getTTentry(&TT,hash);
 	if (TTdata.hash == hash) {
-		int flag = TTdata.flag;
-		int score = TTdata.score;
-		if (flag == EXACT
-			|| (flag == LOWERBOUND && score >= beta)
-			|| (flag == UPPERBOUND && score <= alpha)) {
-				return score;
+		int isvalid = 1;
+		if (getColour(pos, TTdata.bestmove.from) != pos->tomove) isvalid = 0;
+		if (getColour(pos, TTdata.bestmove.to) == pos->tomove) isvalid = 0;
+		if (isvalid) {
+			int flag = TTdata.flag;
+			int score = TTdata.score;
+			if (flag == EXACT
+				|| (flag == LOWERBOUND && score >= beta)
+				|| (flag == UPPERBOUND && score <= alpha)) {
+					return score;
+			}
+			TTmove = TTdata.bestmove;
 		}
-		TTmove = TTdata.bestmove;
 	}
 	const int standpat = taperedEval(pos);
 	if (standpat >= beta) {
@@ -184,26 +189,31 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	else hash = generateHash(pos);
 	struct TTentry TTdata = getTTentry(&TT,hash);
 	if (TTdata.hash == hash) {
-		if (TTdata.depth == origdepthleft) {
-			int flag = TTdata.flag;
-			int score = TTdata.score;
-			
-			if (flag == EXACT) {
-				*pv = TTdata.bestmove;
-				return score;
+		int isvalid = 1;
+		if (getColour(pos, TTdata.bestmove.from) != pos->tomove) isvalid = 0;
+		if (getColour(pos, TTdata.bestmove.to) == pos->tomove) isvalid = 0;
+		if (isvalid) {
+			if (TTdata.depth == origdepthleft) {
+				int flag = TTdata.flag;
+				int score = TTdata.score;
+				
+				if (flag == EXACT) {
+					*pv = TTdata.bestmove;
+					return score;
+				}
+				else if (flag == LOWERBOUND) {
+					alpha = max(score, alpha);
+				}
+				else if (flag == UPPERBOUND) {
+					beta = min(beta, score);
+				}
+				if (alpha >= beta) {
+					*pv = TTdata.bestmove;
+					return score;
+				}
 			}
-			else if (flag == LOWERBOUND) {
-				alpha = max(score, alpha);
-			}
-			else if (flag == UPPERBOUND) {
-				beta = min(beta, score);
-			}
-			if (alpha >= beta) {
-				*pv = TTdata.bestmove;
-				return score;
-			}
+			TTmove = TTdata.bestmove;
 		}
-		TTmove = TTdata.bestmove;
 	}
 	
 	int staticeval = taperedEval(pos);
@@ -260,11 +270,15 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	// IID
 	
 	if (TTmove.from == -1 && depthleft >= 7 * ONE_PLY) {
+		
 		int newdepth = 3 * ONE_PLY;
 		int val = alphaBeta(pos, alpha, beta, newdepth, 0, ply + 1, pv, endtime);
 		TTdata = getTTentry(&TT, hash);
         if (TTdata.hash == hash) {
-            TTmove = TTdata.bestmove;
+			int isvalid = 1;
+			if (getColour(pos, TTdata.bestmove.from) != pos->tomove) isvalid = 0;
+			if (getColour(pos, TTdata.bestmove.to) == pos->tomove) isvalid = 0;
+			if (isvalid) TTmove = TTdata.bestmove;
         }
 	}
 	
