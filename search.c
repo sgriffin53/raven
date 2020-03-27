@@ -216,6 +216,9 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		}
 	}
 	
+	
+	// eval pruning
+	
 	int staticeval = taperedEval(pos);
 	
 	if (depthleft < 3 * ONE_PLY && !incheck && abs(beta) - 1 > -MATE_SCORE + 100) {
@@ -620,6 +623,13 @@ struct pvline getPV(struct position *pos, int depth) {
 	int movesunmade = 0;
 	for (int i = 1;i < depth;i++) {
 		struct move bestmove = TTdata.bestmove;
+		int isvalid = 1;
+		if (getColour(pos, TTdata.bestmove.from) != pos->tomove) isvalid = 0;
+		if (getColour(pos, TTdata.bestmove.to) == pos->tomove) isvalid = 0;
+		if (!isvalid) {
+			pvline.size -= 1;
+			break;
+		}
 		makeMove(&bestmove,pos);
 		movesmade++;
 		pos->tomove = !pos->tomove;
