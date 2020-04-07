@@ -144,7 +144,7 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 	return alpha;
 }
 
-int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int nullmove, int ply, struct move *pv, clock_t endtime) {
+int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int nullmove, int ply, struct move *pv, clock_t endtime, int cut) {
 	assert(pos);
 	assert(alpha >= -MATE_SCORE && beta <= MATE_SCORE);
 	assert(beta > alpha);
@@ -249,13 +249,13 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		posstackend++;
 		int verR = 3 * ONE_PLY;
 		int R = 3 * ONE_PLY;
-		const int val = -alphaBeta(pos,-beta,-beta+1, depthleft - ONE_PLY - R, 1, ply + 1, pv, endtime);
+		const int val = -alphaBeta(pos,-beta,-beta+1, depthleft - ONE_PLY - R, 1, ply + 1, pv, endtime, !cut);
 		pos->tomove = !pos->tomove;
 		pos->halfmoves = orighalfmoves;
 		pos->epsquare = origepsquare;
 		posstackend--;
 		if (val >= origBeta || val >= beta) {
-			const int verification = alphaBeta(pos,beta - 1,beta, depthleft - ONE_PLY - verR, 1, ply + 1, pv, endtime); // alpha_beta(p, md, beta - 1, beta, d, false, false);
+			const int verification = alphaBeta(pos,beta - 1,beta, depthleft - ONE_PLY - verR, 1, ply + 1, pv, endtime, !cut); // alpha_beta(p, md, beta - 1, beta, d, false, false);
 			if (verification >= beta) return beta;
 		}
 	}
@@ -275,7 +275,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	if (TTmove.from == -1 && depthleft >= 7 * ONE_PLY) {
 		
 		int newdepth = 3 * ONE_PLY;
-		int val = alphaBeta(pos, alpha, beta, newdepth, 0, ply + 1, pv, endtime);
+		int val = alphaBeta(pos, alpha, beta, newdepth, 0, ply + 1, pv, endtime, !cut);
 		TTdata = getTTentry(&TT, hash);
         if (TTdata.hash == hash) {
 			int isvalid = 1;
@@ -344,9 +344,9 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		legalmoves++;
 		if (curmove.cappiece == NONE) quiets++;
 		
-		int score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY + extension - r, 0, ply + 1, pv, endtime);
+		int score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY + extension - r, 0, ply + 1, pv, endtime, !cut);
 		if (r > 0 && score > alpha) {
-			score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY + extension, 0, ply + 1, pv, endtime);
+			score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY + extension, 0, ply + 1, pv, endtime, !cut);
 		}
 		unmakeMove(pos);
 		
@@ -403,10 +403,36 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			pos->tomove = !pos->tomove;
 			probcutcount++;
 			int probcutscore;
-			probcutscore = -alphaBeta(pos, -rbeta, -rbeta + 1, depthleft - 4 * ONE_PLY, 0, ply + 1, pv, endtime);
+			probcutscore = -alphaBeta(pos, -rbeta, -rbeta + 1, depthleft - 4 * ONE_PLY, 0, ply + 1, pv, endtime, !cut);
 			unmakeMove(pos);
 			if (probcutscore >= rbeta) {
 				return probcutscore;
+			}
+		}
+	}
+	
+	// multicut
+	
+	int MCR = 8;
+	int MCC = 3;
+	int MCM = 6;
+	if (depthleft >= MCR * ONE_PLY && cut) {
+		int c = 0;
+		for (int i = 0;i < min(MCM,num_moves);i++) {
+			makeMove(&moves[i],pos);
+			pos->tomove = !pos->tomove;
+			if (isCheck(pos)) {
+				unmakeMove(pos);
+				continue;
+			}
+			pos->tomove = !pos->tomove;
+			int score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY - MCR * ONE_PLY, 0, ply + 1, pv, endtime, !cut);
+			unmakeMove(pos);
+			if (score >= beta) {
+				c++;
+				if (c == MCC) {
+					return beta;
+				}
 			}
 		}
 	}
@@ -542,12 +568,12 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		// Search
 		
 
-		score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY - r + extension, 0, ply + 1, pv, endtime);
+		score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY - r + extension, 0, ply + 1, pv, endtime, !cut);
 		
 		// Redo search
 		
 		if (r > 0 && score > alpha) {
-			score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY + extension, 0, ply + 1, pv, endtime);
+			score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY + extension, 0, ply + 1, pv, endtime, !cut);
 		}
 		// Unmake the move
 		
@@ -760,7 +786,7 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 			if (expectedendtime > endtime) break;
 		}
 
-		score = alphaBeta(&pos, -MATE_SCORE, MATE_SCORE, d * ONE_PLY, 0, 0, &pv, endtime);
+		score = alphaBeta(&pos, -MATE_SCORE, MATE_SCORE, d * ONE_PLY, 0, 0, &pv, endtime, 0);
 		
 		//Ignore the result if we ran out of time
 		if (d > 1 && clock() >= endtime) {
