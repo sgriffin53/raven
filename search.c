@@ -434,6 +434,9 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 					return beta;
 				}
 			}
+			else {
+				if (i - c > MCM - MCC) break; // abort if we can't meet the cut off quota
+			}
 		}
 	}
 	
