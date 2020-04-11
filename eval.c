@@ -825,9 +825,9 @@ void evalMobility(struct position *pos, int *openingEval, int *endgameEval) {
 	// white
 	
 	int idx = 0;
-	
+	double centremult = 0.5;
 	struct mobreturn WNmobility = Nmobility(pos,WHITE);
-	idx = max(0, WNmobility.mobility - WNmobility.unsafe * 2);
+	idx = min(8, max(0, WNmobility.mobility - WNmobility.unsafe * 2 + WNmobility.centre * centremult));
 	*openingEval += knightMgMobility[idx];
 	*endgameEval += knightEgMobility[idx];
 	*openingEval += WNmobility.pstO;
@@ -836,7 +836,7 @@ void evalMobility(struct position *pos, int *openingEval, int *endgameEval) {
 	kingattackers += WNmobility.kingattackers;
 	
 	struct mobreturn WBmobility = Bmobility(pos,WHITE);
-	idx = max(0, WBmobility.mobility - WBmobility.unsafe * 2);
+	idx = min(13, max(0, WBmobility.mobility - WBmobility.unsafe * 2 + WBmobility.centre * centremult));
 	*openingEval += bishopMgMobility[idx];
 	*endgameEval += bishopEgMobility[idx];
 	*openingEval += WBmobility.pstO;
@@ -845,7 +845,7 @@ void evalMobility(struct position *pos, int *openingEval, int *endgameEval) {
 	kingattackers += WBmobility.kingattackers;
 	
 	struct mobreturn WRmobility = Rmobility(pos,WHITE);
-	idx = max(0, WRmobility.mobility - WRmobility.unsafe * 2);
+	idx = min(14, max(0, WRmobility.mobility - WRmobility.unsafe * 2 + WRmobility.centre * centremult));
 	*openingEval += rookMgMobility[idx];
 	*endgameEval += rookEgMobility[idx];
 	*openingEval += WRmobility.pstO;
@@ -854,7 +854,7 @@ void evalMobility(struct position *pos, int *openingEval, int *endgameEval) {
 	kingattackers += WRmobility.kingattackers;
 	
 	struct mobreturn WQmobility = Qmobility(pos,WHITE);
-	idx = max(0, WQmobility.mobility - WQmobility.unsafe * 2);
+	idx = min(27, max(0, WQmobility.mobility - WQmobility.unsafe * 2 + WQmobility.centre * centremult));
 	*openingEval += queenMgMobility[idx];
 	*endgameEval += queenEgMobility[idx];
 	*openingEval += WQmobility.pstO;
@@ -869,7 +869,7 @@ void evalMobility(struct position *pos, int *openingEval, int *endgameEval) {
 	kingattackers = 0;
 	// black
 	struct mobreturn BNmobility = Nmobility(pos,BLACK);
-	idx = max(0, BNmobility.mobility - BNmobility.unsafe * 2);
+	idx = min(8, max(0, BNmobility.mobility - BNmobility.unsafe * 2 + BNmobility.centre * centremult));
 	*openingEval -= knightMgMobility[idx];
 	*endgameEval -= knightEgMobility[idx];
 	*openingEval += BNmobility.pstO;
@@ -878,7 +878,7 @@ void evalMobility(struct position *pos, int *openingEval, int *endgameEval) {
 	kingattackers += BNmobility.kingattackers;
 	
 	struct mobreturn BBmobility = Bmobility(pos,BLACK);
-	idx = max(0, BBmobility.mobility - BBmobility.unsafe * 2);
+	idx = min(13, max(0, BBmobility.mobility - BBmobility.unsafe * 2 + BBmobility.centre * centremult));
 	*openingEval -= bishopMgMobility[idx];
 	*endgameEval -= bishopEgMobility[idx];
 	*openingEval += BBmobility.pstO;
@@ -887,7 +887,7 @@ void evalMobility(struct position *pos, int *openingEval, int *endgameEval) {
 	kingattackers += BBmobility.kingattackers;
 	
 	struct mobreturn BRmobility = Rmobility(pos,BLACK);
-	idx = max(0, BRmobility.mobility - BRmobility.unsafe * 2);
+	idx = min(14, max(0, BRmobility.mobility - BRmobility.unsafe * 2 + BRmobility.centre * centremult));
 	*openingEval -= rookMgMobility[idx];
 	*endgameEval -= rookEgMobility[idx];
 	*openingEval += BRmobility.pstO;
@@ -896,7 +896,7 @@ void evalMobility(struct position *pos, int *openingEval, int *endgameEval) {
 	kingattackers += BRmobility.kingattackers;
 	
 	struct mobreturn BQmobility = Qmobility(pos,BLACK);
-	idx = max(0, BQmobility.mobility - BQmobility.unsafe * 2);
+	idx = min(27, max(0, BQmobility.mobility - BQmobility.unsafe * 2 + BQmobility.centre * centremult));
 	*openingEval -= queenMgMobility[idx];
 	*endgameEval -= queenEgMobility[idx];
 	*openingEval += BQmobility.pstO;
@@ -1199,6 +1199,7 @@ struct mobreturn Nmobility(struct position *pos, int side) {
 	int PSTvalO = 0;
 	int PSTvalE = 0;
 	char piece = KNIGHT;
+	int centre = 0;
 	// Knights
 	BBcopy = pos->pieces[KNIGHT] & BBsidepieces;
 	while(BBcopy)
@@ -1208,6 +1209,7 @@ struct mobreturn Nmobility(struct position *pos, int side) {
 		U64 BBnewmoves = BBknightLookup[from] & BBallowed;
 		BBmoves |= BBnewmoves;
 		U64 BBkzattacks = BBnewmoves & BBkingzone;
+		centre += __builtin_popcountll(BBcentre & BBnewmoves);
 		kzattacks += __builtin_popcountll(BBkzattacks);
 		if (BBkzattacks) kzattackers++;
 		PSTvalO += PSTval(side, piece,from,'O');
@@ -1221,6 +1223,7 @@ struct mobreturn Nmobility(struct position *pos, int side) {
 	returnstruct.pstO = PSTvalO;
 	returnstruct.pstE = PSTvalE;
 	returnstruct.unsafe = __builtin_popcountll(BBmoves & BBattackedbypawns);
+	returnstruct.centre = centre;
 	return returnstruct;
 }
 struct mobreturn Bmobility(struct position *pos, int side) {
@@ -1249,6 +1252,7 @@ struct mobreturn Bmobility(struct position *pos, int side) {
 	int PSTvalO = 0;
 	int PSTvalE = 0;
 	int from = 0;
+	int centre = 0;
 	char piece = BISHOP;
 	BBcopy = pos->pieces[BISHOP] & BBsidepieces;
 	while(BBcopy)
@@ -1258,6 +1262,7 @@ struct mobreturn Bmobility(struct position *pos, int side) {
 		BBmoves |= BBnewmoves;
 		U64 BBkzattacks = BBnewmoves & BBkingzone;
 		kzattacks += __builtin_popcountll(BBkzattacks);
+		centre += __builtin_popcountll(BBcentre & BBnewmoves);
 		if (BBkzattacks) kzattackers++;
 		PSTvalO += PSTval(side, piece,from,'O');
 		PSTvalE += PSTval(side, piece,from,'E');
@@ -1270,6 +1275,7 @@ struct mobreturn Bmobility(struct position *pos, int side) {
 	returnstruct.pstO = PSTvalO;
 	returnstruct.pstE = PSTvalE;
 	returnstruct.unsafe = __builtin_popcountll(BBmoves & BBattackedbypawns);
+	returnstruct.centre = centre;
 	return returnstruct;
 }
 struct mobreturn Rmobility(struct position *pos, int side) {
@@ -1299,6 +1305,7 @@ struct mobreturn Rmobility(struct position *pos, int side) {
 	int PSTvalE = 0;
 	char piece = ROOK;
 	int from = 0;
+	int centre = 0;
 	BBcopy = pos->pieces[ROOK] & BBsidepieces;
 	while(BBcopy)
 	{
@@ -1307,6 +1314,7 @@ struct mobreturn Rmobility(struct position *pos, int side) {
 		BBmoves |= BBnewmoves;
 		U64 BBkzattacks = BBnewmoves & BBkingzone;
 		kzattacks += __builtin_popcountll(BBkzattacks);
+		centre += __builtin_popcountll(BBcentre & BBnewmoves);
 		if (BBkzattacks) kzattackers++;
 		PSTvalO += PSTval(side, piece,from,'O');
 		PSTvalE += PSTval(side, piece,from,'E');
@@ -1319,6 +1327,7 @@ struct mobreturn Rmobility(struct position *pos, int side) {
 	returnstruct.pstO = PSTvalO;
 	returnstruct.pstE = PSTvalE;
 	returnstruct.unsafe = __builtin_popcountll(BBmoves & BBattackedbypawns);
+	returnstruct.centre = centre;
 	return returnstruct;
 }
 struct mobreturn Qmobility(struct position *pos, int side) {
@@ -1348,6 +1357,7 @@ struct mobreturn Qmobility(struct position *pos, int side) {
 	int PSTvalE = 0;
 	char piece = QUEEN;
 	int from = 0;
+	int centre = 0;
 	BBcopy = pos->pieces[QUEEN] & BBsidepieces;
 	while(BBcopy)
 	{
@@ -1356,6 +1366,7 @@ struct mobreturn Qmobility(struct position *pos, int side) {
 		BBmoves |= BBnewmoves;
 		U64 BBkzattacks = BBnewmoves & BBkingzone;
 		kzattacks += __builtin_popcountll(BBkzattacks);
+		centre += __builtin_popcountll(BBcentre & BBnewmoves);
 		if (BBkzattacks) kzattackers++;
 		PSTvalO += PSTval(side, piece,from,'O');
 		PSTvalE += PSTval(side, piece,from,'E');
@@ -1368,6 +1379,7 @@ struct mobreturn Qmobility(struct position *pos, int side) {
 	returnstruct.pstO = PSTvalO;
 	returnstruct.pstE = PSTvalE;
 	returnstruct.unsafe = __builtin_popcountll(BBmoves & BBattackedbypawns);
+	returnstruct.centre = centre;
 	return returnstruct;
 }
 

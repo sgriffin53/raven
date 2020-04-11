@@ -10,6 +10,7 @@ struct mobreturn {
 	int pstO;
 	int pstE;
 	int unsafe;
+	int centre;
 };
 static const int safety_table[9][30] =
 {
