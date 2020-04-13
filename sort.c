@@ -107,9 +107,14 @@ void sortMoves(struct position *pos, struct move *moves, const int num_moves, st
 		else if ((killers[ply][0].to == moves[i].to) && (killers[ply][0].from == moves[i].from) && (killers[ply][0].prom == moves[i].prom)) {
 			scores[i] = 900000;
 		}
-		
+		else if ((killers[ply - 2][0].to == moves[i].to) && (killers[ply - 2][0].from == moves[i].from) && (killers[ply - 2][0].prom == moves[i].prom)) {
+			scores[i] = 875000;
+		}
 		else if ((killers[ply][1].to == moves[i].to) && (killers[ply][1].from == moves[i].from) && (killers[ply][1].prom == moves[i].prom)) {
 			scores[i] = 850000;
+		}
+		else if ((killers[ply - 2][1].to == moves[i].to) && (killers[ply - 2][1].from == moves[i].from) && (killers[ply - 2][1].prom == moves[i].prom)) {
+			scores[i] = 825000;
 		}
 		else if (histscore > 0.0) {
 			histscore = 1000.0 + histscore * 100.0;
