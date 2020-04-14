@@ -390,7 +390,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	
 	// Prob Cut
 	
-	if (!beatsbeta && depthleft >= 5 * ONE_PLY && abs(beta) <= MATE_SCORE && staticeval >= beta) {
+	if (!beatsbeta && depthleft >= 5 * ONE_PLY && abs(beta) <= MATE_SCORE && staticeval >= beta && cut) {
 		int rbeta = min(MATE_SCORE, beta + 100);
 		int probcutcount = 0;
 		for (int i = 0;i < num_moves;i++) {
