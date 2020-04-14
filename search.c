@@ -416,7 +416,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	int MCR = 8;
 	int MCC = 3;
 	int MCM = 6;
-	if (depthleft >= MCR * ONE_PLY && cut) {
+	if (!incheck && depthleft >= MCR * ONE_PLY && cut) {
 		int c = 0;
 		for (int i = 0;i < min(MCM,num_moves);i++) {
 			makeMove(&moves[i],pos);
