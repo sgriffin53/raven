@@ -175,55 +175,11 @@ static const int PST[6][2][64] = {
 };
 
 static inline int PSTval(int colour, const char piece, const int square, const char gamestage) {
-	assert(piece >= PAWN && piece <= KING);
-	assert(square >= 0 && square <= 63);
-	int score = 0;
+	int stage = 0;
+	if (gamestage == 'E') stage = 1;
 	int flipsquare = fileranktosquareidx(getfile(square), 7 - getrank(square));
-	if (gamestage == 'E') {
-		if (colour == WHITE) {
-			switch (piece) {
-				case PAWN: score = PST[PAWN][1][square]; break;
-				case KNIGHT: score = PST[KNIGHT][1][square]; break;
-				case BISHOP: score = PST[BISHOP][1][square]; break;
-				case ROOK: score = PST[ROOK][1][square]; break;
-				case QUEEN: score = PST[QUEEN][1][square]; break;
-				case KING: score = PST[KING][1][square]; break;
-			}
-		}
-		else if (colour == BLACK) {
-			switch (piece) {
-				case PAWN: score = -PST[PAWN][1][flipsquare]; break;
-				case KNIGHT: score = -PST[KNIGHT][1][flipsquare]; break;
-				case BISHOP: score = -PST[BISHOP][1][flipsquare]; break;
-				case ROOK: score = -PST[ROOK][1][flipsquare]; break;
-				case QUEEN: score = -PST[QUEEN][1][flipsquare]; break;
-				case KING: score = -PST[KING][1][flipsquare]; break;
-			}
-		}
-	}
-	else {
-		if (colour == WHITE) {
-			switch (piece) {
-				case PAWN: score = PST[PAWN][0][square]; break;
-				case KNIGHT: score = PST[KNIGHT][0][square]; break;
-				case BISHOP: score = PST[BISHOP][0][square]; break;
-				case ROOK: score = PST[ROOK][0][square]; break;
-				case QUEEN: score = PST[QUEEN][0][square]; break;
-				case KING: score = PST[KING][0][square]; break;
-			}
-		}
-		else if (colour == BLACK) {
-			switch (piece) {
-				case PAWN: score = -PST[PAWN][0][flipsquare]; break;
-				case KNIGHT: score = -PST[KNIGHT][0][flipsquare]; break;
-				case BISHOP: score = -PST[BISHOP][0][flipsquare]; break;
-				case ROOK: score = -PST[ROOK][0][flipsquare]; break;
-				case QUEEN: score = -PST[QUEEN][0][flipsquare]; break;
-				case KING: score = -PST[KING][0][flipsquare]; break;
-			}
-		}
-	}
-	return score;
+	if (colour == BLACK) return -PST[piece][stage][flipsquare];
+	else return PST[piece][stage][square];
 }
 
 #endif
