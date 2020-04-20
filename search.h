@@ -24,5 +24,8 @@ int reduction(const struct move *move, const int depthleft, char cappiece, int l
 int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime);
 void clearKillers(int ply);
 void clearHistory();
+int value_to_tt(int v, int ply);
+int vaule_from_tt(int v, int ply);
+int gamephase(struct position *pos);
 
 #endif

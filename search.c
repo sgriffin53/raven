@@ -239,7 +239,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	
 	// if (!nullmove && !isEndgame(pos) && !incheck && !(alpha != beta - 1)) {
 	
-	if (!nullmove && !incheck && ply != 0 && depthleft >= 3 * ONE_PLY && !isEndgame(pos)) {
+	if (!nullmove && !incheck && ply != 0 && depthleft >= 3 * ONE_PLY) {
 		const int orighalfmoves = pos->halfmoves;
 		const int origepsquare = pos->epsquare;
 		pos->tomove = !pos->tomove;
@@ -249,6 +249,12 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		posstackend++;
 		int verR = 3 * ONE_PLY;
 		int R = 3 * ONE_PLY;
+		if (gamephase(pos) >= 85) { // endgame
+			// decrease search reduction
+			
+			R = 2 * ONE_PLY;
+			verR = 2 * ONE_PLY;
+		}
 		const int val = -alphaBeta(pos,-beta,-beta+1, depthleft - ONE_PLY - R, 1, ply + 1, pv, endtime, !cut);
 		pos->tomove = !pos->tomove;
 		pos->halfmoves = orighalfmoves;
@@ -641,6 +647,13 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	*pv = bestmove;
 	assert(bestmove.to >= 0 && bestmove.to <= 63 && bestmove.from >= 0 && bestmove.from <= 63);
 	return bestscore;
+}
+int gamephase(struct position *pos) {
+	int opening = 0;
+	int endgame = 100;
+	int phase = finalEval(pos, &opening, &endgame);
+	if (pos->tomove == BLACK) phase = -phase;
+	return phase;
 }
 struct pvline getPV(struct position *pos, int depth) {
 	struct pvline pvline;
