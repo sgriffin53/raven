@@ -32,8 +32,10 @@ int reduction(const struct move *move, const int depthleft, char cappiece, int l
 	assert(depthleft >= 0);
 	if ((!incheck) && (legalmoves > 4) && (depthleft >= 3 * ONE_PLY) && (move->prom == NONE) && (!givescheck)) {
 		if (cappiece == NONE) {
-			if (depthleft >= 6 * ONE_PLY) return 2 * ONE_PLY;
-			return 1 * ONE_PLY;
+			int red = ONE_PLY;
+			if (depthleft >= 6 * ONE_PLY) red = 2 * ONE_PLY;
+			if (legalmoves >= 20) red += ONE_PLY;
+			return red;
 		}
 	}
 
