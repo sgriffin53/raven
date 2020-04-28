@@ -239,9 +239,10 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	
 	// null move pruning
 	
-	// if (!nullmove && !isEndgame(pos) && !incheck && !(alpha != beta - 1)) {
+	int TTfailhigh = 0;
+	if (TTdata.hash == hash && TTdata.flag != UPPERBOUND && TTdata.score >= beta) TTfailhigh = 1;
 	
-	if (!nullmove && !incheck && ply != 0 && depthleft >= 3 * ONE_PLY) {
+	if (!nullmove && !incheck && ply != 0 && depthleft >= 3 * ONE_PLY && (TTfailhigh || staticeval >= beta)) {
 		const int orighalfmoves = pos->halfmoves;
 		const int origepsquare = pos->epsquare;
 		pos->tomove = !pos->tomove;
