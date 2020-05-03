@@ -319,6 +319,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		
 		if (curmove.piece == PAWN && pos->tomove == BLACK) {
 			U64 BBarea = BBrank2 | BBrank3 | BBrank4 | BBrank5;
+			if (gamephase(pos) >= 80) BBarea = ~0; // extend all passed pawn moves in endgame
 			U64 BBpiece = 1ULL << curmove.from;
 			if (BBpiece & BBarea) {
 				// pawn is on rank 2-5
@@ -331,6 +332,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		}
 		else if (curmove.piece == PAWN && pos->tomove == WHITE) {
 			U64 BBarea = BBrank4 | BBrank5 | BBrank6 | BBrank7;
+			if (gamephase(pos) >= 80) BBarea = ~0; // extend all passed pawn moves in endgame
 			U64 BBpiece = 1ULL << curmove.from;
 			if (BBpiece & BBarea) {
 				// pawn is on rank 2-5
@@ -544,6 +546,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		}
 		if (moves[i].piece == PAWN && pos->tomove == WHITE) {
 			U64 BBarea = BBrank2 | BBrank3 | BBrank4 | BBrank5;
+			if (gamephase(pos) >= 80) BBarea = ~0; // extend all passed pawn moves in endgame
 			U64 BBpiece = 1ULL << moves[i].from;
 			if (BBpiece & BBarea) {
 				// pawn is on rank 2-5
@@ -557,6 +560,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		else if (moves[i].piece == PAWN && pos->tomove == BLACK) {
 			U64 BBarea = BBrank4 | BBrank5 | BBrank6 | BBrank7;
 			U64 BBpiece = 1ULL << moves[i].from;
+			if (gamephase(pos) >= 80) BBarea = ~0; // extend all passed pawn moves in endgame
 			if (BBpiece & BBarea) {
 				// pawn is on rank 2-5
 				U64 BBenemypawns = BBpasserLookup[WHITE][moves[i].from] & (pos->colours[BLACK] & pos->pieces[PAWN]);
