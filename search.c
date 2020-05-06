@@ -752,7 +752,17 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 	int lastscore = 0;
 	int lastlastscore = 0;
 	struct move pvlist[128];
-
+	
+	if (!strictmovetime && movestackend >= 1) {
+		struct position lastpos = posstack[posstackend - 2];
+		struct move lastmove = movestack[movestackend - 1];
+		int SEEvalue = SEEcapture(&lastpos, lastmove.from, lastmove.to, lastpos.tomove);
+		if (SEEvalue <= -300) {
+		//	printf("sacrifice: %s\n", movetostr(lastmove));
+		//	dspBoard(&lastpos);
+			endtime = maxendtime;
+		}
+	}
 	for(int d = 1; d <= searchdepth; ++d) {
 		
 		time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
