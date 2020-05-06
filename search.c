@@ -825,7 +825,7 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 
 		 */
 		 
-		//if (endtime > totalendtime) endtime = totalendtime;
+		if (endtime > totalendtime) endtime = totalendtime;
 		score = alphaBeta(&pos, -MATE_SCORE, MATE_SCORE, d * ONE_PLY, 0, 0, &pv, endtime, 0);
 		
 		//Ignore the result if we ran out of time
