@@ -721,9 +721,10 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 	// Timing code
 	const clock_t begin = clock();
 	clock_t endtime = clock() + (movetime / 1000.0 * CLOCKS_PER_SEC);
-	clock_t maxendtime = endtime + (movetime * 0.30 / 1000.0 * CLOCKS_PER_SEC);
+	clock_t maxendtime = endtime + (movetime * 0.60 / 1000.0 * CLOCKS_PER_SEC);
 	clock_t origendtime = endtime;
 	
+	printf("%d %d\n", endtime, totalendtime);
 	assert(maxendtime > endtime);
 	// Movegen
 	struct move moves[MAX_MOVES];
@@ -751,7 +752,7 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 	int lastscore = 0;
 	int lastlastscore = 0;
 	struct move pvlist[128];
-	
+
 	for(int d = 1; d <= searchdepth; ++d) {
 		
 		time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
@@ -793,7 +794,7 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 				// Extend search time
 				double remaining_time = endtime - time_spent;
 				double remaining_timems = remaining_time;
-				clock_t newendtime = clock() + + remaining_timems + remaining_timems * 0.015;
+				clock_t newendtime = clock() + + (remaining_timems + remaining_timems * 0.015);
 				if (newendtime > maxendtime) newendtime = maxendtime;
 				endtime = newendtime;
 			}
@@ -808,7 +809,13 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 			int expectedendtime = clock() + expectedtime;
 			if (expectedendtime > endtime) break;
 		}
+		// Increase time to max if opponent's last move was a sacrifice
+		//printf("%d::\n", movestackend);
+		/*
 
+		 */
+		 
+		if (endtime > totalendtime) endtime = totalendtime;
 		score = alphaBeta(&pos, -MATE_SCORE, MATE_SCORE, d * ONE_PLY, 0, 0, &pv, endtime, 0);
 		
 		//Ignore the result if we ran out of time

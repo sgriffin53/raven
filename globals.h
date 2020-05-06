@@ -2,6 +2,7 @@
 #define GLOBALS_H
 
 #include "TT.h"
+#include <time.h>
 
 int hashsize;
 struct position posstack[1024];
@@ -43,5 +44,6 @@ int movecount[1024];
 int numgoodhist;
 U64 totNodesSearched;
 int silentsearch;
+clock_t totalendtime;
 
 #endif

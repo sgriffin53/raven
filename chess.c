@@ -142,10 +142,12 @@ int main() {
 				if (strcmp(splitstr[i],"wtime") == 0) {
 					wtime = atoi(splitstr[i+1]);
 					if (origwtime == -1) origwtime = wtime;
+					totalendtime = clock() + wtime * 0.6;
 				}
 				if (strcmp(splitstr[i],"btime") == 0) {
 					btime = atoi(splitstr[i+1]);
 					if (origbtime == -1) origbtime = btime;
+					totalendtime = clock() + btime * 0.6;
 				}
 				if (strcmp(splitstr[i],"movestogo") == 0) {
 					movestogo = atoi(splitstr[i+1]);
