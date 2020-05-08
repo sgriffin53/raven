@@ -181,6 +181,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		beta = min(mate_in(ply+1), beta);
 		if (alpha >= beta) return alpha;
 	}
+	int staticeval = -MATE_SCORE - 100;
 	U64 hash;
 	if (currenthash != 0) {
 		hash = currenthash;
@@ -215,13 +216,13 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 				}
 			}
 			TTmove = TTdata.bestmove;
+			staticeval = TTdata.score;
 		}
 	}
 	
+	if (staticeval == -MATE_SCORE - 100) staticeval = taperedEval(pos);
 	
 	// eval pruning
-	
-	int staticeval = taperedEval(pos);
 	
 	if (depthleft < 3 * ONE_PLY && !incheck && abs(beta) - 1 > -MATE_SCORE + 100) {
 		int eval_margin = 120 * depthleft / ONE_PLY;
@@ -724,7 +725,6 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 	clock_t maxendtime = endtime + (movetime * 0.60 / 1000.0 * CLOCKS_PER_SEC);
 	clock_t origendtime = endtime;
 	
-	printf("%d %d\n", endtime, totalendtime);
 	assert(maxendtime > endtime);
 	// Movegen
 	struct move moves[MAX_MOVES];
