@@ -541,6 +541,8 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			}
 		}
 		int r = reduction(&moves[i], depthleft, cappiece, legalmoves, incheck, givescheck, ply);
+		r = max(0, min(r,3 * ONE_PLY));
+			
 		if (cutoffpercent >= 20.0 && r == 2 * ONE_PLY) {
 			// limit reduction of moves with good history to one ply
 			r = ONE_PLY;
@@ -582,16 +584,25 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		int SEEvalue = SEEcapture(&lastpos, moves[i].from, moves[i].to, lastpos.tomove);
 		if (SEEvalue < 0) depthleft -= ONE_PLY; // reduce bad captures
 		 
-		// Search
-		
+		// PVS Search
 
-		score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY - r + extension, 0, ply + 1, pv, endtime, !cut);
+		if (legalmoves == 1) {
+			score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY + extension, 0, ply + 1, pv, endtime, !cut);
+		}
+		else {
+			// narrow window search with reductions
+			score = -alphaBeta(pos, -alpha - 1, -alpha, depthleft - ONE_PLY - r + extension, 0, ply + 1, pv, endtime, !cut);
+			if (score > alpha) {
+				// full window research with no reduction
+				score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY + extension, 0, ply + 1, pv, endtime, !cut);
+			}
+		}
 		
 		// Redo search
 		
-		if (r > 0 && score > alpha) {
-			score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY + extension, 0, ply + 1, pv, endtime, !cut);
-		}
+		//if (r > 0 && score > alpha) {
+		//	score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY + extension, 0, ply + 1, pv, endtime, !cut);
+		//}
 		// Unmake the move
 		
 		unmakeMove(pos);
@@ -882,6 +893,8 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 				printf(" %s", movetostr(bestmove));
 			}
 			printf("\n");
+			//printf("NW research rate: %f\n", (double)((double)totnwresearches * (100 / (double)totnwsearches)));
+			//printf("\n");
 		}
 		lastsearchdepth = d;
 		if (score == MATE_SCORE || score == -MATE_SCORE) break;
