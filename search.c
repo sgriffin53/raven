@@ -515,7 +515,8 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		
 		// SEE pruning
 		
-		if (depthleft <= 8 * ONE_PLY && bestscore > -MATE_SCORE && SEEcapture(pos, moves[i].from, moves[i].to, pos->tomove) <= -80 * (depthleft / ONE_PLY) * (depthleft / ONE_PLY)) {
+		int SEEvalue = SEEcapture(pos, moves[i].from, moves[i].to, pos->tomove);
+		if (depthleft <= 8 * ONE_PLY && bestscore > -MATE_SCORE && SEEvalue <= -80 * (depthleft / ONE_PLY) * (depthleft / ONE_PLY)) {
 			continue;
 		}
 		int extension = 0;
@@ -589,8 +590,8 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			extension = ONE_PLY;
 		}
 		 
-		struct position lastpos = posstack[posstackend - 2];
-		int SEEvalue = SEEcapture(&lastpos, moves[i].from, moves[i].to, lastpos.tomove);
+		//struct position lastpos = posstack[posstackend - 2];
+		//int SEEvalue = SEEcapture(&lastpos, moves[i].from, moves[i].to, lastpos.tomove);
 		if (SEEvalue < 0) depthleft -= ONE_PLY; // reduce bad captures
 		 
 		// PVS Search
