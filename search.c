@@ -169,6 +169,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	}
 	struct move bestmove = {.to=-1,.from=-1,.prom=NONE,.cappiece=NONE};;
 	struct move TTmove = {.to=-1,.from=-1,.prom=NONE,.cappiece=NONE};
+	struct move nullref = {.to=-1,.from=-1,.prom=NONE,.cappiece=NONE};
 	int origAlpha = alpha;
 	int origBeta = beta;
 	
@@ -260,6 +261,9 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			verR = 2 * ONE_PLY;
 		}
 		const int val = -alphaBeta(pos,-beta,-beta+1, depthleft - ONE_PLY - R, 1, ply + 1, pv, endtime, !cut);
+		U64 nullhash = generateHash(pos);
+		struct TTentry nullTTdata = getTTentry(&TT, nullhash);
+		if (nullhash == nullTTdata.hash) nullref = nullTTdata.bestmove;
 		pos->tomove = !pos->tomove;
 		pos->halfmoves = orighalfmoves;
 		pos->epsquare = origepsquare;
@@ -499,9 +503,12 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		
 		double cutoffpercent = ((double)histval * 100.0 / (double)(histval + butterflyval));
 		
+		int escapesnr = 0;
+		if (nullref.to == moves[i].from) escapesnr = 1;
+		
 		// history pruning
 		
-		if (!incheck && !nullmove && depthleft <= 21 * ONE_PLY && !isTTmove && moves[i].cappiece == NONE && !isKiller
+		if (!escapesnr && !incheck && !nullmove && depthleft <= 21 * ONE_PLY && !isTTmove && moves[i].cappiece == NONE && !isKiller
 			&& bestmove.from != -1 && legalmoves >= 4 && (histval + butterflyval) > histmargin && cutoffpercent < 1.25 && ply != 0) {
 			continue;
 		}
