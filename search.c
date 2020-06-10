@@ -553,7 +553,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		int r = reduction(&moves[i], depthleft, cappiece, legalmoves, incheck, givescheck, ply);
 		r = max(0, min(r,3 * ONE_PLY));
 			
-		if (cutoffpercent >= 20.0 && r == 2 * ONE_PLY) {
+		if (cutoffpercent >= 20.0 && r >= 2 * ONE_PLY) {
 			// limit reduction of moves with good history to one ply
 			r = ONE_PLY;
 		}
