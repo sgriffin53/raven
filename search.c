@@ -684,7 +684,7 @@ int gamephase(struct position *pos) {
 	if (pos->tomove == BLACK) phase = -phase;
 	return phase;
 }
-struct pvline getPV(struct position *pos, int depth) {
+struct pvline getPV(struct position *pos, int depth, clock_t endtime) {
 	struct pvline pvline;
 	U64 hash = generateHash(pos);
 	struct PVTTentry TTdata = getPVTTentry(&PVTT,hash);
@@ -714,6 +714,11 @@ struct pvline getPV(struct position *pos, int depth) {
 		pos->tomove = !pos->tomove;
 		hash = generateHash(pos);
 		TTdata = getPVTTentry(&PVTT,hash);
+		if (TTdata.hash != hash) {
+			struct move pv;
+			int score = alphaBeta(pos, -MATE_SCORE, MATE_SCORE, (depth - i) * ONE_PLY, 0, 0, &pv, endtime, 0);
+			TTdata = getPVTTentry(&PVTT,hash);
+		}
 		if (TTdata.hash != hash) break;
 		pvline.moves[i] = TTdata.bestmove;
 		pvline.size++;
@@ -889,7 +894,7 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 			printf(" time %i", (int)(time_spent*1000));
 			if (time_spent > 0) printf(" nps %i", nps);
 			printf(" score cp %i", score);
-			struct pvline pvline = getPV(&pos,d);
+			struct pvline pvline = getPV(&pos,d, endtime);
 			printf(" pv");
 			int pvmatch = 0;
 			if (pvline.moves[0].from == bestmove.from && pvline.moves[0].to == bestmove.to && pvline.moves[0].prom == bestmove.prom) pvmatch = 1;
