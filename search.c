@@ -169,6 +169,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	}
 	struct move bestmove = {.to=-1,.from=-1,.prom=NONE,.cappiece=NONE};;
 	struct move TTmove = {.to=-1,.from=-1,.prom=NONE,.cappiece=NONE};
+	struct move nullref = {.to=-1,.from=-1,.prom=NONE,.cappiece=NONE};
 	int origAlpha = alpha;
 	int origBeta = beta;
 	
@@ -181,6 +182,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		beta = min(mate_in(ply+1), beta);
 		if (alpha >= beta) return alpha;
 	}
+	int staticeval = -MATE_SCORE - 100;
 	U64 hash;
 	if (currenthash != 0) {
 		hash = currenthash;
@@ -215,13 +217,13 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 				}
 			}
 			TTmove = TTdata.bestmove;
+			staticeval = TTdata.score;
 		}
 	}
 	
+	if (staticeval == -MATE_SCORE - 100) staticeval = taperedEval(pos);
 	
 	// eval pruning
-	
-	int staticeval = taperedEval(pos);
 	
 	if (depthleft < 3 * ONE_PLY && !incheck && abs(beta) - 1 > -MATE_SCORE + 100) {
 		int eval_margin = 120 * depthleft / ONE_PLY;
@@ -259,6 +261,9 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			verR = 2 * ONE_PLY;
 		}
 		const int val = -alphaBeta(pos,-beta,-beta+1, depthleft - ONE_PLY - R, 1, ply + 1, pv, endtime, !cut);
+		U64 nullhash = generateHash(pos);
+		struct TTentry nullTTdata = getTTentry(&TT, nullhash);
+		if (nullhash == nullTTdata.hash) nullref = nullTTdata.bestmove;
 		pos->tomove = !pos->tomove;
 		pos->halfmoves = orighalfmoves;
 		pos->epsquare = origepsquare;
@@ -319,6 +324,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		
 		if (curmove.piece == PAWN && pos->tomove == BLACK) {
 			U64 BBarea = BBrank2 | BBrank3 | BBrank4 | BBrank5;
+			if (gamephase(pos) >= 80) BBarea = ~0; // extend all passed pawn moves in endgame
 			U64 BBpiece = 1ULL << curmove.from;
 			if (BBpiece & BBarea) {
 				// pawn is on rank 2-5
@@ -331,6 +337,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		}
 		else if (curmove.piece == PAWN && pos->tomove == WHITE) {
 			U64 BBarea = BBrank4 | BBrank5 | BBrank6 | BBrank7;
+			if (gamephase(pos) >= 80) BBarea = ~0; // extend all passed pawn moves in endgame
 			U64 BBpiece = 1ULL << curmove.from;
 			if (BBpiece & BBarea) {
 				// pawn is on rank 2-5
@@ -351,6 +358,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		if (SEEvalue < 0) r = ONE_PLY; // reduce bad captures
 		makeMove(&curmove,pos);
 		legalmoves++;
+		nodesSearched++;
 		if (curmove.cappiece == NONE) quiets++;
 		
 		int score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY + extension - r, 0, ply + 1, pv, endtime, !cut);
@@ -496,14 +504,20 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		
 		double cutoffpercent = ((double)histval * 100.0 / (double)(histval + butterflyval));
 		
-		if (depthleft <= 21 * ONE_PLY && !isTTmove && moves[i].cappiece == NONE && !isKiller
-			&& bestmove.from != -1 && legalmoves >= 1 && (histval + butterflyval) > histmargin && cutoffpercent < 1.25 && ply != 0) {
+		int escapesnr = 0;
+		if (nullref.to == moves[i].from) escapesnr = 1;
+		
+		// history pruning
+		
+		if (!escapesnr && !incheck && !nullmove && depthleft <= 21 * ONE_PLY && !isTTmove && moves[i].cappiece == NONE && !isKiller
+			&& bestmove.from != -1 && legalmoves >= 4 && (histval + butterflyval) > histmargin && cutoffpercent < 1.25 && ply != 0) {
 			continue;
 		}
 		
 		// SEE pruning
 		
-		if (depthleft <= 8 * ONE_PLY && bestscore > -MATE_SCORE && SEEcapture(pos, moves[i].from, moves[i].to, pos->tomove) <= -80 * (depthleft / ONE_PLY) * (depthleft / ONE_PLY)) {
+		int SEEvalue = SEEcapture(pos, moves[i].from, moves[i].to, pos->tomove);
+		if (depthleft <= 8 * ONE_PLY && bestscore > -MATE_SCORE && SEEvalue <= -80 * (depthleft / ONE_PLY) * (depthleft / ONE_PLY)) {
 			continue;
 		}
 		int extension = 0;
@@ -538,12 +552,15 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			}
 		}
 		int r = reduction(&moves[i], depthleft, cappiece, legalmoves, incheck, givescheck, ply);
-		if (cutoffpercent >= 20.0 && r == 2 * ONE_PLY) {
+		r = max(0, min(r,3 * ONE_PLY));
+			
+		if (cutoffpercent >= 20.0 && r >= 2 * ONE_PLY) {
 			// limit reduction of moves with good history to one ply
 			r = ONE_PLY;
 		}
 		if (moves[i].piece == PAWN && pos->tomove == WHITE) {
 			U64 BBarea = BBrank2 | BBrank3 | BBrank4 | BBrank5;
+			if (gamephase(pos) >= 80) BBarea = ~0; // extend all passed pawn moves in endgame
 			U64 BBpiece = 1ULL << moves[i].from;
 			if (BBpiece & BBarea) {
 				// pawn is on rank 2-5
@@ -557,6 +574,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		else if (moves[i].piece == PAWN && pos->tomove == BLACK) {
 			U64 BBarea = BBrank4 | BBrank5 | BBrank6 | BBrank7;
 			U64 BBpiece = 1ULL << moves[i].from;
+			if (gamephase(pos) >= 80) BBarea = ~0; // extend all passed pawn moves in endgame
 			if (BBpiece & BBarea) {
 				// pawn is on rank 2-5
 				U64 BBenemypawns = BBpasserLookup[WHITE][moves[i].from] & (pos->colours[BLACK] & pos->pieces[PAWN]);
@@ -573,20 +591,29 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			extension = ONE_PLY;
 		}
 		 
-		struct position lastpos = posstack[posstackend - 2];
-		int SEEvalue = SEEcapture(&lastpos, moves[i].from, moves[i].to, lastpos.tomove);
+		//struct position lastpos = posstack[posstackend - 2];
+		//int SEEvalue = SEEcapture(&lastpos, moves[i].from, moves[i].to, lastpos.tomove);
 		if (SEEvalue < 0) depthleft -= ONE_PLY; // reduce bad captures
 		 
-		// Search
-		
+		// PVS Search
 
-		score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY - r + extension, 0, ply + 1, pv, endtime, !cut);
+		if (legalmoves == 1) {
+			score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY + extension, 0, ply + 1, pv, endtime, !cut);
+		}
+		else {
+			// narrow window search with reductions
+			score = -alphaBeta(pos, -alpha - 1, -alpha, depthleft - ONE_PLY - r + extension, 0, ply + 1, pv, endtime, !cut);
+			if (score > alpha) {
+				// full window research with no reduction
+				score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY + extension, 0, ply + 1, pv, endtime, !cut);
+			}
+		}
 		
 		// Redo search
 		
-		if (r > 0 && score > alpha) {
-			score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY + extension, 0, ply + 1, pv, endtime, !cut);
-		}
+		//if (r > 0 && score > alpha) {
+		//	score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY + extension, 0, ply + 1, pv, endtime, !cut);
+		//}
 		// Unmake the move
 		
 		unmakeMove(pos);
@@ -658,7 +685,7 @@ int gamephase(struct position *pos) {
 	if (pos->tomove == BLACK) phase = -phase;
 	return phase;
 }
-struct pvline getPV(struct position *pos, int depth) {
+struct pvline getPV(struct position *pos, int depth, clock_t endtime) {
 	struct pvline pvline;
 	U64 hash = generateHash(pos);
 	struct PVTTentry TTdata = getPVTTentry(&PVTT,hash);
@@ -688,6 +715,11 @@ struct pvline getPV(struct position *pos, int depth) {
 		pos->tomove = !pos->tomove;
 		hash = generateHash(pos);
 		TTdata = getPVTTentry(&PVTT,hash);
+		if (TTdata.hash != hash) {
+			struct move pv;
+			int score = alphaBeta(pos, -MATE_SCORE, MATE_SCORE, (depth - i) * ONE_PLY, 0, 0, &pv, endtime, 0);
+			TTdata = getPVTTentry(&PVTT,hash);
+		}
 		if (TTdata.hash != hash) break;
 		pvline.moves[i] = TTdata.bestmove;
 		pvline.size++;
@@ -717,7 +749,7 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 	// Timing code
 	const clock_t begin = clock();
 	clock_t endtime = clock() + (movetime / 1000.0 * CLOCKS_PER_SEC);
-	clock_t maxendtime = endtime + (movetime * 0.30 / 1000.0 * CLOCKS_PER_SEC);
+	clock_t maxendtime = endtime + (movetime * 0.60 / 1000.0 * CLOCKS_PER_SEC);
 	clock_t origendtime = endtime;
 	
 	assert(maxendtime > endtime);
@@ -748,6 +780,16 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 	int lastlastscore = 0;
 	struct move pvlist[128];
 	
+	if (!strictmovetime && movestackend >= 1) {
+		struct position lastpos = posstack[posstackend - 2];
+		struct move lastmove = movestack[movestackend - 1];
+		int SEEvalue = SEEcapture(&lastpos, lastmove.from, lastmove.to, lastpos.tomove);
+		if (SEEvalue <= -300) {
+		//	printf("sacrifice: %s\n", movetostr(lastmove));
+		//	dspBoard(&lastpos);
+			endtime = maxendtime;
+		}
+	}
 	for(int d = 1; d <= searchdepth; ++d) {
 		
 		time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
@@ -789,7 +831,7 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 				// Extend search time
 				double remaining_time = endtime - time_spent;
 				double remaining_timems = remaining_time;
-				clock_t newendtime = clock() + + remaining_timems + remaining_timems * 0.015;
+				clock_t newendtime = clock() + + (remaining_timems + remaining_timems * 0.015);
 				if (newendtime > maxendtime) newendtime = maxendtime;
 				endtime = newendtime;
 			}
@@ -804,7 +846,13 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 			int expectedendtime = clock() + expectedtime;
 			if (expectedendtime > endtime) break;
 		}
+		// Increase time to max if opponent's last move was a sacrifice
+		//printf("%d::\n", movestackend);
+		/*
 
+		 */
+		 
+		if (endtime > totalendtime) endtime = totalendtime;
 		score = alphaBeta(&pos, -MATE_SCORE, MATE_SCORE, d * ONE_PLY, 0, 0, &pv, endtime, 0);
 		
 		//Ignore the result if we ran out of time
@@ -847,7 +895,7 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 			printf(" time %i", (int)(time_spent*1000));
 			if (time_spent > 0) printf(" nps %i", nps);
 			printf(" score cp %i", score);
-			struct pvline pvline = getPV(&pos,d);
+			struct pvline pvline = getPV(&pos,d, endtime);
 			printf(" pv");
 			int pvmatch = 0;
 			if (pvline.moves[0].from == bestmove.from && pvline.moves[0].to == bestmove.to && pvline.moves[0].prom == bestmove.prom) pvmatch = 1;
@@ -861,6 +909,8 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 				printf(" %s", movetostr(bestmove));
 			}
 			printf("\n");
+			//printf("NW research rate: %f\n", (double)((double)totnwresearches * (100 / (double)totnwsearches)));
+			//printf("\n");
 		}
 		lastsearchdepth = d;
 		if (score == MATE_SCORE || score == -MATE_SCORE) break;
