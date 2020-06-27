@@ -826,7 +826,7 @@ void evalMobility(struct position *pos, int *openingEval, int *endgameEval) {
 	
 	int idx = 0;
 	double centremult = 0.5;
-	double hrattackbonus = 0.5;
+	double hrattackbonus = 1;
 	struct mobreturn WNmobility = Nmobility(pos,WHITE);
 	idx = min(8, max(0, WNmobility.mobility - WNmobility.unsafe * 2 + WNmobility.centre * centremult));
 	*openingEval += knightMgMobility[idx];
