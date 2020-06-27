@@ -559,7 +559,10 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			// limit reduction of moves with good history to one ply
 			r = ONE_PLY;
 		}
-		
+		if (gamephase(pos) == 100) {
+			// no LMR in pawn endgames
+			r = 0;
+		}
 		// passed pawn extension
 		
 		if (moves[i].piece == PAWN && pos->tomove == WHITE) {
