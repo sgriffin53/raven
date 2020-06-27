@@ -559,6 +559,9 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			// limit reduction of moves with good history to one ply
 			r = ONE_PLY;
 		}
+		
+		// passed pawn extension
+		
 		if (moves[i].piece == PAWN && pos->tomove == WHITE) {
 			U64 BBarea = BBrank2 | BBrank3 | BBrank4 | BBrank5;
 			if (gamephase(pos) >= 80) BBarea = ~0; // extend all passed pawn moves in endgame
@@ -586,14 +589,22 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			}
 		}
 		
+		// recapture extension
+		
 		struct move lastmove = movestack[movestackend - 2];
 		if (pieceval(lastmove.cappiece) == pieceval(lastmove.piece) && moves[i].to == lastmove.to) {
 			// recapture extension
 			extension = ONE_PLY;
 		}
-		 
-		//struct position lastpos = posstack[posstackend - 2];
-		//int SEEvalue = SEEcapture(&lastpos, moves[i].from, moves[i].to, lastpos.tomove);
+		
+		// crosscheck extension
+		
+		if (incheck && givescheck) {
+			extension = ONE_PLY;
+		}
+		
+		// SEE reduction
+		
 		if (SEEvalue < 0) depthleft -= ONE_PLY; // reduce bad captures
 		 
 		// PVS Search
