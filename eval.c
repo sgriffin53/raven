@@ -1012,7 +1012,7 @@ int evalEndgame(struct position *pos, int endgameEval) {
 			if (pos->pieces[PAWN] | pos->pieces[QUEEN]) return endgameEval;
 			if (num_BN | num_BB | num_BR) return 0;
 		}
-		if (num_WN == 2) {
+		if (num_BN == 2) {
 			if (pos->pieces[PAWN] | pos->pieces[QUEEN]) return endgameEval;
 			if (num_WN | num_WB | num_WR) return 0;
 		}
