@@ -700,7 +700,7 @@ int gamephase(struct position *pos) {
 	if (pos->tomove == BLACK) phase = -phase;
 	return phase;
 }
-struct pvline getPV(struct position *pos, int depth, clock_t endtime) {
+struct pvline getPV(struct position *pos, int depth) {
 	struct pvline pvline;
 	U64 hash = generateHash(pos);
 	struct PVTTentry TTdata = getPVTTentry(&PVTT,hash);
@@ -730,11 +730,6 @@ struct pvline getPV(struct position *pos, int depth, clock_t endtime) {
 		pos->tomove = !pos->tomove;
 		hash = generateHash(pos);
 		TTdata = getPVTTentry(&PVTT,hash);
-		if (TTdata.hash != hash) {
-			struct move pv;
-			int score = alphaBeta(pos, -MATE_SCORE, MATE_SCORE, (depth - i) * ONE_PLY, 0, 0, &pv, endtime, 0);
-			TTdata = getPVTTentry(&PVTT,hash);
-		}
 		if (TTdata.hash != hash) break;
 		pvline.moves[i] = TTdata.bestmove;
 		pvline.size++;
@@ -764,7 +759,7 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 	// Timing code
 	const clock_t begin = clock();
 	clock_t endtime = clock() + (movetime / 1000.0 * CLOCKS_PER_SEC);
-	clock_t maxendtime = endtime + (movetime * 0.60 / 1000.0 * CLOCKS_PER_SEC);
+	clock_t maxendtime = endtime + (movetime * 0.30 / 1000.0 * CLOCKS_PER_SEC);
 	clock_t origendtime = endtime;
 	
 	assert(maxendtime > endtime);
@@ -795,21 +790,12 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 	int lastlastscore = 0;
 	struct move pvlist[128];
 	
-	if (!strictmovetime && movestackend >= 1) {
-		struct position lastpos = posstack[posstackend - 2];
-		struct move lastmove = movestack[movestackend - 1];
-		int SEEvalue = SEEcapture(&lastpos, lastmove.from, lastmove.to, lastpos.tomove);
-		if (SEEvalue <= -300) {
-		//	printf("sacrifice: %s\n", movetostr(lastmove));
-		//	dspBoard(&lastpos);
-			endtime = maxendtime;
-		}
-	}
 	for(int d = 1; d <= searchdepth; ++d) {
 		
 		time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
 		time_spentms = (int)(time_spent*1000);
 		rootdepth = d;
+		
 		
 		// Check how many times the PV has changed in the last 4 depths
 		
@@ -846,7 +832,7 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 				// Extend search time
 				double remaining_time = endtime - time_spent;
 				double remaining_timems = remaining_time;
-				clock_t newendtime = clock() + + (remaining_timems + remaining_timems * 0.015);
+				clock_t newendtime = clock() + + remaining_timems + remaining_timems * 0.015;
 				if (newendtime > maxendtime) newendtime = maxendtime;
 				endtime = newendtime;
 			}
@@ -861,13 +847,7 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 			int expectedendtime = clock() + expectedtime;
 			if (expectedendtime > endtime) break;
 		}
-		// Increase time to max if opponent's last move was a sacrifice
-		//printf("%d::\n", movestackend);
-		/*
-
-		 */
-		 
-		if (endtime > totalendtime) endtime = totalendtime;
+		
 		score = alphaBeta(&pos, -MATE_SCORE, MATE_SCORE, d * ONE_PLY, 0, 0, &pv, endtime, 0);
 		
 		//Ignore the result if we ran out of time
@@ -910,7 +890,7 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 			printf(" time %i", (int)(time_spent*1000));
 			if (time_spent > 0) printf(" nps %i", nps);
 			printf(" score cp %i", score);
-			struct pvline pvline = getPV(&pos,d, endtime);
+			struct pvline pvline = getPV(&pos,d);
 			printf(" pv");
 			int pvmatch = 0;
 			if (pvline.moves[0].from == bestmove.from && pvline.moves[0].to == bestmove.to && pvline.moves[0].prom == bestmove.prom) pvmatch = 1;
