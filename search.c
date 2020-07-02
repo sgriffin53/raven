@@ -325,7 +325,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		
 		if (curmove.piece == PAWN && pos->tomove == BLACK) {
 			U64 BBarea = BBrank2 | BBrank3 | BBrank4 | BBrank5;
-			if (gamephase(pos) >= 80) BBarea = ~0; // extend all passed pawn moves in endgame
+			//if (gamephase(pos) >= 80) BBarea = ~0; // extend all passed pawn moves in endgame
 			U64 BBpiece = 1ULL << curmove.from;
 			if (BBpiece & BBarea) {
 				// pawn is on rank 2-5
@@ -338,7 +338,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		}
 		else if (curmove.piece == PAWN && pos->tomove == WHITE) {
 			U64 BBarea = BBrank4 | BBrank5 | BBrank6 | BBrank7;
-			if (gamephase(pos) >= 80) BBarea = ~0; // extend all passed pawn moves in endgame
+			//if (gamephase(pos) >= 80) BBarea = ~0; // extend all passed pawn moves in endgame
 			U64 BBpiece = 1ULL << curmove.from;
 			if (BBpiece & BBarea) {
 				// pawn is on rank 2-5
@@ -567,7 +567,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		
 		if (moves[i].piece == PAWN && pos->tomove == WHITE) {
 			U64 BBarea = BBrank2 | BBrank3 | BBrank4 | BBrank5;
-			if (gamephase(pos) >= 80) BBarea = ~0; // extend all passed pawn moves in endgame
+			//if (gamephase(pos) >= 80) BBarea = ~0; // extend all passed pawn moves in endgame
 			U64 BBpiece = 1ULL << moves[i].from;
 			if (BBpiece & BBarea) {
 				// pawn is on rank 2-5
@@ -581,7 +581,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		else if (moves[i].piece == PAWN && pos->tomove == BLACK) {
 			U64 BBarea = BBrank4 | BBrank5 | BBrank6 | BBrank7;
 			U64 BBpiece = 1ULL << moves[i].from;
-			if (gamephase(pos) >= 80) BBarea = ~0; // extend all passed pawn moves in endgame
+			//if (gamephase(pos) >= 80) BBarea = ~0; // extend all passed pawn moves in endgame
 			if (BBpiece & BBarea) {
 				// pawn is on rank 2-5
 				U64 BBenemypawns = BBpasserLookup[WHITE][moves[i].from] & (pos->colours[BLACK] & pos->pieces[PAWN]);
@@ -597,12 +597,6 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		struct move lastmove = movestack[movestackend - 2];
 		if (pieceval(lastmove.cappiece) == pieceval(lastmove.piece) && moves[i].to == lastmove.to) {
 			// recapture extension
-			extension = ONE_PLY;
-		}
-		
-		// crosscheck extension
-		
-		if (incheck && givescheck) {
 			extension = ONE_PLY;
 		}
 		
@@ -759,10 +753,10 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 	// Timing code
 	const clock_t begin = clock();
 	clock_t endtime = clock() + (movetime / 1000.0 * CLOCKS_PER_SEC);
-	clock_t maxendtime = endtime + (movetime * 0.30 / 1000.0 * CLOCKS_PER_SEC);
+	//clock_t maxendtime = endtime + (movetime * 0.30 / 1000.0 * CLOCKS_PER_SEC);
 	clock_t origendtime = endtime;
 	
-	assert(maxendtime > endtime);
+	//assert(maxendtime > endtime);
 	// Movegen
 	struct move moves[MAX_MOVES];
 	const int num_moves = genMoves(&pos, moves, 0);
@@ -795,48 +789,6 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 		time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
 		time_spentms = (int)(time_spent*1000);
 		rootdepth = d;
-		
-		
-		// Check how many times the PV has changed in the last 4 depths
-		
-		int losingontime = 0;
-		
-		if (pos.tomove == WHITE) {
-			if (wtime < btime) losingontime = 1;
-		}
-		else {
-			if (btime < wtime) losingontime = 1;
-		}
-		double timeleftpercent;
-		if (pos.tomove == WHITE) {
-			timeleftpercent = (double)wtime * 100.0 / (double)origwtime; // time left as percentage of original time
-		}
-		if (pos.tomove == BLACK) {
-			timeleftpercent = (double)btime * 100.0 / (double)origbtime; // time left as percentage of original time
-		}
-		
-		if (d > 4 && abs(score - lastscore) >= 0 && !losingontime && timeleftpercent > 30.0 && !strictmovetime) {
-			int timeschanged = 0;
-			
-			for (int i = d - 1;i >= 0 && i > d - 5;i--) {
-				int issame = 0;
-				struct move lastpv = pvlist[i-1];
-				if (pvlist[i].to == lastpv.to && pvlist[i].from == lastpv.from && pvlist[i].prom == lastpv.prom) {
-					issame = 1;
-				}
-				if (!issame) timeschanged++;
-			}
-			
-			if (timeschanged >= 1) { 
-				// PV move has changed at least one time in last 4 iterations
-				// Extend search time
-				double remaining_time = endtime - time_spent;
-				double remaining_timems = remaining_time;
-				clock_t newendtime = clock() + + remaining_timems + remaining_timems * 0.015;
-				if (newendtime > maxendtime) newendtime = maxendtime;
-				endtime = newendtime;
-			}
-		}
 		
 		// Predict whether we have enough time for next search and break if not
 		
