@@ -867,6 +867,11 @@ void evalMobility(struct position *pos, int *openingEval, int *endgameEval) {
 	kingattacks += 4 * WQmobility.kingattacks;
 	kingattackers += WQmobility.kingattackers;
 	
+	// prevent overflow
+	
+	if (kingattackers >= 8) kingattackers = 8;
+	if (kingattacks >= 29) kingattacks = 29;
+	
 	*openingEval += safety_table[kingattackers][kingattacks];
 	*endgameEval += safety_table[kingattackers][kingattacks];
 	
@@ -912,6 +917,11 @@ void evalMobility(struct position *pos, int *openingEval, int *endgameEval) {
 	*openingEval -= BQmobility.homerowsattacks * hrattackbonus;
 	kingattacks += 4 * BQmobility.kingattacks;
 	kingattackers += BQmobility.kingattackers;
+	
+	// prevent overflow
+	
+	if (kingattackers >= 8) kingattackers = 8;
+	if (kingattacks >= 29) kingattacks = 29;
 	
 	*openingEval -= safety_table[kingattackers][kingattacks];
 	*endgameEval -= safety_table[kingattackers][kingattacks];
