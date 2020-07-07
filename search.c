@@ -42,6 +42,12 @@ int reduction(const struct move *move, const int depthleft, char cappiece, int l
 	return 0;
 }
 
+clock_t getClock() {
+	struct timespec tp;
+	clock_gettime(CLOCK_REALTIME, &tp);
+	return ((clock_t)tp.tv_sec * 1000 + tp.tv_nsec / 1000000);
+}
+
 void clearKillers(int ply) {
 	struct move nomove = {.to=-1,.from=-1,.prom=-1,.cappiece=-1};
 	for (int i = 0;i < ply;i++) {
@@ -65,7 +71,7 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 	assert(pos);
 	assert(alpha >= -MATE_SCORE && beta <= MATE_SCORE);
 	if (ply > seldepth) seldepth = ply;
-	if (clock() >= endtime) {
+	if (nodesSearched % 512 == 0 && getClock() >= endtime) {
 		return -MATE_SCORE;
 	}
 	struct move TTmove = {.to=-1,.from=-1,.prom=NONE,.cappiece=NONE};
@@ -153,7 +159,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	if (ply > seldepth) seldepth = ply;
 	int origdepthleft = depthleft;
 	if (depthleft <= 0) depthleft = 0;
-	if (clock() >= endtime) {
+	if (nodesSearched % 512 == 0 && getClock() >= endtime) {
 		return -MATE_SCORE;
 	}
 	currenthash = 0;
@@ -751,8 +757,8 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 	int time_spentms;
 	
 	// Timing code
-	const clock_t begin = clock();
-	clock_t endtime = clock() + (movetime / 1000.0 * CLOCKS_PER_SEC);
+	const clock_t begin = getClock();
+	clock_t endtime = begin + movetime;
 	//clock_t maxendtime = endtime + (movetime * 0.30 / 1000.0 * CLOCKS_PER_SEC);
 	clock_t origendtime = endtime;
 	
@@ -786,8 +792,8 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 	
 	for(int d = 1; d <= searchdepth; ++d) {
 		
-		time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
-		time_spentms = (int)(time_spent*1000);
+		time_spentms = getClock() - begin;
+		time_spent = time_spentms / 1000.0;
 		rootdepth = d;
 		
 		// Predict whether we have enough time for next search and break if not
@@ -796,14 +802,14 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 			if (time_spent_prevms == 0) time_spent_prevms = 1;
 			//double factor = time_spentms / time_spent_prevms;
 			double expectedtime = time_spentms * 4;
-			int expectedendtime = clock() + expectedtime;
+			int expectedendtime = getClock() + expectedtime;
 			if (expectedendtime > endtime) break;
 		}
 		
 		score = alphaBeta(&pos, -MATE_SCORE, MATE_SCORE, d * ONE_PLY, 0, 0, &pv, endtime, 0);
 		
 		//Ignore the result if we ran out of time
-		if (d > 1 && clock() >= endtime) {
+		if (d > 1 && getClock() >= endtime) {
 			break;
 		}
 
@@ -830,8 +836,8 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 		//bestmove = TTdata.bestmove;
 		bestmove = pv;
 		pvlist[d] = pv;
-		time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
-		time_spentms = (int)(time_spent*1000);
+		time_spentms = getClock() - begin;
+		time_spent = time_spentms / 1000.0;
 		int nps = nodesSearched / time_spent;
 		// Info string
 		if (!silentsearch) {
@@ -862,8 +868,8 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 		lastsearchdepth = d;
 		if (score == MATE_SCORE || score == -MATE_SCORE) break;
 	}
-	time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
-	time_spentms = (int)(time_spent*1000);
+	time_spentms = getClock() - begin;
+	time_spent = time_spentms / 1000.0;
 	
 	if (!silentsearch) {
 		printf("info time %d", time_spentms);
