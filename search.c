@@ -48,6 +48,17 @@ clock_t getClock() {
 	return ((clock_t)tp.tv_sec * 1000 + tp.tv_nsec / 1000000);
 }
 
+int outOfTime(clock_t endtime) {
+	static int counter = 0;
+
+	if (counter == 0) {
+		counter = 512;
+		return getClock() >= endtime;
+	}
+	--counter;
+	return 0;
+}
+
 void clearKillers(int ply) {
 	struct move nomove = {.to=-1,.from=-1,.prom=-1,.cappiece=-1};
 	for (int i = 0;i < ply;i++) {
@@ -71,8 +82,8 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 	assert(pos);
 	assert(alpha >= -MATE_SCORE && beta <= MATE_SCORE);
 	if (ply > seldepth) seldepth = ply;
-	if (nodesSearched % 512 == 0 && getClock() >= endtime) {
-		return -MATE_SCORE;
+	if (outOfTime(endtime)) {
+		return NO_SCORE;
 	}
 	struct move TTmove = {.to=-1,.from=-1,.prom=NONE,.cappiece=NONE};
 	U64 hash;
@@ -135,6 +146,9 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 		
 		unmakeMove(pos);
 
+		if (score == -NO_SCORE) {
+			return NO_SCORE;
+		}
 		if (score >= beta) {
 			if (TTdata.hash != hash) {
 				if (beta != 0 && beta <= MATE_SCORE - 100 && beta >= -MATE_SCORE + 100) addTTentry(&TT, hash, 0, LOWERBOUND, moves[i], beta);
@@ -159,8 +173,8 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	if (ply > seldepth) seldepth = ply;
 	int origdepthleft = depthleft;
 	if (depthleft <= 0) depthleft = 0;
-	if (nodesSearched % 512 == 0 && getClock() >= endtime) {
-		return -MATE_SCORE;
+	if (outOfTime(endtime)) {
+		return NO_SCORE;
 	}
 	currenthash = 0;
 	if (isThreefold(pos)) return 0;
@@ -267,6 +281,9 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			verR = 2 * ONE_PLY;
 		}
 		const int val = -alphaBeta(pos,-beta,-beta+1, depthleft - ONE_PLY - R, 1, ply + 1, pv, endtime, !cut);
+		if (val == -NO_SCORE) {
+			return NO_SCORE;
+		}
 		U64 nullhash = generateHash(pos);
 		struct TTentry nullTTdata = getTTentry(&TT, nullhash);
 		if (nullhash == nullTTdata.hash) nullref = nullTTdata.bestmove;
@@ -277,6 +294,9 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		if (val >= origBeta || val >= beta) {
 			if (cut || staticeval - 100 >= beta) return beta;
 			const int verification = alphaBeta(pos,beta - 1,beta, depthleft - ONE_PLY - verR, 1, ply + 1, pv, endtime, !cut); // alpha_beta(p, md, beta - 1, beta, d, false, false);
+			if (verification == NO_SCORE) {
+				return NO_SCORE;
+			}
 			if (verification >= beta) return beta;
 		}
 	}
@@ -297,6 +317,9 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		
 		int newdepth = 3 * ONE_PLY;
 		int val = alphaBeta(pos, alpha, beta, newdepth, 0, ply + 1, pv, endtime, !cut);
+		if (val == NO_SCORE) {
+			return NO_SCORE;
+		}
 		TTdata = getTTentry(&TT, hash);
         if (TTdata.hash == hash) {
 			int isvalid = 1;
@@ -369,11 +392,14 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		if (curmove.cappiece == NONE) quiets++;
 		
 		int score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY + extension - r, 0, ply + 1, pv, endtime, !cut);
-		if (r > 0 && score > alpha) {
+		if (r > 0 && score > alpha && score != -NO_SCORE) {
 			score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY + extension, 0, ply + 1, pv, endtime, !cut);
 		}
 		unmakeMove(pos);
 		
+		if (score == -NO_SCORE) {
+			return NO_SCORE;
+		}
 		if (score > bestscore) {
 			bestscore = score;
 			bestmove = curmove;
@@ -429,6 +455,9 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			int probcutscore;
 			probcutscore = -alphaBeta(pos, -rbeta, -rbeta + 1, depthleft - 4 * ONE_PLY, 0, ply + 1, pv, endtime, !cut);
 			unmakeMove(pos);
+			if (probcutscore == -NO_SCORE) {
+				return NO_SCORE;
+			}
 			if (probcutscore >= rbeta) {
 				return probcutscore;
 			}
@@ -452,6 +481,9 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			pos->tomove = !pos->tomove;
 			int score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY - MCR * ONE_PLY, 0, ply + 1, pv, endtime, !cut);
 			unmakeMove(pos);
+			if (score == -NO_SCORE) {
+				return NO_SCORE;
+			}
 			if (score >= beta) {
 				c++;
 				if (c == MCC) {
@@ -618,7 +650,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		else {
 			// narrow window search with reductions
 			score = -alphaBeta(pos, -alpha - 1, -alpha, depthleft - ONE_PLY - r + extension, 0, ply + 1, pv, endtime, !cut);
-			if (score > alpha) {
+			if (score > alpha && score != -NO_SCORE) {
 				// full window research with no reduction
 				score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY + extension, 0, ply + 1, pv, endtime, !cut);
 			}
@@ -632,6 +664,10 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		// Unmake the move
 		
 		unmakeMove(pos);
+
+		if (score == -NO_SCORE) {
+			return NO_SCORE;
+		}
 		
 		if (score > alpha) {
 			fullwindow = 0;
@@ -809,7 +845,7 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 		score = alphaBeta(&pos, -MATE_SCORE, MATE_SCORE, d * ONE_PLY, 0, 0, &pv, endtime, 0);
 		
 		//Ignore the result if we ran out of time
-		if (d > 1 && getClock() >= endtime) {
+		if (d > 1 && score == NO_SCORE) {
 			break;
 		}
 
