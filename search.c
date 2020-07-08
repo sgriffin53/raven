@@ -42,6 +42,23 @@ int reduction(const struct move *move, const int depthleft, char cappiece, int l
 	return 0;
 }
 
+clock_t getClock() {
+	struct timespec tp;
+	clock_gettime(CLOCK_REALTIME, &tp);
+	return ((clock_t)tp.tv_sec * 1000 + tp.tv_nsec / 1000000);
+}
+
+int outOfTime(clock_t endtime) {
+	static int counter = 0;
+
+	if (counter == 0) {
+		counter = 512;
+		return getClock() >= endtime;
+	}
+	--counter;
+	return 0;
+}
+
 void clearKillers(int ply) {
 	struct move nomove = {.to=-1,.from=-1,.prom=-1,.cappiece=-1};
 	for (int i = 0;i < ply;i++) {
@@ -65,8 +82,8 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 	assert(pos);
 	assert(alpha >= -MATE_SCORE && beta <= MATE_SCORE);
 	if (ply > seldepth) seldepth = ply;
-	if (clock() >= endtime) {
-		return -MATE_SCORE;
+	if (outOfTime(endtime)) {
+		return NO_SCORE;
 	}
 	struct move TTmove = {.to=-1,.from=-1,.prom=NONE,.cappiece=NONE};
 	U64 hash;
@@ -129,6 +146,9 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 		
 		unmakeMove(pos);
 
+		if (score == -NO_SCORE) {
+			return NO_SCORE;
+		}
 		if (score >= beta) {
 			if (TTdata.hash != hash) {
 				if (beta != 0 && beta <= MATE_SCORE - 100 && beta >= -MATE_SCORE + 100) addTTentry(&TT, hash, 0, LOWERBOUND, moves[i], beta);
@@ -153,8 +173,8 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	if (ply > seldepth) seldepth = ply;
 	int origdepthleft = depthleft;
 	if (depthleft <= 0) depthleft = 0;
-	if (clock() >= endtime) {
-		return -MATE_SCORE;
+	if (outOfTime(endtime)) {
+		return NO_SCORE;
 	}
 	currenthash = 0;
 	if (isThreefold(pos)) return 0;
@@ -261,6 +281,9 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			verR = 2 * ONE_PLY;
 		}
 		const int val = -alphaBeta(pos,-beta,-beta+1, depthleft - ONE_PLY - R, 1, ply + 1, pv, endtime, !cut);
+		if (val == -NO_SCORE) {
+			return NO_SCORE;
+		}
 		U64 nullhash = generateHash(pos);
 		struct TTentry nullTTdata = getTTentry(&TT, nullhash);
 		if (nullhash == nullTTdata.hash) nullref = nullTTdata.bestmove;
@@ -271,6 +294,9 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		if (val >= origBeta || val >= beta) {
 			if (cut || staticeval - 100 >= beta) return beta;
 			const int verification = alphaBeta(pos,beta - 1,beta, depthleft - ONE_PLY - verR, 1, ply + 1, pv, endtime, !cut); // alpha_beta(p, md, beta - 1, beta, d, false, false);
+			if (verification == NO_SCORE) {
+				return NO_SCORE;
+			}
 			if (verification >= beta) return beta;
 		}
 	}
@@ -291,6 +317,9 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		
 		int newdepth = 3 * ONE_PLY;
 		int val = alphaBeta(pos, alpha, beta, newdepth, 0, ply + 1, pv, endtime, !cut);
+		if (val == NO_SCORE) {
+			return NO_SCORE;
+		}
 		TTdata = getTTentry(&TT, hash);
         if (TTdata.hash == hash) {
 			int isvalid = 1;
@@ -363,11 +392,14 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		if (curmove.cappiece == NONE) quiets++;
 		
 		int score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY + extension - r, 0, ply + 1, pv, endtime, !cut);
-		if (r > 0 && score > alpha) {
+		if (r > 0 && score > alpha && score != -NO_SCORE) {
 			score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY + extension, 0, ply + 1, pv, endtime, !cut);
 		}
 		unmakeMove(pos);
 		
+		if (score == -NO_SCORE) {
+			return NO_SCORE;
+		}
 		if (score > bestscore) {
 			bestscore = score;
 			bestmove = curmove;
@@ -423,6 +455,9 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			int probcutscore;
 			probcutscore = -alphaBeta(pos, -rbeta, -rbeta + 1, depthleft - 4 * ONE_PLY, 0, ply + 1, pv, endtime, !cut);
 			unmakeMove(pos);
+			if (probcutscore == -NO_SCORE) {
+				return NO_SCORE;
+			}
 			if (probcutscore >= rbeta) {
 				return probcutscore;
 			}
@@ -446,6 +481,9 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			pos->tomove = !pos->tomove;
 			int score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY - MCR * ONE_PLY, 0, ply + 1, pv, endtime, !cut);
 			unmakeMove(pos);
+			if (score == -NO_SCORE) {
+				return NO_SCORE;
+			}
 			if (score >= beta) {
 				c++;
 				if (c == MCC) {
@@ -612,7 +650,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		else {
 			// narrow window search with reductions
 			score = -alphaBeta(pos, -alpha - 1, -alpha, depthleft - ONE_PLY - r + extension, 0, ply + 1, pv, endtime, !cut);
-			if (score > alpha) {
+			if (score > alpha && score != -NO_SCORE) {
 				// full window research with no reduction
 				score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY + extension, 0, ply + 1, pv, endtime, !cut);
 			}
@@ -626,6 +664,10 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		// Unmake the move
 		
 		unmakeMove(pos);
+
+		if (score == -NO_SCORE) {
+			return NO_SCORE;
+		}
 		
 		if (score > alpha) {
 			fullwindow = 0;
@@ -751,8 +793,8 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 	int time_spentms;
 	
 	// Timing code
-	const clock_t begin = clock();
-	clock_t endtime = clock() + (movetime / 1000.0 * CLOCKS_PER_SEC);
+	const clock_t begin = getClock();
+	clock_t endtime = begin + movetime;
 	//clock_t maxendtime = endtime + (movetime * 0.30 / 1000.0 * CLOCKS_PER_SEC);
 	clock_t origendtime = endtime;
 	
@@ -786,8 +828,8 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 	
 	for(int d = 1; d <= searchdepth; ++d) {
 		
-		time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
-		time_spentms = (int)(time_spent*1000);
+		time_spentms = getClock() - begin;
+		time_spent = time_spentms / 1000.0;
 		rootdepth = d;
 		
 		// Predict whether we have enough time for next search and break if not
@@ -796,14 +838,14 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 			if (time_spent_prevms == 0) time_spent_prevms = 1;
 			//double factor = time_spentms / time_spent_prevms;
 			double expectedtime = time_spentms * 4;
-			int expectedendtime = clock() + expectedtime;
+			int expectedendtime = getClock() + expectedtime;
 			if (expectedendtime > endtime) break;
 		}
 		
 		score = alphaBeta(&pos, -MATE_SCORE, MATE_SCORE, d * ONE_PLY, 0, 0, &pv, endtime, 0);
 		
 		//Ignore the result if we ran out of time
-		if (d > 1 && clock() >= endtime) {
+		if (d > 1 && score == NO_SCORE) {
 			break;
 		}
 
@@ -830,8 +872,8 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 		//bestmove = TTdata.bestmove;
 		bestmove = pv;
 		pvlist[d] = pv;
-		time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
-		time_spentms = (int)(time_spent*1000);
+		time_spentms = getClock() - begin;
+		time_spent = time_spentms / 1000.0;
 		int nps = nodesSearched / time_spent;
 		// Info string
 		if (!silentsearch) {
@@ -862,8 +904,8 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 		lastsearchdepth = d;
 		if (score == MATE_SCORE || score == -MATE_SCORE) break;
 	}
-	time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
-	time_spentms = (int)(time_spent*1000);
+	time_spentms = getClock() - begin;
+	time_spent = time_spentms / 1000.0;
 	
 	if (!silentsearch) {
 		printf("info time %d", time_spentms);
