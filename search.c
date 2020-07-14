@@ -35,6 +35,7 @@ int reduction(const struct move *move, const int depthleft, char cappiece, int l
 			int red = ONE_PLY;
 			if (depthleft >= 6 * ONE_PLY) red = 2 * ONE_PLY;
 			if (legalmoves >= 20) red += ONE_PLY;
+			if (move->piece == PAWN) red = ONE_PLY;
 			return red;
 		}
 	}
