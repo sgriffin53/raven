@@ -547,6 +547,9 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		int escapesnr = 0;
 		if (nullref.to == moves[i].from) escapesnr = 1;
 		
+
+		int sortscore = sortScore(pos, &moves[i], TTmove, ply);
+		
 		// history pruning
 		
 		if (!escapesnr && !incheck && !nullmove && depthleft <= 21 * ONE_PLY && !isTTmove && moves[i].cappiece == NONE && !isKiller
@@ -585,13 +588,13 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		&& legalmoves > 1
 		&&  moves[i].prom == NONE
 		&& !givescheck
+		&& sortscore == 0
 		&& ply != 0) {
 			if (cappiece == NONE) {
 			unmakeMove(pos);
 			continue;
 			}
 		}
-		int sortscore = sortScore(pos, &moves[i], TTmove, ply);
 		int r = reduction(&moves[i], depthleft, cappiece, legalmoves, incheck, givescheck, ply);
 		if (r == ONE_PLY && sortscore == 0) { // increase reduction for moves with sort score of 0
 			r += ONE_PLY;
