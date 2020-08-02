@@ -56,6 +56,50 @@ int mvvlva(char piece, char cappiece) {
 	return 10 * capval(cappiece) - capval(piece);
 }
 
+int sortScore(struct position *pos, struct move *move, struct move TTmove, int ply) {
+	// Score
+	char cappiece = move->cappiece;
+	char piece = move->piece;
+	int histval = history[pos->tomove][move->from][move->to];
+	int butterflyval = butterfly[pos->tomove][move->from][move->to];
+	double histscore = (double)histval;
+	if (butterflyval != 0) histscore = (double)histval / (double)butterflyval;
+	
+	struct move prevmove = movestack[movestackend - 1];
+	struct move countermove = countermoves[prevmove.from][prevmove.to];
+	if (TTmove.from != -1
+		&& (move->from == TTmove.from) && (move->to == TTmove.to) && (move->prom == TTmove.prom)) {
+			return 5000000;
+	}
+	else if (cappiece != NONE
+		&& cappiece >= piece) {
+			return 1000000 + mvvlva(piece, cappiece);
+	}
+	else if (cappiece != NONE
+		&& piece > cappiece) {
+			return 700000 + mvvlva(piece, cappiece);
+	}
+	else if ((killers[ply][0].to == move->to) && (killers[ply][0].from == move->from) && (killers[ply][0].prom == move->prom)) {
+		return 900000;
+	}
+	else if ((killers[ply - 2][0].to == move->to) && (killers[ply - 2][0].from == move->from) && (killers[ply - 2][0].prom == move->prom)) {
+		return 875000;
+	}
+	else if ((killers[ply][1].to == move->to) && (killers[ply][1].from == move->from) && (killers[ply][1].prom == move->prom)) {
+		return 850000;
+	}
+	else if ((killers[ply - 2][1].to == move->to) && (killers[ply - 2][1].from == move->from) && (killers[ply - 2][1].prom == move->prom)) {
+		return 825000;
+	}
+	else if (histscore > 0.0) {
+		histscore = 1000.0 + histscore * 100.0;
+		if (histscore > 700000.0) {
+			histscore = 700000.0;
+		}
+		return (int)histscore;
+	}
+	return 0;
+}
 void sortMoves(struct position *pos, struct move *moves, const int num_moves, struct move TTmove, int ply) {
 	assert(moves);
 	assert(pos);

@@ -591,7 +591,11 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			continue;
 			}
 		}
+		int sortscore = sortScore(pos, &moves[i], TTmove, ply);
 		int r = reduction(&moves[i], depthleft, cappiece, legalmoves, incheck, givescheck, ply);
+		if (r == ONE_PLY && sortscore == 0) {
+			r += ONE_PLY;
+		}
 		r = max(0, min(r,3 * ONE_PLY));
 			
 		if (cutoffpercent >= 20.0 && r >= 2 * ONE_PLY) {
