@@ -596,7 +596,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			}
 		}
 		int r = reduction(&moves[i], depthleft, cappiece, legalmoves, incheck, givescheck, ply);
-		if (r == ONE_PLY && sortscore == 0) { // increase reduction for moves with sort score of 0
+		if (r >= ONE_PLY && sortscore == 0) { // increase reduction for moves with sort score of 0
 			r += ONE_PLY;
 		}
 		if (r > ONE_PLY && sortscore > 0) { // decrease reduction for moves with good sort scores
