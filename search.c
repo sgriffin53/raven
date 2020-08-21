@@ -293,7 +293,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		pos->epsquare = origepsquare;
 		posstackend--;
 		if (val >= origBeta || val >= beta) {
-			if (cut || staticeval - 100 >= beta) return beta;
+			if (cut || staticeval - 100 >= beta || gamephase(pos) <= 70) return beta;
 			const int verification = alphaBeta(pos,beta - 1,beta, depthleft - ONE_PLY - verR, 1, ply + 1, pv, endtime, !cut); // alpha_beta(p, md, beta - 1, beta, d, false, false);
 			if (verification == NO_SCORE) {
 				return NO_SCORE;
