@@ -20,6 +20,7 @@
 #include "magicmoves.h"
 
 #define ONE_PLY 4
+#define MAX_DEPTH 100
 
 int mate_in(int ply) {
 	return MATE_SCORE - ply;
@@ -353,7 +354,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		curmove = premoves[i];
 		extension = 0;
 		
-		if (curmove.piece == PAWN && pos->tomove == BLACK) {
+		if ((curmove.prom == NONE || curmove.prom == QUEEN) && curmove.piece == PAWN && pos->tomove == BLACK) {
 			U64 BBarea = BBrank2 | BBrank3 | BBrank4 | BBrank5;
 			//if (gamephase(pos) >= 80) BBarea = ~0; // extend all passed pawn moves in endgame
 			U64 BBpiece = 1ULL << curmove.from;
@@ -366,7 +367,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 				}
 			}
 		}
-		else if (curmove.piece == PAWN && pos->tomove == WHITE) {
+		else if ((curmove.prom == NONE || curmove.prom == QUEEN) && curmove.piece == PAWN && pos->tomove == WHITE) {
 			U64 BBarea = BBrank4 | BBrank5 | BBrank6 | BBrank7;
 			//if (gamephase(pos) >= 80) BBarea = ~0; // extend all passed pawn moves in endgame
 			U64 BBpiece = 1ULL << curmove.from;
@@ -614,7 +615,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		}
 		// passed pawn extension
 		
-		if (moves[i].piece == PAWN && pos->tomove == WHITE) {
+		if ((moves[i].prom == NONE || moves[i].prom == QUEEN) && moves[i].piece == PAWN && pos->tomove == WHITE) {
 			U64 BBarea = BBrank2 | BBrank3 | BBrank4 | BBrank5;
 			//if (gamephase(pos) >= 80) BBarea = ~0; // extend all passed pawn moves in endgame
 			U64 BBpiece = 1ULL << moves[i].from;
@@ -627,7 +628,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 				}
 			}
 		}
-		else if (moves[i].piece == PAWN && pos->tomove == BLACK) {
+		else if ((moves[i].prom == NONE || moves[i].prom == QUEEN) && moves[i].piece == PAWN && pos->tomove == BLACK) {
 			U64 BBarea = BBrank4 | BBrank5 | BBrank6 | BBrank7;
 			U64 BBpiece = 1ULL << moves[i].from;
 			//if (gamephase(pos) >= 80) BBarea = ~0; // extend all passed pawn moves in endgame
@@ -806,6 +807,7 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 	// Timing code
 	const clock_t begin = getClock();
 	clock_t endtime = begin + movetime;
+	clock_t maxendtime = begin + movetime + movetime * 0.3;
 	//clock_t maxendtime = endtime + (movetime * 0.30 / 1000.0 * CLOCKS_PER_SEC);
 	clock_t origendtime = endtime;
 	
@@ -837,10 +839,10 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 	int lastlastscore = 0;
 	struct move pvlist[128];
 	
-	for(int d = 1; d <= searchdepth; ++d) {
+	for(int d = 1; d <= min(MAX_DEPTH, searchdepth); ++d) {
 		
 		time_spentms = getClock() - begin;
-		time_spent = time_spentms / 1000.0;
+		//time_spent = time_spentms / 1000.0;
 		rootdepth = d;
 		
 		// Predict whether we have enough time for next search and break if not
@@ -848,7 +850,7 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 		if (d > 1 && time_spentms > 30 && endtime == origendtime && !strictmovetime) {
 			if (time_spent_prevms == 0) time_spent_prevms = 1;
 			//double factor = time_spentms / time_spent_prevms;
-			double expectedtime = time_spentms * 4;
+			double expectedtime = time_spentms * 2;
 			int expectedendtime = getClock() + expectedtime;
 			if (expectedendtime > endtime) break;
 		}
