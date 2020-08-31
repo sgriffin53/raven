@@ -1,7 +1,7 @@
 SOURCES = chess.c position.c hash.c makemove.c tests.c movegen.c attacks.c bitboards.c magicmoves.c perft.c search.c eval.c TT.c sort.c misc.c tuner/tune.c tuner/tune_eval.c
-DFLAGS  = -lm -Wpedantic -Wall -Wextra -Wshadow
-RFLAGS  = -lm -flto -Ofast -DNDEBUG
-TFLAGS = -lm -flto -Ofast -DNDEBUG -Wl,--stack,2000000000
+DFLAGS  = -lm -fcommon -Wpedantic -Wall -Wextra -Wshadow
+RFLAGS  = -lm -fcommon -flto -Ofast -DNDEBUG
+TFLAGS = -lm -fcommon -flto -Ofast -DNDEBUG -Wl,--stack,2000000000
 release:
 	gcc $(SOURCES) $(RFLAGS) -o raven
 debug:
