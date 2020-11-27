@@ -603,6 +603,8 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		if (r > ONE_PLY && sortscore > 0) { // decrease reduction for moves with good sort scores
 			r -= ONE_PLY;
 		}
+		int ispv = alpha != beta - 1;
+		if (!ispv && !cut && r > ONE_PLY) r -= ONE_PLY; // excepted ALL node - don't reduce as much
 		r = max(0, min(r,3 * ONE_PLY));
 			
 		if (cutoffpercent >= 20.0 && r >= 2 * ONE_PLY) {
