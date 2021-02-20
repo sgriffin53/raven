@@ -589,7 +589,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		&& legalmoves > 1
 		&&  moves[i].prom == NONE
 		&& !givescheck
-		&& sortscore == 0
+		&& sortscore <= 700000
 		&& ply != 0) {
 			if (cappiece == NONE) {
 			unmakeMove(pos);
