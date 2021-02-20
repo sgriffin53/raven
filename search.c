@@ -185,7 +185,10 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	if (pos->halfmoves >= 100) return 0;
 	if (isInsufficientMaterial(pos)) return 0;
 	int incheck = isCheck(pos);
-	if (incheck) depthleft += ONE_PLY;
+	if (incheck) {
+		if (!cut) depthleft += ONE_PLY;
+		else depthleft += 0.75 * ONE_PLY;
+	}
 	if (depthleft <= 0) {
 		return qSearch(pos, alpha, beta, ply + 1, endtime);
 		//return taperedEval(pos);
