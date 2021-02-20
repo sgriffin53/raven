@@ -22,6 +22,8 @@
 #define ONE_PLY 4
 #define MAX_DEPTH 100
 
+const int PASSER_EXTENSION = 1 * ONE_PLY;
+
 int mate_in(int ply) {
 	return MATE_SCORE - ply;
 }
@@ -354,7 +356,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		curmove = premoves[i];
 		extension = 0;
 		
-		if ((curmove.prom == NONE || curmove.prom == QUEEN) && curmove.piece == PAWN && pos->tomove == BLACK) {
+		if ((curmove.prom == NONE || curmove.prom == QUEEN) && curmove.piece == PAWN && pos->tomove == BLACK && __builtin_popcountll(pos->pieces[PAWN]) > 1) {
 			U64 BBarea = BBrank2 | BBrank3 | BBrank4 | BBrank5;
 			//if (gamephase(pos) >= 80) BBarea = ~0; // extend all passed pawn moves in endgame
 			U64 BBpiece = 1ULL << curmove.from;
@@ -363,11 +365,11 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 				U64 BBenemypawns = BBpasserLookup[BLACK][curmove.from] & (pos->colours[WHITE] & pos->pieces[PAWN]);
 				if (!BBenemypawns) {
 					// pawn is passed
-					extension = 1 * ONE_PLY;
+					extension = PASSER_EXTENSION;
 				}
 			}
 		}
-		else if ((curmove.prom == NONE || curmove.prom == QUEEN) && curmove.piece == PAWN && pos->tomove == WHITE) {
+		else if ((curmove.prom == NONE || curmove.prom == QUEEN) && curmove.piece == PAWN && pos->tomove == WHITE && __builtin_popcountll(pos->pieces[PAWN]) > 1) {
 			U64 BBarea = BBrank4 | BBrank5 | BBrank6 | BBrank7;
 			//if (gamephase(pos) >= 80) BBarea = ~0; // extend all passed pawn moves in endgame
 			U64 BBpiece = 1ULL << curmove.from;
@@ -376,7 +378,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 				U64 BBenemypawns = BBpasserLookup[WHITE][curmove.from] & (pos->colours[BLACK] & pos->pieces[PAWN]);
 				if (!BBenemypawns) {
 					// pawn is passed
-					extension = 1 * ONE_PLY;
+					extension = PASSER_EXTENSION;
 				}
 			}
 		}
@@ -618,7 +620,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		}
 		// passed pawn extension
 		
-		if ((moves[i].prom == NONE || moves[i].prom == QUEEN) && moves[i].piece == PAWN && pos->tomove == WHITE) {
+		if ((moves[i].prom == NONE || moves[i].prom == QUEEN) && moves[i].piece == PAWN && pos->tomove == WHITE && __builtin_popcountll(pos->pieces[PAWN]) > 1) {
 			U64 BBarea = BBrank2 | BBrank3 | BBrank4 | BBrank5;
 			//if (gamephase(pos) >= 80) BBarea = ~0; // extend all passed pawn moves in endgame
 			U64 BBpiece = 1ULL << moves[i].from;
@@ -627,11 +629,11 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 				U64 BBenemypawns = BBpasserLookup[BLACK][moves[i].from] & (pos->colours[WHITE] & pos->pieces[PAWN]);
 				if (!BBenemypawns) {
 					// pawn is passed
-					extension = 1 * ONE_PLY;
+					extension = PASSER_EXTENSION;
 				}
 			}
 		}
-		else if ((moves[i].prom == NONE || moves[i].prom == QUEEN) && moves[i].piece == PAWN && pos->tomove == BLACK) {
+		else if ((moves[i].prom == NONE || moves[i].prom == QUEEN) && moves[i].piece == PAWN && pos->tomove == BLACK && __builtin_popcountll(pos->pieces[PAWN]) > 1) {
 			U64 BBarea = BBrank4 | BBrank5 | BBrank6 | BBrank7;
 			U64 BBpiece = 1ULL << moves[i].from;
 			//if (gamephase(pos) >= 80) BBarea = ~0; // extend all passed pawn moves in endgame
@@ -640,7 +642,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 				U64 BBenemypawns = BBpasserLookup[WHITE][moves[i].from] & (pos->colours[BLACK] & pos->pieces[PAWN]);
 				if (!BBenemypawns) {
 					// pawn is passed
-					extension = 1 * ONE_PLY;
+					extension = PASSER_EXTENSION;
 				}
 			}
 		}
