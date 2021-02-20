@@ -605,6 +605,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		}
 		int ispv = alpha != beta - 1;
 		if (!ispv && !cut && r > ONE_PLY) r -= ONE_PLY; // excepted ALL node - don't reduce as much
+		if (escapesnr) r -= 0.5 * ONE_PLY;
 		r = max(0, min(r,3 * ONE_PLY));
 			
 		if (cutoffpercent >= 20.0 && r >= 2 * ONE_PLY) {
