@@ -210,10 +210,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	if (currenthash != 0) {
 		hash = currenthash;
 	}
-	else if (hashstack[hashstackend - 1] != 0) {
-		hash = hashstack[hashstackend - 1];
-	}
-	else hash = generateHash(pos);
+	hash = generateHash(pos);
 	struct TTentry TTdata = getTTentry(&TT,hash);
 	if (TTdata.hash == hash) {
 		int isvalid = 1;
