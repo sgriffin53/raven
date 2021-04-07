@@ -64,9 +64,6 @@ void uci_listen() {
 			clearETT(&ETT);
 			clearKillers(128);
 			clearHistory();
-			for (int i = 0; i < 1024; i++) {
-				hashstack[i] = 0;
-			}
 			movestogo = 25;
 		}
 		else if (strcmp(splitstr[0], "go") == 0) {
@@ -117,8 +114,6 @@ void uci_listen() {
 			parsefen(&pos, "startpos"); // set start position
 			movestackend = 0;
 			U64 hash = generateHash(&pos);
-			hashstack[0] = hash;
-			hashstackend = 1;
 			if (strcmp(splitstr[2], "moves") == 0) {
 				// make all moves given by position command
 				for (int i = 3; i < splitstrend; i++) {

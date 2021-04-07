@@ -42,16 +42,12 @@ int main() {
 	origwtime = -1;
 	origbtime = -1;
 	movestackend = 0;
-	hashstackend = 0;
 	movestogo = 25;
 	silentsearch = 0;
 	totalendtime = INT_MAX / 100;
 	
 	genLookups(); // generate king and knight lookup tables
-	
-	for (int i = 0;i < 1024;i++) {
-		hashstack[i] = 0;
-	}
+
 	uci_listen();
 	/*
 	while (keeprunning) {
