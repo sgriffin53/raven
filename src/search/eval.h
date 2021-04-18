@@ -49,7 +49,7 @@ void evalKPPST(struct position *pos, int *openingEval, int *endgameEval);
 void evalPawns(struct position *pos, int *openingEval, int *endgameEval);
 void evalKnights(struct position *pos, int *openingEval, int *endgameEval);
 void evalBishops(struct position *pos, int *openingEval, int *endgameEval);
-void evalKRmate(struct position *pos, int *openingEval, int *endgameEval);
+void evalKRmate(struct position *pos, int *endgameEval);
 void evalRooks(struct position *pos, int *openingEval, int *endgameEval);
 void evalQueens(struct position *pos, int *openingEval, int *endgameEval);
 void evalKings(struct position *pos, int *openingEval, int *endgameEval);

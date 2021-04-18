@@ -584,7 +584,7 @@ void evalBishops(struct position *pos, int *openingEval, int *endgameEval) {
 	}
 	
 }
-void evalKRmate(struct position *pos, int *openingEval, int *endgameEval) {
+void evalKRmate(struct position *pos, int *endgameEval) {
 	
 	int num_BR = __builtin_popcountll(pos->colours[BLACK] & pos->pieces[ROOK]);
 	int num_WR = __builtin_popcountll(pos->colours[WHITE] & pos->pieces[ROOK]);
@@ -620,7 +620,7 @@ void evalKRmate(struct position *pos, int *openingEval, int *endgameEval) {
 	} 
 	U64 BBblacknonrookmaterial = (pos->pieces[PAWN] | pos->pieces[QUEEN] | pos->pieces[BISHOP] | pos->pieces[KNIGHT]) & pos->colours[BLACK];
 	U64 BBwhitematerial = (pos->pieces[PAWN] | pos->pieces[QUEEN] | pos->pieces[BISHOP] | pos->pieces[KNIGHT] | pos->pieces[ROOK]) & pos->colours[WHITE];
-	if  (!BBblacknonrookmaterial == 1 && !BBwhitematerial && num_BR == 1) {
+	if  ((!BBblacknonrookmaterial) == 1 && !BBwhitematerial && num_BR == 1) {
 		// KR vs K endgame, black has the rook
 		
 		// give a bonus for the enemy king's centre manhattan distance
@@ -1004,12 +1004,12 @@ int evalEndgame(struct position *pos, int endgameEval) {
 	int num_BN = __builtin_popcountll(pos->colours[BLACK] & pos->pieces[KNIGHT]);
 	int num_BB = __builtin_popcountll(pos->colours[BLACK] & pos->pieces[BISHOP]);
 	int num_BR = __builtin_popcountll(pos->colours[BLACK] & pos->pieces[ROOK]);
-	int num_BQ = __builtin_popcountll(pos->colours[BLACK] & pos->pieces[QUEEN]);
+	//int num_BQ = __builtin_popcountll(pos->colours[BLACK] & pos->pieces[QUEEN]);
 	int num_WP = __builtin_popcountll(pos->colours[WHITE] & pos->pieces[PAWN]);
 	int num_WN = __builtin_popcountll(pos->colours[WHITE] & pos->pieces[KNIGHT]);
 	int num_WB = __builtin_popcountll(pos->colours[WHITE] & pos->pieces[BISHOP]);
 	int num_WR = __builtin_popcountll(pos->colours[WHITE] & pos->pieces[ROOK]);
-	int num_WQ = __builtin_popcountll(pos->colours[WHITE] & pos->pieces[QUEEN]);
+	//int num_WQ = __builtin_popcountll(pos->colours[WHITE] & pos->pieces[QUEEN]);
 	
 	int num_pieces = __builtin_popcountll(pos->colours[WHITE] | pos->colours[BLACK]);
 	
@@ -1167,7 +1167,7 @@ int taperedEval(struct position *pos) {
 	
 	// mop up evaluation for basic checkmate
 	
-	evalKRmate(pos, &openingEval, &endgameEval);
+	evalKRmate(pos, &endgameEval);
 	
 	// mobility
 	
@@ -1193,22 +1193,18 @@ int taperedEval(struct position *pos) {
 struct mobreturn Nmobility(struct position *pos, int side) {
 	U64 BBsidepieces;
 	U64 BBkingzone;
-	U64 BBkingonly;
 	U64 BBattackedbypawns;
 	if (side == WHITE) {
 		BBsidepieces = pos->colours[WHITE];
-		BBkingonly = pos->pieces[KING] & pos->colours[BLACK];
 		BBkingzone = BBpawnshieldLookup[BLACK][pos->Bkingpos];
 		BBattackedbypawns = BBpawnattacksB(pos->pieces[PAWN] & pos->colours[BLACK]);
 	}
 	else {
 		BBsidepieces = pos->colours[BLACK];
-		BBkingonly = pos->pieces[KING] & pos->colours[WHITE];
 		BBkingzone = BBpawnshieldLookup[WHITE][pos->Wkingpos];
 		BBattackedbypawns = BBpawnattacksW(pos->pieces[PAWN] & pos->colours[WHITE]);
 	}
 	U64 BBallowed = ~BBsidepieces;
-	U64 BBoccupied = pos->colours[WHITE] | pos->colours[BLACK];
 	U64 BBmoves = 0;
 	U64 BBcopy = 0;
 	int from = 0;
@@ -1251,17 +1247,14 @@ struct mobreturn Nmobility(struct position *pos, int side) {
 struct mobreturn Bmobility(struct position *pos, int side) {
 	U64 BBsidepieces;
 	U64 BBkingzone;
-	U64 BBkingonly;
 	U64 BBattackedbypawns;
 	if (side == WHITE) {
 		BBsidepieces = pos->colours[WHITE];
-		BBkingonly = pos->pieces[KING] & pos->colours[BLACK];
 		BBkingzone = BBpawnshieldLookup[BLACK][pos->Bkingpos];
 		BBattackedbypawns = BBpawnattacksB(pos->pieces[PAWN] & pos->colours[BLACK]);
 	}
 	else {
 		BBsidepieces = pos->colours[BLACK];
-		BBkingonly = pos->pieces[KING] & pos->colours[WHITE];
 		BBkingzone = BBpawnshieldLookup[WHITE][pos->Wkingpos];
 		BBattackedbypawns = BBpawnattacksW(pos->pieces[PAWN] & pos->colours[WHITE]);
 	}
@@ -1306,17 +1299,14 @@ struct mobreturn Bmobility(struct position *pos, int side) {
 struct mobreturn Rmobility(struct position *pos, int side) {
 	U64 BBsidepieces;
 	U64 BBkingzone;
-	U64 BBkingonly;
 	U64 BBattackedbypawns;
 	if (side == WHITE) {
 		BBsidepieces = pos->colours[WHITE];
-		BBkingonly = pos->pieces[KING] & pos->colours[BLACK];
 		BBkingzone = BBpawnshieldLookup[BLACK][pos->Bkingpos];
 		BBattackedbypawns = BBpawnattacksB(pos->pieces[PAWN] & pos->colours[BLACK]);
 	}
 	else {
 		BBsidepieces = pos->colours[BLACK];
-		BBkingonly = pos->pieces[KING] & pos->colours[WHITE];
 		BBkingzone = BBpawnshieldLookup[WHITE][pos->Wkingpos];
 		BBattackedbypawns = BBpawnattacksW(pos->pieces[PAWN] & pos->colours[WHITE]);
 	}
@@ -1361,17 +1351,14 @@ struct mobreturn Rmobility(struct position *pos, int side) {
 struct mobreturn Qmobility(struct position *pos, int side) {
 	U64 BBsidepieces;
 	U64 BBkingzone;
-	U64 BBkingonly;
 	U64 BBattackedbypawns;
 	if (side == WHITE) {
 		BBsidepieces = pos->colours[WHITE];
-		BBkingonly = pos->pieces[KING] & pos->colours[BLACK];
 		BBkingzone = BBpawnshieldLookup[BLACK][pos->Bkingpos];
 		BBattackedbypawns = BBpawnattacksB(pos->pieces[PAWN] & pos->colours[BLACK]);
 	}
 	else {
 		BBsidepieces = pos->colours[BLACK];
-		BBkingonly = pos->pieces[KING] & pos->colours[WHITE];
 		BBkingzone = BBpawnshieldLookup[WHITE][pos->Wkingpos];
 		BBattackedbypawns = BBpawnattacksW(pos->pieces[PAWN] & pos->colours[WHITE]);
 	}

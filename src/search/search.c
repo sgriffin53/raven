@@ -29,7 +29,7 @@ int mate_in(int ply) {
 int mated_in(int ply) {
 	return -MATE_SCORE + ply;
 }
-int reduction(const struct move *move, const int depthleft, char cappiece, int legalmoves, int incheck, int givescheck, int ply) {
+int reduction(const struct move *move, const int depthleft, char cappiece, int legalmoves, int incheck, int givescheck) {
 	assert(move);
 	assert(depthleft >= 0);
 	if ((!incheck) && (legalmoves > 4) && (depthleft >= 3 * ONE_PLY) && (move->prom == NONE) && (!givescheck)) {
@@ -499,15 +499,10 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	int allorigdepthleft = depthleft;
 	
 	int score = 0;
-	int fullwindow = 1;
-	
 	
 	for (int i = 0;i < num_moves && !beatsbeta;i++) {
 		depthleft = allorigdepthleft;
 		
-		int numpassers = 0;
-		
-		char piece = moves[i].piece;
 		char cappiece = moves[i].cappiece;
 		
 		int histval = history[pos->tomove][moves[i].from][moves[i].to];
@@ -562,7 +557,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		if (depthleft <= 8 * ONE_PLY && bestscore > -MATE_SCORE && SEEvalue <= -80 * (depthleft / ONE_PLY) * (depthleft / ONE_PLY)) {
 			continue;
 		}
-		int extension = 0;
+		int ext = 0;
 		
 		// Make the move
 		
@@ -594,7 +589,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			continue;
 			}
 		}
-		int r = reduction(&moves[i], depthleft, cappiece, legalmoves, incheck, givescheck, ply);
+		int r = reduction(&moves[i], depthleft, cappiece, legalmoves, incheck, givescheck);
 		if (r >= ONE_PLY && sortscore == 0) { // increase reduction for moves with sort score of 0
 			r += ONE_PLY;
 		}
@@ -624,7 +619,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 				U64 BBenemypawns = BBpasserLookup[BLACK][moves[i].from] & (pos->colours[WHITE] & pos->pieces[PAWN]);
 				if (!BBenemypawns) {
 					// pawn is passed
-					extension = 1 * ONE_PLY;
+					ext = 1 * ONE_PLY;
 				}
 			}
 		}
@@ -637,7 +632,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 				U64 BBenemypawns = BBpasserLookup[WHITE][moves[i].from] & (pos->colours[BLACK] & pos->pieces[PAWN]);
 				if (!BBenemypawns) {
 					// pawn is passed
-					extension = 1 * ONE_PLY;
+					ext = 1 * ONE_PLY;
 				}
 			}
 		}
@@ -647,7 +642,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		struct move lastmove = movestack[movestackend - 2];
 		if (pieceval(lastmove.cappiece) == pieceval(lastmove.piece) && moves[i].to == lastmove.to) {
 			// recapture extension
-			extension = ONE_PLY;
+			ext = ONE_PLY;
 		}
 		
 		// SEE reduction
@@ -657,14 +652,14 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		// PVS Search
 
 		if (legalmoves == 1) {
-			score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY + extension, 0, ply + 1, pv, endtime, !cut);
+			score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY + ext, 0, ply + 1, pv, endtime, !cut);
 		}
 		else {
 			// narrow window search with reductions
-			score = -alphaBeta(pos, -alpha - 1, -alpha, depthleft - ONE_PLY - r + extension, 0, ply + 1, pv, endtime, !cut);
+			score = -alphaBeta(pos, -alpha - 1, -alpha, depthleft - ONE_PLY - r + ext, 0, ply + 1, pv, endtime, !cut);
 			if (score > alpha && score != -NO_SCORE) {
 				// full window research with no reduction
-				score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY + extension, 0, ply + 1, pv, endtime, !cut);
+				score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY + ext, 0, ply + 1, pv, endtime, !cut);
 			}
 		}
 		
@@ -681,9 +676,6 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			return NO_SCORE;
 		}
 		
-		if (score > alpha) {
-			fullwindow = 0;
-		}
 		if (score > bestscore) {
 			bestscore = score;
 			bestmove = moves[i];
@@ -699,7 +691,6 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 				killers[ply][0] = moves[i];
 				//history[pos->tomove][moves[i].from][moves[i].to] += pow(2.0,(double)depthleft);
 				history[pos->tomove][moves[i].from][moves[i].to] += (depthleft / ONE_PLY) * (depthleft / ONE_PLY);
-				struct move prevmove = movestack[movestackend - 1];
 				countermoves[prevmove.from][prevmove.to] = moves[i];
 			}
 			break;
@@ -807,7 +798,6 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 	// Timing code
 	const clock_t begin = getClock();
 	clock_t endtime = begin + movetime;
-	clock_t maxendtime = begin + movetime + movetime * 0.3;
 	//clock_t maxendtime = endtime + (movetime * 0.30 / 1000.0 * CLOCKS_PER_SEC);
 	clock_t origendtime = endtime;
 	
@@ -835,9 +825,6 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 	}
 	int time_spent_prevms;
 	int score = 0;
-	int lastscore = 0;
-	int lastlastscore = 0;
-	struct move pvlist[128];
 	
 	for(int d = 1; d <= min(MAX_DEPTH, searchdepth); ++d) {
 		
@@ -884,7 +871,6 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 		// Update results
 		//bestmove = TTdata.bestmove;
 		bestmove = pv;
-		pvlist[d] = pv;
 		time_spentms = getClock() - begin;
 		time_spent = time_spentms / 1000.0;
 		int nps = nodesSearched / time_spent;
@@ -950,13 +936,10 @@ int SEE(struct position *pos, int square, int side) {
 }
 struct move get_smallest_attacker(struct position *pos, int square, int side) {
 	U64 BBmypieces;
-	U64 BBopppieces;
 	U64 BBsquare = 1ULL << square;
 	U64 BBoccupied = pos->colours[WHITE] | pos->colours[BLACK];
 	if (side == WHITE) BBmypieces = pos->colours[WHITE];
 	else BBmypieces = pos->colours[BLACK];
-	if (side == BLACK) BBopppieces = pos->colours[WHITE];
-	else BBopppieces = pos->colours[BLACK];
 	struct move blankmove = {.to=-1, .from=-1, .prom=-1, .piece=-1, .cappiece=-1};
 	struct move returnmove = {.to=square, .from=-1, .prom=0, .piece=-1, .cappiece=getPiece(pos,square)};
 	// pawns

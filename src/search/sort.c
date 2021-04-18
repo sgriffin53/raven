@@ -65,8 +65,6 @@ int sortScore(struct position *pos, struct move *move, struct move TTmove, int p
 	double histscore = (double)histval;
 	if (butterflyval != 0) histscore = (double)histval / (double)butterflyval;
 	
-	struct move prevmove = movestack[movestackend - 1];
-	struct move countermove = countermoves[prevmove.from][prevmove.to];
 	if (TTmove.from != -1
 		&& (move->from == TTmove.from) && (move->to == TTmove.to) && (move->prom == TTmove.prom)) {
 			return 5000000;
