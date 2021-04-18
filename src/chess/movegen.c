@@ -15,13 +15,11 @@ int genKingMoves(struct position *pos, int square, struct move *moves, int forqs
 	U64 BBattacks = 0ULL;
 	int num_moves = 0;
 	if (pos->tomove == WHITE) {
-		U64 BBking = (pos->pieces[KING] & pos->colours[WHITE]);
 		BBattacks = BBkingLookup[square];
 		BBattacks = BBattacks & ~pos->colours[WHITE];
 		if (forqsearch) BBattacks = BBattacks & pos->colours[BLACK];
 	}
 	else if (pos->tomove == BLACK) {
-		U64 BBking = (pos->pieces[KING] & pos->colours[BLACK]);
 		BBattacks = BBkingLookup[square];
 		BBattacks = BBattacks & ~pos->colours[BLACK];
 		if (forqsearch) BBattacks = BBattacks & pos->colours[WHITE];
@@ -116,13 +114,11 @@ int genKnightMoves(struct position *pos, int square, struct move *moves, int for
 	U64 BBattacks = 0ULL;
 	int num_moves = 0;
 	if (pos->tomove == WHITE) {
-		U64 BBknight = (1ULL << square);
 		BBattacks = BBknightLookup[square];
 		BBattacks = BBattacks & ~pos->colours[WHITE];
 		if (forqsearch) BBattacks = BBattacks & pos->colours[BLACK];
 	}
 	else if (pos->tomove == BLACK) {
-		U64 BBknight = (1ULL << square);
 		BBattacks = BBknightLookup[square];
 		BBattacks = BBattacks & ~pos->colours[BLACK];
 		if (forqsearch) BBattacks = BBattacks & pos->colours[WHITE];
@@ -336,9 +332,9 @@ int genPawnMoves(struct position *pos, int square, struct move *moves, int forqs
 	else if (pos->tomove == BLACK) {
 		if (getrank(square) == 6) {
 			// generate double pawn moves for pawns on 7nd rank
-			U64 BBmove = BBpawnDoublePushB(BBpawn,~(pos->colours[BLACK] | pos->colours[WHITE]));
-			if (BBmove != 0) {
-				int movesquare = __builtin_ctzll(BBmove);
+			U64 BBmove_dbl = BBpawnDoublePushB(BBpawn,~(pos->colours[BLACK] | pos->colours[WHITE]));
+			if (BBmove_dbl != 0) {
+				int movesquare = __builtin_ctzll(BBmove_dbl);
 				if (!forqsearch) {
 					moves[num_moves].from = square;
 					moves[num_moves].to = movesquare;
@@ -350,9 +346,9 @@ int genPawnMoves(struct position *pos, int square, struct move *moves, int forqs
 			}
 		}
 		// single pawn push
-		U64 BBmove = BBpawnSinglePushB(BBpawn,~(pos->colours[BLACK] | pos->colours[WHITE]));
-		if (BBmove != 0) {
-			int movesquare = __builtin_ctzll(BBmove);
+		U64 BBmove_sgl = BBpawnSinglePushB(BBpawn,~(pos->colours[BLACK] | pos->colours[WHITE]));
+		if (BBmove_sgl != 0) {
+			int movesquare = __builtin_ctzll(BBmove_sgl);
 			if (getrank(movesquare) == 0) {
 					moves[num_moves].from = square;
 					moves[num_moves].to = movesquare;
@@ -437,7 +433,7 @@ int genPawnMoves(struct position *pos, int square, struct move *moves, int forqs
 	}
 	return num_moves;
 }
-int genAllPawnMoves(struct position *pos, int square, struct move *moves, int forqsearch) {
+int genAllPawnMoves(struct position *pos, struct move *moves, int forqsearch) {
 	// generates all pawn moves
 	U64 BBoccupied = pos->colours[WHITE] | pos->colours[BLACK];
 	U64 BBwhitepawns = pos->colours[WHITE] & pos->pieces[PAWN];
@@ -839,7 +835,7 @@ int genMoves(struct position *pos, struct move *moves, int forqsearch) {
 	U64 BBstmPawns = 0;
 	if (pos->tomove == WHITE) BBstmPawns = pos->colours[WHITE] & pos->pieces[PAWN];
 	else BBstmPawns = pos->colours[BLACK] & pos->pieces[PAWN];
-	if (BBstmPawns) num_moves += genAllPawnMoves(pos, 0, &moves[num_moves], forqsearch);
+	if (BBstmPawns) num_moves += genAllPawnMoves(pos, &moves[num_moves], forqsearch);
 	
 	return num_moves;
 }

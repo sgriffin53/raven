@@ -19,10 +19,10 @@ struct position flipBoard(struct position *pos) {
 		int piece = getPiece(pos, i);
 		if (piece == NONE) col = NONE;
 		if (piece == KING) {
-			if (!col == WHITE) {
+			if (col == BLACK) {
 				newpos.Bkingpos = newsquare;
 			}
-			else if (!col == BLACK) {
+			else if (col == WHITE) {
 				newpos.Wkingpos = newsquare;
 			}
 		}
@@ -210,39 +210,13 @@ int strsquaretoidx(char square[]) {
 	int rank = (int)square[1] - 49;
 	return fileranktosquareidx(file,rank);
 }
-char getPiece(struct position *pos, int sq) {
+int getPiece(struct position *pos, int sq) {
 	assert(pos);
 	assert(sq >= 0 && sq <= 63);
 	U64 BBsquare = (1ULL << sq);
 	for (int i = PAWN;i <= KING;i++) {
 		if (pos->pieces[i] & BBsquare) return i;
 	}
-	/*
-	if (pos->pieces[PAWN] & BBsquare) {
-		if (pos->colours[WHITE] & BBsquare) return 'P';
-		else return 'p';
-	}
-	if (pos->pieces[KNIGHT] & BBsquare) {
-		if (pos->colours[WHITE] & BBsquare) return 'N';
-		else return 'n';
-	}
-	if (pos->pieces[BISHOP] & BBsquare) {
-		if (pos->colours[WHITE] & BBsquare) return 'B';
-		else return 'b';
-	}
-	if (pos->pieces[ROOK] & BBsquare) {
-		if (pos->colours[WHITE] & BBsquare) return 'R';
-		else return 'r';
-	}
-	if (pos->pieces[QUEEN] & BBsquare) {
-		if (pos->colours[WHITE] & BBsquare) return 'Q';
-		else return 'q';
-	}
-	if (pos->pieces[KING] & BBsquare) {
-		if (pos->colours[WHITE] & BBsquare) return 'K';
-		else return 'k';
-	}
-	 */
 	return NONE;
 }
 int getColour(struct position *pos, int sq) {
@@ -252,49 +226,17 @@ int getColour(struct position *pos, int sq) {
 	}
 	return NONE;
 }
-void setPiece(struct position *pos, int sq, int colour, char piece) {
+void setPiece(struct position *pos, int sq, int colour, int piece) {
 	assert(piece);
 	assert(pos);
 	assert(sq >= 0 && sq <= 63);
 	U64 BBsquare = (1ULL << sq);
 	//clear bitboard of old square
-	char oldpiece = getPiece(pos,sq);
-	/*
-	switch (oldpiece) {
-		case 'p':
-		case 'P': pos->pieces[PAWN] &= ~BBsquare; break;
-		case 'n':
-		case 'N': pos->pieces[KNIGHT] &= ~BBsquare; break;
-		case 'b':
-		case 'B': pos->pieces[BISHOP] &= ~BBsquare; break;
-		case 'r':
-		case 'R': pos->pieces[ROOK] &= ~BBsquare; break;
-		case 'q':
-		case 'Q': pos->pieces[QUEEN] &= ~BBsquare; break;
-		case 'k':
-		case 'K': pos->pieces[KING] &= ~BBsquare; break;
-	}
-	 */
+	int oldpiece = getPiece(pos,sq);
 	pos->pieces[oldpiece] &= ~BBsquare;
 	//clear white and black piece bitboards of that square
 	pos->colours[WHITE] &= ~BBsquare;
 	pos->colours[BLACK] &= ~BBsquare;
-	/*
-	switch (piece) {
-		case 'p':
-		case 'P': pos->pieces[PAWN] |= BBsquare; break;
-		case 'n':
-		case 'N': pos->pieces[KNIGHT] |= BBsquare; break;
-		case 'b':
-		case 'B': pos->pieces[BISHOP] |= BBsquare; break;
-		case 'r':
-		case 'R': pos->pieces[ROOK] |= BBsquare; break;
-		case 'q':
-		case 'Q': pos->pieces[QUEEN] |= BBsquare; break;
-		case 'k': pos->pieces[KING] |= BBsquare; pos->Bkingpos = sq; break;
-		case 'K': pos->pieces[KING] |= BBsquare; pos->Wkingpos = sq; break;
-	}
-	 */
 	if (piece != NONE) pos->pieces[piece] |= BBsquare;
 	if (piece == KING) {
 		if (colour == WHITE) pos->Wkingpos = sq;

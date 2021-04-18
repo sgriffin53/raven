@@ -12,6 +12,6 @@ int genRookMoves(struct position *pos, int square, struct move *moves, int forqs
 int genQueenMoves(struct position *pos, int square, struct move *moves, int forqsearch);
 int genBishopMoves(struct position *pos, int square, struct move *moves, int forqsearch);
 int genPawnMoves(struct position *pos, int square, struct move *moves, int forqsearch);
-int genAllPawnMoves(struct position *pos, int square, struct move *moves, int forqsearch);
+int genAllPawnMoves(struct position *pos, struct move *moves, int forqsearch);
 
 #endif

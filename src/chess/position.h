@@ -47,9 +47,9 @@ int fileranktosquareidx(int file,int rank);
 void dspBB(U64 BB);
 void dspBBstr(char* BBstr,struct position pos);
 int strsquaretoidx(char square[]);
-char getPiece(struct position *pos,int sq);
+int getPiece(struct position *pos,int sq);
 int getColour(struct position *pos,int sq);
-void setPiece(struct position *pos, int sq, int colour, char piece);
+void setPiece(struct position *pos, int sq, int colour, int piece);
 void dspBoard(struct position *pos);
 
 
