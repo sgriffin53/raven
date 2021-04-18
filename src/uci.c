@@ -113,7 +113,6 @@ void uci_listen() {
 		else if ((strcmp(splitstr[0], "position") == 0) && (strcmp(splitstr[1], "startpos") == 0)) {
 			parsefen(&pos, "startpos"); // set start position
 			movestackend = 0;
-			U64 hash = generateHash(&pos);
 			if (strcmp(splitstr[2], "moves") == 0) {
 				// make all moves given by position command
 				for (int i = 3; i < splitstrend; i++) {

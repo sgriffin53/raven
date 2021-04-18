@@ -61,7 +61,7 @@ void runTestsNPS() {
 		strcat(fen, splitstr[3]);
 		struct position pos;
 		parsefen(&pos, fen);
-		struct move pv = search(pos, 11, 100000, 1);
+		search(pos, 11, 100000, 1);
 		totNodesSearched += nodesSearched;
 		totbetacutoffs += (U64)numbetacutoffs;
 		totinstantbetacutoffs += (U64)numinstantbetacutoffs;
