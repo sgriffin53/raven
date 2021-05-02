@@ -227,7 +227,6 @@ int getColour(struct position *pos, int sq) {
 	return NONE;
 }
 void setPiece(struct position *pos, int sq, int colour, int piece) {
-	assert(piece);
 	assert(pos);
 	assert(sq >= 0 && sq <= 63);
 	U64 BBsquare = (1ULL << sq);
