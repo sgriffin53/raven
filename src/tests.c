@@ -1,5 +1,7 @@
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include "tests.h"
 #include "chess/position.h"
@@ -7,11 +9,78 @@
 #include "search/search.h"
 #include "chess/makemove.h"
 #include "search/eval.h"
+#include "search/perft.h"
 
 void runTestsAll() {
 	runTestsFlip();
 	runTestsMakeMove();
 	testRunBetaCutoffs();
+}
+
+void runTestsPerft() {
+	printf("Running perft test.\n");
+	char path[256] = "tests\\perftsuite.epd";
+	
+	char *token;
+	char splitstr[12][200];
+	
+    FILE *fp;
+    char str[1024];
+	
+    fp = fopen(path, "r");
+    if (fp == NULL){
+        printf("Could not open file %s",path);
+		return;
+    }
+	int totpositions = 0;
+    while (fgets(str, 1024, fp) != NULL) {
+		//if (numentries >= 4000000) break; // limit number of entries
+        //printf("%s", str);
+		char fen[1024];
+		str[strcspn(str, "\n")] = 0;
+		//split str into tokens into splitstr by space
+		token = strtok(str," ");
+
+		int splitstrend = 0;
+		while (token != NULL) {
+			strcpy(splitstr[splitstrend],token);
+			splitstrend++;
+			token = strtok(NULL, " ");
+		}
+		
+		strcpy(fen,splitstr[0]);
+		strcat(fen, " ");
+		strcat(fen, splitstr[1]);
+		strcat(fen, " ");
+		strcat(fen, splitstr[2]);
+		strcat(fen, " ");
+		strcat(fen, splitstr[3]);
+		struct position pos;
+		int expected[7];
+		for (int i = 0;i < 6;i++) expected[i] = -1;
+		expected[0] = atoi(splitstr[7]);
+		if (splitstrend >= 10) expected[1] = atoi(splitstr[9]);
+		if (splitstrend >= 12) expected[2] = atoi(splitstr[11]);
+		if (splitstrend >= 14) expected[3] = atoi(splitstr[13]);
+		if (splitstrend >= 16) expected[4] = atoi(splitstr[15]);
+		if (splitstrend >= 18) expected[5] = atoi(splitstr[17]);
+		expected[6] = -1;
+		parsefen(&pos, fen);
+		printf("%s\n", fen);
+		//printf("D1: %d D2: %d D3: %d\n", expected[0], expected[1], expected[2]);
+		int i = 0;
+		while (expected[i] != -1) {
+			int nodes = perft(&pos, i+1);
+			if (nodes != expected[i]) {
+				printf("failed on %s at depth %d\n", fen, i+1);
+				return;
+			}
+			i++;
+		}
+		totpositions++;
+		
+	}
+	printf("All perft tests passed: %d positions.\n", totpositions);
 }
 void runTestsNPS() {
 	printf("Running NPS test.\n");
@@ -26,6 +95,7 @@ void runTestsNPS() {
     fp = fopen(path, "r");
     if (fp == NULL){
         printf("Could not open file %s",path);
+		return;
     }
 	U64 totbetacutoffs;
 	U64 totinstantbetacutoffs;

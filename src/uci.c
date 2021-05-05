@@ -152,6 +152,9 @@ void uci_listen() {
 			else if (strcmp(splitstr[1], "nps") == 0) {
 				runTestsNPS();
 			}
+			else if (strcmp(splitstr[1], "perft") == 0) {
+				runTestsPerft();
+			}
 			else runTestsAll();
 		}
 		else if (strcmp(splitstr[0], "flip") == 0) {

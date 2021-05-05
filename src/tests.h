@@ -6,5 +6,6 @@ void runTestsMakeMove();
 void testRunBetaCutoffs();
 void runTestsFlip();
 void runTestsNPS();
+void runTestsPerft();
 
 #endif
