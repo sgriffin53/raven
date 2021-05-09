@@ -161,6 +161,9 @@ void uci_listen() {
 			else if (strcmp(splitstr[1], "consistency") == 0) {
 				runTestsMoveConsistency();
 			}
+			else if (strcmp(splitstr[1], "TT") == 0) {
+				runTestsTTentry();
+			}
 			else runTestsAll();
 		}
 		else if (strcmp(splitstr[0], "flip") == 0) {

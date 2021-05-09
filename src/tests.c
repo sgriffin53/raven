@@ -12,11 +12,72 @@
 #include "search/perft.h"
 #include "chess/movegen.h"
 #include "chess/hash.h"
+#include "search/TT.h"
 
 void runTestsAll() {
 	runTestsFlip();
 	runTestsMakeMove();
 	testRunBetaCutoffs();
+}
+
+void runTestsTTentry() {
+	printf("Running TT entry test.\n");
+	struct TTtestEntry positions[6] = {
+		{ .fen="startpos", .hash=0, .depth=6, .bestmove={.from=E2, .to=E4, .piece=PAWN, .cappiece=NONE, .prom=NONE}, .flag=LOWERBOUND, .bestscore=60 },
+		{ .fen="1Q2Q2Q/8/3ppp2/1R1pkp1R/3ppp2/8/1B2Q2B/4K3 b - - 0 1", .hash=0, .depth=12, .bestmove={.from=F4, .to=F3, .piece=PAWN, .cappiece=NONE, .prom=NONE}, .flag=EXACT, .bestscore=321 },
+		{ .fen="4k3/8/2B5/8/8/8/8/4K3 b - - 0 1", .hash=0, .depth=3, .bestmove={.from=E8, .to=F8, .piece=KING, .cappiece=NONE, .prom=NONE}, .flag=UPPERBOUND, .bestscore=504 },
+		{ .fen="4k3/3R4/3N4/8/8/8/8/4K3 b - - 0 1", .hash=0, .depth=1, .bestmove={.from=E8, .to=D7, .piece=KING, .cappiece=ROOK, .prom=NONE}, .flag=EXACT, .bestscore=511 },
+		{ .fen="4k3/8/2Q5/8/8/8/8/4K3 b - - 0 1", .hash=0, .depth=90, .bestmove={.from=E8, .to=F7, .piece=KING, .cappiece=NONE, .prom=NONE}, .flag=LOWERBOUND, .bestscore=-420 }
+		
+	};
+	for (int i = 0;i < 5;i++) {
+
+		char fen[64];
+		strcpy(fen, positions[i].fen);
+		struct position pos;
+		parsefen(&pos, fen);
+		U64 hash = generateHash(&pos);
+		positions[i].hash = hash;
+		addTTentry(&TT, hash, positions[i].depth, positions[i].flag, positions[i].bestmove, positions[i].bestscore);
+		struct TTentry TTdata = getTTentry(&TT, hash);
+		if (TTdata.hash != positions[i].hash) {
+			printf("Failed\n");
+			return;
+		}
+		if (TTdata.depth != positions[i].depth) {
+			printf("Failed\n");
+			return;
+		}
+		if (TTdata.bestmove.from != positions[i].bestmove.from
+			|| TTdata.bestmove.to != positions[i].bestmove.to
+			|| TTdata.bestmove.piece != positions[i].bestmove.piece
+			|| TTdata.bestmove.cappiece != positions[i].bestmove.cappiece
+			|| TTdata.bestmove.prom != positions[i].bestmove.prom) {
+			printf("Failed\n");
+			return;
+		}
+		if (TTdata.flag != positions[i].flag) {
+			printf("Failed\n");
+			return;
+		}
+		if (TTdata.score != positions[i].bestscore) {
+			printf("Failed\n");
+			return;
+		}
+	}
+	printf("All TT entry tests passed. 5 positions tested.\n");
+}
+void moveConsistencyAsserts(struct position *pos, struct move *move) {
+	assert(getPiece(pos, move->to) >= PAWN && getPiece(pos, move->to) <= NONE);
+	assert(getPiece(pos, move->from) >= PAWN && getPiece(pos, move->from) <= NONE);
+	assert(getPiece(pos, move->to) != KING);
+	assert(getPiece(pos, move->to) == move->cappiece);
+	assert(getPiece(pos, move->from) == move->piece);
+	assert(move->to >= 0 && move->to <= 63);
+	assert(move->from >= 0 && move->from <= 63);
+	assert(move->to != move->from);
+	assert(move->prom != PAWN);
+	assert(move->prom != KING);
 }
 void runTestsMoveConsistency() {
 	printf("Running move consistency test.\n");
@@ -50,32 +111,23 @@ void runTestsMoveConsistency() {
 		int num_moves = genMoves(&pos, moves, 0);
 		U64 hash = generateHash(&pos);
 		
-		for (int i = 0;i < num_moves;i++) {
-			int cappiece = getPiece(&pos, moves[i].to);
-			int piece = getPiece(&pos, moves[i].from);
+		for (int j = 0;j < num_moves;j++) {
+			int cappiece = getPiece(&pos, moves[j].to);
+			int piece = getPiece(&pos, moves[j].from);
 			int origtomove = pos.tomove;
 			// before making move
-			assert(cappiece >= PAWN && cappiece <= NONE);
-			assert(piece >= PAWN && piece <= NONE);
-			assert(cappiece != KING);
-			assert(cappiece == moves[i].cappiece);
-			assert(piece == moves[i].piece);
-			assert(moves[i].to >= 0 && moves[i].to <= 63);
-			assert(moves[i].from >= 0 && moves[i].from <= 63);
-			assert(moves[i].to != moves[i].from);
-			assert(moves[i].prom != PAWN);
-			assert(moves[i].prom != KING);
-			if (piece != PAWN) assert(moves[i].prom == NONE);
-			if (moves[i].prom != NONE) assert(piece == PAWN);
-			if (pos.tomove == WHITE && piece == PAWN && moves[i].prom != NONE) {
-				assert(getrank(moves[i].from) == 6);
+			moveConsistencyAsserts(&pos, &moves[j]);
+			if (piece != PAWN) assert(moves[j].prom == NONE);
+			if (moves[j].prom != NONE) assert(piece == PAWN);
+			if (pos.tomove == WHITE && piece == PAWN && moves[j].prom != NONE) {
+				assert(getrank(moves[j].from) == 6);
 			}
-			else if (pos.tomove == BLACK && piece == PAWN && moves[i].prom != NONE) {
-				assert(getrank(moves[i].from) == 1);
+			else if (pos.tomove == BLACK && piece == PAWN && moves[j].prom != NONE) {
+				assert(getrank(moves[j].from) == 1);
 			}
 				
 			
-			makeMove(&moves[i],&pos);
+			makeMove(&moves[j],&pos);
 			
 			pos.tomove = !pos.tomove;
 			if (isCheck(&pos)) {
@@ -92,10 +144,12 @@ void runTestsMoveConsistency() {
 			
 			// after making move
 			
-			if (moves[i].prom == NONE) assert(getPiece(&pos, moves[i].to) == piece);
-			assert(getPiece(&pos, moves[i].from) == NONE);
+			if (moves[i].prom == NONE) {
+				assert(getPiece(&pos, moves[j].to) == piece);
+			}
+			assert(getPiece(&pos, moves[j].from) == NONE);
 			if (moves[i].prom != NONE) {
-				assert(getPiece(&pos, moves[i].to) == moves[i].prom);
+				assert(getPiece(&pos, moves[j].to) == moves[j].prom);
 			}
 			
 			unmakeMove(&pos);
@@ -356,6 +410,7 @@ void testRunBetaCutoffs() {
 	printf("Beta cutoff rate: %.2f%%",(float)(numinstantbetacutoffs * (100 / (float)numbetacutoffs)));
 	printf("\n");
 }
+
 void runTestsMakeMove() {
 	printf("Running make move tests:\n\n");
 	struct position pos;
