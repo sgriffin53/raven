@@ -320,19 +320,200 @@ void evalPawns(struct position *pos, int *openingEval, int *endgameEval) {
 			*endgameEval += IsolatedPawn_eg;
 		}
 	}
+/*
+	// white pawn shield
 	
+	int Wkingpos = pos->Wkingpos;
+	U64 BBpawnshield = BBpawnshieldLookup[WHITE][Wkingpos];
+	BBpawnshield &= (pos->colours[WHITE] & pos->pieces[PAWN]);
+	*openingEval += PawnShield * __builtin_popcountll(BBpawnshield);
+	
+	// black pawn shield
+	
+	int Bkingpos = pos->Bkingpos;
+	BBpawnshield = BBpawnshieldLookup[BLACK][Bkingpos];
+	BBpawnshield &= (pos->colours[BLACK] & pos->pieces[PAWN]);
+	*openingEval -= PawnShield * __builtin_popcountll(BBpawnshield);
+*/
+
+
+/*
+	// bonus for pawns in centre
+	
+	U64 BBWpiecesincentre = (pos->colours[WHITE] & pos->pieces[PAWN] & BBcentre);
+	*openingEval += PawnsInCentre_mg * __builtin_popcountll(BBWpiecesincentre);
+	*endgameEval += PawnsInCentre_eg * __builtin_popcountll(BBWpiecesincentre);
+	
+	U64 BBBpiecesincentre = (pos->colours[BLACK] & pos->pieces[PAWN] & BBcentre);
+	*openingEval -= PawnsInCentre_mg * __builtin_popcountll(BBBpiecesincentre);
+	*endgameEval -= PawnsInCentre_eg * __builtin_popcountll(BBBpiecesincentre);
+*/
 }
 void evalKnights(struct position *pos, int *openingEval, int *endgameEval) {
+	int num_BN = __builtin_popcountll(pos->colours[BLACK] & pos->pieces[KNIGHT]);
+	int num_WN = __builtin_popcountll(pos->colours[WHITE] & pos->pieces[KNIGHT]);
 	
+	/*
+	// bonus for knights in closed positions
+	// bonus for bishops in open positions
 	
+	U64 BBWrammed = southOne(pos->pieces[PAWN] & pos->colours[BLACK]) & (pos->pieces[PAWN] & pos->colours[WHITE]);
+	U64 BBBrammed = northOne(pos->pieces[PAWN] & pos->colours[WHITE]) & (pos->pieces[PAWN] & pos->colours[BLACK]);
+	
+	int rammedpairs = __builtin_popcountll(BBWrammed);
+	int nonrammedpawns = __builtin_popcountll(pos->pieces[PAWN] & ~BBWrammed & ~BBBrammed);
+	
+	// closedness is a number from -8 to 8, -8 being completely open, 8 being completely closed
+		
+	double closedness = rammedpairs * 2 + nonrammedpawns / 2 - 8;
+	
+	// white knight bonus
+	
+	if (closedness > 0) {
+		*openingEval += num_WN * (int)(closedness / 8.0) * ClosedKnights_mg;
+		*endgameEval += num_WN * (int)(closedness / 8.0) * ClosedKnights_eg;
+	}
+	
+	// black knight bonus
+	
+	if (closedness > 0) {
+		*openingEval -= num_BN * (int)(closedness / 8.0) * ClosedKnights_mg;
+		*endgameEval -= num_BN * (int)(closedness / 8.0) * ClosedKnights_eg;
+	}
+	 */
 }
 void evalBishops(struct position *pos, int *openingEval, int *endgameEval) {
+	/*
+	U64 BBwhitepawns = (pos->colours[WHITE] & pos->pieces[PAWN]);
+	U64 BBblackpawns = (pos->colours[BLACK] & pos->pieces[PAWN]);
 	
+		
+	int num_BB = __builtin_popcountll(pos->colours[BLACK] & pos->pieces[BISHOP]);
+	int num_WB = __builtin_popcountll(pos->colours[WHITE] & pos->pieces[BISHOP]);
+	
+	// bonus for knights in closed positions
+	// bonus for bishops in open positions
+	
+	U64 BBWrammed = southOne(pos->pieces[PAWN] & pos->colours[BLACK]) & (pos->pieces[PAWN] & pos->colours[WHITE]);
+	U64 BBBrammed = northOne(pos->pieces[PAWN] & pos->colours[WHITE]) & (pos->pieces[PAWN] & pos->colours[BLACK]);
+	
+	int rammedpairs = __builtin_popcountll(BBWrammed);
+	int nonrammedpawns = __builtin_popcountll(pos->pieces[PAWN] & ~BBWrammed & ~BBBrammed);
+	
+	// closedness is a number from -8 to 8, -8 being completely open, 8 being completely closed
+		
+	double closedness = rammedpairs * 2 + nonrammedpawns / 2 - 8;
+	
+	// white bishop bonus
+	
+	if (closedness < 0) {
+		*openingEval += num_WB * (int)(-closedness / 8.0) * OpenBishops_mg;
+		*endgameEval += num_WB * (int)(-closedness / 8.0) * OpenBishops_eg;
+	}
+	
+	// black bishop bonus
+	
+	if (closedness < 0) {
+		*openingEval -= num_BB * (int)(-closedness / 8.0) * OpenBishops_mg;
+		*endgameEval -= num_BB * (int)(-closedness / 8.0) * OpenBishops_eg;
+	}
+	 */
 }
 void evalKRmate(struct position *pos, int *endgameEval) {
 }
 void evalRooks(struct position *pos, int *openingEval, int *endgameEval) {
+/*
+	// bonus for rooks being on 7th rank or (semi-)open files
 	
+	U64 BBwhiterooks = pos->colours[WHITE] & pos->pieces[ROOK];
+	U64 BBblackrooks = pos->colours[BLACK] & pos->pieces[ROOK];
+	
+	while (BBwhiterooks) {
+		int square = __builtin_ctzll(BBwhiterooks);
+		BBwhiterooks &= BBwhiterooks - 1;
+		
+		U64 BBfilemask = BBfileA << getfile(square);
+		
+		
+		// rooks on open files
+		U64 BBpawnsonfile = BBfilemask & pos->pieces[PAWN];
+		U64 BBBpawnsonfile = BBfilemask & pos->pieces[PAWN] & pos->colours[BLACK];
+		U64 BBWpawnsonfile = BBfilemask & pos->pieces[PAWN] & pos->colours[WHITE];
+		// white rook on open file
+		if (BBpawnsonfile == 0) {
+			// white rook on open file
+			*openingEval += RookOpenFile_mg;
+			*endgameEval += RookOpenFile_eg;
+		}
+		if ((BBWpawnsonfile == 0) && (BBBpawnsonfile)) {
+			// white rook on semi-open file with black pawns
+		//	*openingEval += RookSemiOpenFile_mg;
+		//	*endgameEval += RookSemiOpenFile_eg;
+		}
+		
+		// rook on same file as queen
+		
+		U64 BBBqueensonfile = BBfilemask & (pos->pieces[QUEEN] & pos->colours[BLACK]);
+		if (BBBqueensonfile) {
+		//	*openingEval += RookSameFileQueen_mg;
+		//	*endgameEval += RookSameFileQueen_eg;
+		}
+		
+		// rooks on 7th rank
+		
+		if (getrank(square) != 6) continue;
+		// rook on 7th rank
+		U64 BBhostilepawns = BBrank7 & pos->colours[BLACK] & pos->pieces[PAWN];
+		if (!BBhostilepawns && getrank(pos->Bkingpos) != 7) continue;
+		// either hostile pawns on 7th rank or king is on 8th rank
+		
+		//*openingEval += RookOn7th_mg;
+		//*endgameEval += RookOn7th_eg;
+	}
+	
+	while (BBblackrooks) {
+		int square = __builtin_ctzll(BBblackrooks);
+		BBblackrooks &= BBblackrooks - 1;
+		
+		
+		U64 BBfilemask = BBfileA << getfile(square);
+		
+		// rooks on open files
+		U64 BBpawnsonfile = BBfilemask & pos->pieces[PAWN];
+		U64 BBBpawnsonfile = BBfilemask & pos->pieces[PAWN] & pos->colours[BLACK];
+		U64 BBWpawnsonfile = BBfilemask & pos->pieces[PAWN] & pos->colours[WHITE];
+		// black rook on open file
+		if (BBpawnsonfile == 0) {
+			// black rook on open file
+			*openingEval -= RookOpenFile_mg;
+			*endgameEval -= RookOpenFile_eg;
+		}
+		if ((BBBpawnsonfile == 0) && (BBWpawnsonfile)) {
+			// black rook on semi-open file with white pawns
+		//	*openingEval -= RookSemiOpenFile_mg;
+		//	*endgameEval -= RookSemiOpenFile_eg;
+		}
+		// rook on same file as queen
+		
+		U64 BBWqueensonfile = BBfilemask & (pos->pieces[QUEEN] & pos->colours[WHITE]);
+		if (BBWqueensonfile) {
+		//	*openingEval -= RookSameFileQueen_mg;
+		//	*endgameEval -= RookSameFileQueen_eg;
+		}
+		
+		// rooks on 7th rank
+		
+		// rook on 7th rank
+		
+		if (getrank(square) != 1) continue;
+		U64 BBhostilepawns = BBrank2 & pos->colours[WHITE] & pos->pieces[PAWN];
+		if (!BBhostilepawns && getrank(pos->Wkingpos) != 0) continue;
+		// either hostile pawns on 7th rank or king is on 8th rank
+		
+		//*openingEval -= RookOn7th_mg;
+		//*endgameEval -= RookOn7th_eg;
+	}
+	 */
 }
 
 void evalQueens(struct position *pos, int *openingEval, int *endgameEval) {
@@ -398,8 +579,8 @@ void evalMobility(struct position *pos, int *openingEval, int *endgameEval) {
 	if (kingattackers >= 8) kingattackers = 8;
 	if (kingattacks >= 29) kingattacks = 29;
 	
-	//*openingEval += safety_table[kingattackers][kingattacks];
-	//*endgameEval += safety_table[kingattackers][kingattacks];
+	*openingEval += safety_table[kingattackers][kingattacks];
+	*endgameEval += safety_table[kingattackers][kingattacks];
 	
 	kingattacks = 0;
 	kingattackers = 0;
@@ -449,8 +630,8 @@ void evalMobility(struct position *pos, int *openingEval, int *endgameEval) {
 	if (kingattackers >= 8) kingattackers = 8;
 	if (kingattacks >= 29) kingattacks = 29;
 	
-	//*openingEval -= safety_table[kingattackers][kingattacks];
-	//*endgameEval -= safety_table[kingattackers][kingattacks];
+	*openingEval -= safety_table[kingattackers][kingattacks];
+	*endgameEval -= safety_table[kingattackers][kingattacks];
 }
 void evalMinorAttacks(struct position *pos, int *openingEval, int *endgameEval) {
 		// bonus for minor pieces attacking enemy pieces not defended by pawns
