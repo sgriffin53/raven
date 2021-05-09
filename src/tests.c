@@ -10,13 +10,139 @@
 #include "chess/makemove.h"
 #include "search/eval.h"
 #include "search/perft.h"
+#include "chess/movegen.h"
+#include "chess/hash.h"
 
 void runTestsAll() {
 	runTestsFlip();
 	runTestsMakeMove();
 	testRunBetaCutoffs();
 }
-
+void runTestsMoveConsistency() {
+	printf("Running move consistency test.\n");
+	char positions[18][64] = {
+		"startpos",
+		"1Q2Q2Q/8/3ppp2/1R1pkp1R/3ppp2/8/1B2Q2B/4K3 b - - 0 1",
+		"4k3/8/3N4/8/8/8/8/4K3 b - - 0 1",
+		"4k3/8/2B5/8/8/8/8/4K3 b - - 0 1",
+		"4k3/8/2Q5/8/8/8/8/4K3 b - - 0 1",
+		"4k3/8/4Q3/8/8/8/8/4K3 b - - 0 1",
+		"4k3/8/4R3/8/8/8/8/4K3 b - - 0 1",
+		"1R2k3/8/8/8/8/8/8/4K3 b - - 0 1",
+		"4k3/3P4/8/8/8/8/8/4K3 b - - 0 1",
+		"4k3/5P2/8/8/8/8/8/4K3 b - - 0 1",
+		"4K3/8/3n4/8/8/8/8/4k3 w - - 0 1",
+		"4K3/8/2b5/8/8/8/8/4k3 w - - 0 1",
+		"4K3/8/4q3/8/8/8/8/4k3 w - - 0 1",
+		"4K3/8/2q5/8/8/8/8/4k3 w - - 0 1",
+		"2r1K3/8/8/8/8/8/8/4k3 w - - 0 1",
+		"4K3/8/4r3/8/8/8/8/4k3 w - - 0 1",
+		"8/3p4/4K3/8/8/8/8/4k3 w - - 0 1",
+		"8/5p2/4K3/8/8/8/8/4k3 w - - 0 1"
+	};
+	for (int i = 0;i < 18;i++) {
+		
+		char fen[64];
+		strcpy(fen, positions[i]);
+		struct position pos;
+		parsefen(&pos, fen);
+		struct move moves[MAX_MOVES];
+		int num_moves = genMoves(&pos, moves, 0);
+		U64 hash = generateHash(&pos);
+		
+		for (int i = 0;i < num_moves;i++) {
+			int cappiece = getPiece(&pos, moves[i].to);
+			int piece = getPiece(&pos, moves[i].from);
+			int origtomove = pos.tomove;
+			// before making move
+			assert(cappiece >= PAWN && cappiece <= NONE);
+			assert(piece >= PAWN && piece <= NONE);
+			assert(cappiece != KING);
+			assert(cappiece == moves[i].cappiece);
+			assert(piece == moves[i].piece);
+			assert(moves[i].to >= 0 && moves[i].to <= 63);
+			assert(moves[i].from >= 0 && moves[i].from <= 63);
+			assert(moves[i].to != moves[i].from);
+			assert(moves[i].prom != PAWN);
+			assert(moves[i].prom != KING);
+			if (piece != PAWN) assert(moves[i].prom == NONE);
+			if (moves[i].prom != NONE) assert(piece == PAWN);
+			if (pos.tomove == WHITE && piece == PAWN && moves[i].prom != NONE) {
+				assert(getrank(moves[i].from) == 6);
+			}
+			else if (pos.tomove == BLACK && piece == PAWN && moves[i].prom != NONE) {
+				assert(getrank(moves[i].from) == 1);
+			}
+				
+			
+			makeMove(&moves[i],&pos);
+			
+			pos.tomove = !pos.tomove;
+			if (isCheck(&pos)) {
+				unmakeMove(&pos);
+				continue;
+			}
+			
+			pos.tomove = !pos.tomove;
+			
+			assert(pos.tomove != origtomove);
+			
+			U64 newhash = generateHash(&pos);
+			assert(newhash != hash);
+			
+			// after making move
+			
+			if (moves[i].prom == NONE) assert(getPiece(&pos, moves[i].to) == piece);
+			assert(getPiece(&pos, moves[i].from) == NONE);
+			if (moves[i].prom != NONE) {
+				assert(getPiece(&pos, moves[i].to) == moves[i].prom);
+			}
+			
+			unmakeMove(&pos);
+			assert(pos.tomove == origtomove);
+			U64 afterhash = generateHash(&pos);
+			assert(afterhash == hash);
+		}
+	}
+	printf("All move consistency tests passed. 18 positions tested.\n");
+}
+void runTestsIsCheck() {
+	printf("Running is_check test.\n");
+	struct IsCheckPair positions[18] = {
+		{.true=0, .fen="startpos"},
+		{.true=0, .fen="1Q2Q2Q/8/3ppp2/1R1pkp1R/3ppp2/8/1B2Q2B/4K3 b - - 0 1"},
+		{.true=1, .fen="4k3/8/3N4/8/8/8/8/4K3 b - - 0 1"},
+		{.true=1, .fen="4k3/8/2B5/8/8/8/8/4K3 b - - 0 1"},
+		{.true=1, .fen="4k3/8/2Q5/8/8/8/8/4K3 b - - 0 1"},
+		{.true=1, .fen="4k3/8/4Q3/8/8/8/8/4K3 b - - 0 1"},
+		{.true=1, .fen="4k3/8/4R3/8/8/8/8/4K3 b - - 0 1"},
+		{.true=1, .fen="1R2k3/8/8/8/8/8/8/4K3 b - - 0 1"},
+		{.true=1, .fen="4k3/3P4/8/8/8/8/8/4K3 b - - 0 1"},
+		{.true=1, .fen="4k3/5P2/8/8/8/8/8/4K3 b - - 0 1"},
+		{.true=1, .fen="4K3/8/3n4/8/8/8/8/4k3 w - - 0 1"},
+		{.true=1, .fen="4K3/8/2b5/8/8/8/8/4k3 w - - 0 1"},
+		{.true=1, .fen="4K3/8/4q3/8/8/8/8/4k3 w - - 0 1"},
+		{.true=1, .fen="4K3/8/2q5/8/8/8/8/4k3 w - - 0 1"},
+		{.true=1, .fen="2r1K3/8/8/8/8/8/8/4k3 w - - 0 1"},
+		{.true=1, .fen="4K3/8/4r3/8/8/8/8/4k3 w - - 0 1"},
+		{.true=1, .fen="8/3p4/4K3/8/8/8/8/4k3 w - - 0 1"},
+		{.true=1, .fen="8/5p2/4K3/8/8/8/8/4k3 w - - 0 1"}
+	};
+	for (int i = 0;i < 18;i++) {
+		int expected = positions[i].true;
+		char fen[256];
+		strcpy(fen, positions[i].fen);
+		//char fen[256] = positions[i].fen;
+		struct position pos;
+		parsefen(&pos, fen);
+		int result = isCheck(&pos);
+		if (expected != result) {
+			printf("Failed on %s\n",fen);
+			return;
+		}
+	}
+	printf("All is_check tests passed. 18 positions tested.\n");
+}
 void runTestsPerft() {
 	printf("Running perft test.\n");
 	char path[256] = "tests\\perftsuite.epd";

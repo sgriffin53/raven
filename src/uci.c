@@ -155,6 +155,12 @@ void uci_listen() {
 			else if (strcmp(splitstr[1], "perft") == 0) {
 				runTestsPerft();
 			}
+			else if (strcmp(splitstr[1], "ischeck") == 0) {
+				runTestsIsCheck();
+			}
+			else if (strcmp(splitstr[1], "consistency") == 0) {
+				runTestsMoveConsistency();
+			}
 			else runTestsAll();
 		}
 		else if (strcmp(splitstr[0], "flip") == 0) {

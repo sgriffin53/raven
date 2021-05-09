@@ -7,5 +7,11 @@ void testRunBetaCutoffs();
 void runTestsFlip();
 void runTestsNPS();
 void runTestsPerft();
+void runTestsIsCheck();
+void runTestsMoveConsistency();
 
+struct IsCheckPair {
+	int true;
+	char fen[256];
+};
 #endif
