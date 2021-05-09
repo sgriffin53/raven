@@ -163,8 +163,169 @@ void evalKPPST(struct position *pos, int *openingEval, int *endgameEval) {
 }
 void evalPawns(struct position *pos, int *openingEval, int *endgameEval) {
 	
+
 	// Evaluate pawns
 	
+	U64 BBwhitePP = 0ULL;
+	U64 BBblackPP = 0ULL;
+	
+	U64 BBwhitepawns = (pos->colours[WHITE] & pos->pieces[PAWN]);
+	int num_WP = __builtin_popcountll(BBwhitepawns);
+	while (BBwhitepawns) {
+		
+		// passed pawns
+		
+		int square = __builtin_ctzll(BBwhitepawns);
+		BBwhitepawns &= BBwhitepawns - 1;
+		U64 BBpiece = (1ULL << square);
+		int startrank = getrank(square);
+		
+		U64 BBenemypawns = BBpasserLookup[WHITE][square] & (pos->colours[BLACK] & pos->pieces[PAWN]);
+		if (BBenemypawns == 0) {
+			// pawn is passed
+			
+			BBwhitePP |= square; // add square to bb of white passed pawns
+			
+			int bonus = PassedRankBonus[startrank];
+			
+			// blockage of stop square
+			
+			int stopsquare = fileranktosquareidx(getfile(square), startrank + 1);
+			if ((1ULL << stopsquare) & pos->colours[BLACK] & (pos->pieces[BISHOP] | pos->pieces[KNIGHT] | pos->pieces[KING])) {
+				bonus = PassedRankBonus[startrank - 1];
+			}
+			
+			//*openingEval += (int)(0.5 * bonus);
+			//*endgameEval += 1 * bonus;
+			
+			*openingEval += PassedFileBonus_mg[getfile(square)];
+			*endgameEval += PassedFileBonus_eg[getfile(square)];
+			
+			// give a bonus/penalty for opponent/friendly king distances to the passed pawn
+			
+			
+			int oppkingdistx = abs(getfile(pos->Bkingpos) - getfile(square));
+			int oppkingdisty = abs(getrank(pos->Bkingpos) - getrank(square));
+			int oppkingdist = max(oppkingdistx, oppkingdisty);
+			
+			int mykingdistx = abs(getfile(pos->Wkingpos) - getfile(square));
+			int mykingdisty = abs(getrank(pos->Wkingpos) - getrank(square));
+			int mykingdist = max(mykingdistx, mykingdisty);
+			
+			//*endgameEval += OppKingProximity * oppkingdist;
+			//*endgameEval += MyKingProximity * mykingdist;
+			
+		}
+		
+		// pawn chain bonus
+		/*
+		U64 BBpawnattacks = BBpawnEastAttacksB(BBpiece) | BBpawnWestAttacksB(BBpiece);
+		if ((BBpawnattacks & pos->colours[WHITE] & pos->pieces[PAWN])) {
+			*openingEval += PawnChain_mg;
+			*endgameEval += PawnChain_eg;
+		}
+		*/
+		U64 BBfilemask = BBfileA << getfile(square);
+		
+		// doubled pawns
+/*
+		U64 BBWpawnsonfile = BBfilemask & (pos->colours[WHITE] & pos->pieces[PAWN]);
+		U64 BBisdoubled = BBWpawnsonfile & (BBWpawnsonfile-1);
+		if (BBisdoubled) {
+			*openingEval -= DoubledPawn_mg;
+			*endgameEval -= DoubledPawn_eg;
+		}
+*/		
+/*		
+		// isolated pawns
+		
+		U64 BBleftpawns = westOne(BBfilemask) & (pos->colours[WHITE] & pos->pieces[PAWN]);
+		U64 BBrightpawns = eastOne(BBfilemask) & (pos->colours[WHITE] & pos->pieces[PAWN]);
+		if (BBleftpawns == 0 && BBrightpawns == 0) {
+			*openingEval -= IsolatedPawn_mg;
+			*endgameEval -= IsolatedPawn_eg;
+		}
+*/
+		
+	}
+	
+	U64 BBblackpawns = (pos->colours[BLACK] & pos->pieces[PAWN]);
+	int num_BP = __builtin_popcountll(BBblackpawns);
+	while (BBblackpawns) {
+		// passed pawns
+		int square = __builtin_ctzll(BBblackpawns);
+		//BBblackpawns &= ~(1ULL << square);
+		BBblackpawns &= BBblackpawns - 1;
+		U64 BBpiece = (1ULL << square);
+		int startrank = getrank(square);
+		
+		U64 BBenemypawns = (BBpasserLookup[BLACK][square] & (pos->colours[WHITE] & pos->pieces[PAWN]));
+		if (BBenemypawns == 0) {
+			BBblackPP |= square;
+			
+			int bonus = PassedRankBonus[7 - startrank];
+			
+			// blockage of stop square
+			
+			int stopsquare = fileranktosquareidx(getfile(square), startrank - 1);
+			if ((1ULL << stopsquare) & pos->colours[WHITE] & (pos->pieces[BISHOP] | pos->pieces[KNIGHT] | pos->pieces[KING])) {
+				bonus = PassedRankBonus[7 - startrank - 1];
+			}
+			
+			//*openingEval -= (int)(0.5 * bonus);
+			//*endgameEval -= 1 * bonus;
+			
+			*openingEval -= PassedFileBonus_mg[getfile(square)];
+			*endgameEval -= PassedFileBonus_eg[getfile(square)];
+			
+			// give a bonus/penalty for opponent/friendly king distances to the passed pawn
+			
+			
+			int oppkingdistx = abs(getfile(pos->Wkingpos) - getfile(square));
+			int oppkingdisty = abs(getrank(pos->Wkingpos) - getrank(square));
+			int oppkingdist = max(oppkingdistx, oppkingdisty);
+			
+			int mykingdistx = abs(getfile(pos->Bkingpos) - getfile(square));
+			int mykingdisty = abs(getrank(pos->Bkingpos) - getrank(square));
+			int mykingdist = max(mykingdistx, mykingdisty);
+			
+			//*endgameEval -= OppKingProximity * oppkingdist;
+			//*endgameEval -= MyKingProximity * mykingdist;
+			
+		}
+		
+		
+		/*
+		// pawn chain bonus
+		U64 BBpawnattacks = BBpawnEastAttacksW(BBpiece) | BBpawnWestAttacksW(BBpiece);
+		if ((BBpawnattacks & pos->colours[BLACK] & pos->pieces[PAWN])) {
+			*openingEval -= PawnChain_mg;
+			*endgameEval -= PawnChain_eg;
+		}
+		 */
+		U64 BBfilemask = BBfileA << getfile(square);
+		
+		/*
+		// Doubled pawns
+		U64 BBpawnsonfile = BBfilemask & (pos->colours[BLACK] & pos->pieces[PAWN]);
+		
+		U64 BBisdoubled = BBpawnsonfile & (BBpawnsonfile-1);
+		if (BBisdoubled) {
+			*openingEval += DoubledPawn_mg;
+			*endgameEval += DoubledPawn_eg;
+		}
+		*/
+		/*
+		// Isolated pawns
+		
+		U64 BBleftpawns = westOne(BBfilemask) & (pos->colours[BLACK] & pos->pieces[PAWN]);
+		U64 BBrightpawns = eastOne(BBfilemask) & (pos->colours[BLACK] & pos->pieces[PAWN]);
+		if (BBleftpawns == 0 && BBrightpawns == 0) {
+			*openingEval += IsolatedPawn_mg;
+			*endgameEval += IsolatedPawn_eg;
+		}
+		 */
+	}
 	
 }
 void evalKnights(struct position *pos, int *openingEval, int *endgameEval) {
