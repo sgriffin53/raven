@@ -236,7 +236,7 @@ void evalPawns(struct position *pos, int *openingEval, int *endgameEval) {
 			*endgameEval -= DoubledPawn_eg;
 		}
 */		
-/*		
+
 		// isolated pawns
 		
 		U64 BBleftpawns = westOne(BBfilemask) & (pos->colours[WHITE] & pos->pieces[PAWN]);
@@ -245,7 +245,7 @@ void evalPawns(struct position *pos, int *openingEval, int *endgameEval) {
 			*openingEval -= IsolatedPawn_mg;
 			*endgameEval -= IsolatedPawn_eg;
 		}
-*/
+
 		
 	}
 	
@@ -315,7 +315,7 @@ void evalPawns(struct position *pos, int *openingEval, int *endgameEval) {
 			*endgameEval += DoubledPawn_eg;
 		}
 		*/
-		/*
+		
 		// Isolated pawns
 		
 		U64 BBleftpawns = westOne(BBfilemask) & (pos->colours[BLACK] & pos->pieces[PAWN]);
@@ -324,7 +324,7 @@ void evalPawns(struct position *pos, int *openingEval, int *endgameEval) {
 			*openingEval += IsolatedPawn_mg;
 			*endgameEval += IsolatedPawn_eg;
 		}
-		 */
+		 
 	}
 	
 }
