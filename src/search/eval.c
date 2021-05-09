@@ -164,7 +164,9 @@ void evalKPPST(struct position *pos, int *openingEval, int *endgameEval) {
 }
 void evalPawns(struct position *pos, int *openingEval, int *endgameEval) {
 	
-
+	U64 BBwhitePP = 0ULL;
+	U64 BBblackPP = 0ULL;
+	
 	
 	U64 BBwhitepawns = (pos->colours[WHITE] & pos->pieces[PAWN]);
 	int num_WP = __builtin_popcountll(BBwhitepawns);
