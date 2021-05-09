@@ -149,7 +149,17 @@ void evalMaterial(struct position *pos, int *openingEval, int *endgameEval) {
 	*endgameEval += white_pieces - black_pieces;
 }
 void evalKPPST(struct position *pos, int *openingEval, int *endgameEval) {
+	U64 BBpawnsandkings = pos->pieces[PAWN] | pos->pieces[KING];
 	
+	while (BBpawnsandkings != 0) {
+		int square = __builtin_ctzll(BBpawnsandkings);
+		//BBoccupied &= ~(1ULL << square);
+		BBpawnsandkings &= BBpawnsandkings - 1;
+		char piece = getPiece(pos,square);
+		int col = getColour(pos, square);
+		*openingEval += PSTval(col, piece,square,'O');
+		*endgameEval += PSTval(col, piece,square,'E');
+	}
 }
 void evalPawns(struct position *pos, int *openingEval, int *endgameEval) {
 	
@@ -176,6 +186,115 @@ void evalKings(struct position *pos, int *openingEval, int *endgameEval) {
 	
 }
 void evalMobility(struct position *pos, int *openingEval, int *endgameEval) {
+	
+	
+	// Evaluates mobility, king attackers, and NBRQ PST
+	
+	int kingattackers = 0;
+	int kingattacks = 0;
+	// white
+	
+	int idx = 0;
+	double centremult = 0.5;
+	double hrattackbonus = 1;
+	struct mobreturn WNmobility = Nmobility(pos,WHITE);
+	idx = min(8, max(0, WNmobility.mobility - WNmobility.unsafe * 2 + WNmobility.centre * centremult));
+	//*openingEval += knightMgMobility[idx];
+	//*endgameEval += knightEgMobility[idx];
+	*openingEval += WNmobility.pstO;
+	*endgameEval += WNmobility.pstE;
+	//*openingEval += WNmobility.homerowsattacks * hrattackbonus;
+	kingattacks +=  WNmobility.kingattacks;
+	kingattackers += WNmobility.kingattackers;
+	
+	struct mobreturn WBmobility = Bmobility(pos,WHITE);
+	idx = min(13, max(0, WBmobility.mobility - WBmobility.unsafe * 2 + WBmobility.centre * centremult));
+	//*openingEval += bishopMgMobility[idx];
+	//*endgameEval += bishopEgMobility[idx];
+	*openingEval += WBmobility.pstO;
+	*endgameEval += WBmobility.pstE;
+	//*openingEval += WBmobility.homerowsattacks * hrattackbonus;
+	kingattacks += WBmobility.kingattacks;
+	kingattackers += WBmobility.kingattackers;
+	
+	struct mobreturn WRmobility = Rmobility(pos,WHITE);
+	idx = min(14, max(0, WRmobility.mobility - WRmobility.unsafe * 2 + WRmobility.centre * centremult));
+	//*openingEval += rookMgMobility[idx];
+	//*endgameEval += rookEgMobility[idx];
+	*openingEval += WRmobility.pstO;
+	*endgameEval += WRmobility.pstE;
+	//*openingEval += WRmobility.homerowsattacks * hrattackbonus;
+	kingattacks += 2 * WRmobility.kingattacks;
+	kingattackers += WRmobility.kingattackers;
+	
+	struct mobreturn WQmobility = Qmobility(pos,WHITE);
+	idx = min(27, max(0, WQmobility.mobility - WQmobility.unsafe * 2 + WQmobility.centre * centremult));
+	//*openingEval += queenMgMobility[idx];
+	//*endgameEval += queenEgMobility[idx];
+	*openingEval += WQmobility.pstO;
+	*endgameEval += WQmobility.pstE;
+	//*openingEval += WQmobility.homerowsattacks * hrattackbonus;
+	kingattacks += 4 * WQmobility.kingattacks;
+	kingattackers += WQmobility.kingattackers;
+	
+	// prevent overflow
+	
+	if (kingattackers >= 8) kingattackers = 8;
+	if (kingattacks >= 29) kingattacks = 29;
+	
+	//*openingEval += safety_table[kingattackers][kingattacks];
+	//*endgameEval += safety_table[kingattackers][kingattacks];
+	
+	kingattacks = 0;
+	kingattackers = 0;
+	// black
+	struct mobreturn BNmobility = Nmobility(pos,BLACK);
+	idx = min(8, max(0, BNmobility.mobility - BNmobility.unsafe * 2 + BNmobility.centre * centremult));
+	//*openingEval -= knightMgMobility[idx];
+	//*endgameEval -= knightEgMobility[idx];
+	*openingEval += BNmobility.pstO;
+	*endgameEval += BNmobility.pstE;
+	//*openingEval -= BNmobility.homerowsattacks * hrattackbonus;
+	kingattacks += BNmobility.kingattacks;
+	kingattackers += BNmobility.kingattackers;
+	
+	struct mobreturn BBmobility = Bmobility(pos,BLACK);
+	idx = min(13, max(0, BBmobility.mobility - BBmobility.unsafe * 2 + BBmobility.centre * centremult));
+	//*openingEval -= bishopMgMobility[idx];
+	//*endgameEval -= bishopEgMobility[idx];
+	*openingEval += BBmobility.pstO;
+	*endgameEval += BBmobility.pstE;
+	//*openingEval -= BBmobility.homerowsattacks * hrattackbonus;
+	kingattacks += BBmobility.kingattacks;
+	kingattackers += BBmobility.kingattackers;
+	
+	struct mobreturn BRmobility = Rmobility(pos,BLACK);
+	idx = min(14, max(0, BRmobility.mobility - BRmobility.unsafe * 2 + BRmobility.centre * centremult));
+	//*openingEval -= rookMgMobility[idx];
+	//*endgameEval -= rookEgMobility[idx];
+	*openingEval += BRmobility.pstO;
+	*endgameEval += BRmobility.pstE;
+	//*openingEval -= BRmobility.homerowsattacks * hrattackbonus;
+	kingattacks += 2 * BRmobility.kingattacks;
+	kingattackers += BRmobility.kingattackers;
+	
+	struct mobreturn BQmobility = Qmobility(pos,BLACK);
+	idx = min(27, max(0, BQmobility.mobility - BQmobility.unsafe * 2 + BQmobility.centre * centremult));
+	//*openingEval -= queenMgMobility[idx];
+	//*endgameEval -= queenEgMobility[idx];
+	*openingEval += BQmobility.pstO;
+	*endgameEval += BQmobility.pstE;
+	//*openingEval -= BQmobility.homerowsattacks * hrattackbonus;
+	kingattacks += 4 * BQmobility.kingattacks;
+	kingattackers += BQmobility.kingattackers;
+	
+	// prevent overflow
+	
+	if (kingattackers >= 8) kingattackers = 8;
+	if (kingattacks >= 29) kingattacks = 29;
+	
+	//*openingEval -= safety_table[kingattackers][kingattacks];
+	//*endgameEval -= safety_table[kingattackers][kingattacks];
 }
 void evalMinorAttacks(struct position *pos, int *openingEval, int *endgameEval) {
 		// bonus for minor pieces attacking enemy pieces not defended by pawns
