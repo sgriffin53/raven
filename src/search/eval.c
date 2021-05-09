@@ -536,8 +536,8 @@ void evalMobility(struct position *pos, int *openingEval, int *endgameEval) {
 	double hrattackbonus = 1;
 	struct mobreturn WNmobility = Nmobility(pos,WHITE);
 	idx = min(8, max(0, WNmobility.mobility - WNmobility.unsafe * 2 + WNmobility.centre * centremult));
-	//*openingEval += knightMgMobility[idx];
-	//*endgameEval += knightEgMobility[idx];
+	*openingEval += knightMgMobility[idx];
+	*endgameEval += knightEgMobility[idx];
 	*openingEval += WNmobility.pstO;
 	*endgameEval += WNmobility.pstE;
 	//*openingEval += WNmobility.homerowsattacks * hrattackbonus;
@@ -546,8 +546,8 @@ void evalMobility(struct position *pos, int *openingEval, int *endgameEval) {
 	
 	struct mobreturn WBmobility = Bmobility(pos,WHITE);
 	idx = min(13, max(0, WBmobility.mobility - WBmobility.unsafe * 2 + WBmobility.centre * centremult));
-	//*openingEval += bishopMgMobility[idx];
-	//*endgameEval += bishopEgMobility[idx];
+	*openingEval += bishopMgMobility[idx];
+	*endgameEval += bishopEgMobility[idx];
 	*openingEval += WBmobility.pstO;
 	*endgameEval += WBmobility.pstE;
 	//*openingEval += WBmobility.homerowsattacks * hrattackbonus;
@@ -556,8 +556,8 @@ void evalMobility(struct position *pos, int *openingEval, int *endgameEval) {
 	
 	struct mobreturn WRmobility = Rmobility(pos,WHITE);
 	idx = min(14, max(0, WRmobility.mobility - WRmobility.unsafe * 2 + WRmobility.centre * centremult));
-	//*openingEval += rookMgMobility[idx];
-	//*endgameEval += rookEgMobility[idx];
+	*openingEval += rookMgMobility[idx];
+	*endgameEval += rookEgMobility[idx];
 	*openingEval += WRmobility.pstO;
 	*endgameEval += WRmobility.pstE;
 	//*openingEval += WRmobility.homerowsattacks * hrattackbonus;
@@ -566,8 +566,8 @@ void evalMobility(struct position *pos, int *openingEval, int *endgameEval) {
 	
 	struct mobreturn WQmobility = Qmobility(pos,WHITE);
 	idx = min(27, max(0, WQmobility.mobility - WQmobility.unsafe * 2 + WQmobility.centre * centremult));
-	//*openingEval += queenMgMobility[idx];
-	//*endgameEval += queenEgMobility[idx];
+	*openingEval += queenMgMobility[idx];
+	*endgameEval += queenEgMobility[idx];
 	*openingEval += WQmobility.pstO;
 	*endgameEval += WQmobility.pstE;
 	//*openingEval += WQmobility.homerowsattacks * hrattackbonus;
@@ -587,8 +587,8 @@ void evalMobility(struct position *pos, int *openingEval, int *endgameEval) {
 	// black
 	struct mobreturn BNmobility = Nmobility(pos,BLACK);
 	idx = min(8, max(0, BNmobility.mobility - BNmobility.unsafe * 2 + BNmobility.centre * centremult));
-	//*openingEval -= knightMgMobility[idx];
-	//*endgameEval -= knightEgMobility[idx];
+	*openingEval -= knightMgMobility[idx];
+	*endgameEval -= knightEgMobility[idx];
 	*openingEval += BNmobility.pstO;
 	*endgameEval += BNmobility.pstE;
 	//*openingEval -= BNmobility.homerowsattacks * hrattackbonus;
@@ -597,8 +597,8 @@ void evalMobility(struct position *pos, int *openingEval, int *endgameEval) {
 	
 	struct mobreturn BBmobility = Bmobility(pos,BLACK);
 	idx = min(13, max(0, BBmobility.mobility - BBmobility.unsafe * 2 + BBmobility.centre * centremult));
-	//*openingEval -= bishopMgMobility[idx];
-	//*endgameEval -= bishopEgMobility[idx];
+	*openingEval -= bishopMgMobility[idx];
+	*endgameEval -= bishopEgMobility[idx];
 	*openingEval += BBmobility.pstO;
 	*endgameEval += BBmobility.pstE;
 	//*openingEval -= BBmobility.homerowsattacks * hrattackbonus;
@@ -607,8 +607,8 @@ void evalMobility(struct position *pos, int *openingEval, int *endgameEval) {
 	
 	struct mobreturn BRmobility = Rmobility(pos,BLACK);
 	idx = min(14, max(0, BRmobility.mobility - BRmobility.unsafe * 2 + BRmobility.centre * centremult));
-	//*openingEval -= rookMgMobility[idx];
-	//*endgameEval -= rookEgMobility[idx];
+	*openingEval -= rookMgMobility[idx];
+	*endgameEval -= rookEgMobility[idx];
 	*openingEval += BRmobility.pstO;
 	*endgameEval += BRmobility.pstE;
 	//*openingEval -= BRmobility.homerowsattacks * hrattackbonus;
@@ -617,8 +617,8 @@ void evalMobility(struct position *pos, int *openingEval, int *endgameEval) {
 	
 	struct mobreturn BQmobility = Qmobility(pos,BLACK);
 	idx = min(27, max(0, BQmobility.mobility - BQmobility.unsafe * 2 + BQmobility.centre * centremult));
-	//*openingEval -= queenMgMobility[idx];
-	//*endgameEval -= queenEgMobility[idx];
+	*openingEval -= queenMgMobility[idx];
+	*endgameEval -= queenEgMobility[idx];
 	*openingEval += BQmobility.pstO;
 	*endgameEval += BQmobility.pstE;
 	//*openingEval -= BQmobility.homerowsattacks * hrattackbonus;
@@ -638,8 +638,93 @@ void evalMinorAttacks(struct position *pos, int *openingEval, int *endgameEval) 
 	
 }
 void evalMaterialImbalance(struct position *pos, int *openingEval, int *endgameEval) {
+
 }
 int evalEndgame(struct position *pos, int endgameEval) {
+	
+	
+	// Endgame evaluation for 5 or fewer pieces
+	// Taken from Schooner with permission from its author.
+	
+	int num_BP = __builtin_popcountll(pos->colours[BLACK] & pos->pieces[PAWN]);
+	int num_BN = __builtin_popcountll(pos->colours[BLACK] & pos->pieces[KNIGHT]);
+	int num_BB = __builtin_popcountll(pos->colours[BLACK] & pos->pieces[BISHOP]);
+	int num_BR = __builtin_popcountll(pos->colours[BLACK] & pos->pieces[ROOK]);
+	int num_BQ = __builtin_popcountll(pos->colours[BLACK] & pos->pieces[QUEEN]);
+	int num_WP = __builtin_popcountll(pos->colours[WHITE] & pos->pieces[PAWN]);
+	int num_WN = __builtin_popcountll(pos->colours[WHITE] & pos->pieces[KNIGHT]);
+	int num_WB = __builtin_popcountll(pos->colours[WHITE] & pos->pieces[BISHOP]);
+	int num_WR = __builtin_popcountll(pos->colours[WHITE] & pos->pieces[ROOK]);
+	int num_WQ = __builtin_popcountll(pos->colours[WHITE] & pos->pieces[QUEEN]);
+	
+	int num_pieces = __builtin_popcountll(pos->colours[WHITE] | pos->colours[BLACK]);
+	
+	if (num_pieces >= 6) return endgameEval;
+	
+	if (num_pieces == 5) {
+		
+		// KNNKx KNNKP can win
+		if (num_WN == 2) {
+			if (pos->pieces[PAWN] | pos->pieces[QUEEN]) return endgameEval;
+			if (num_BN | num_BB | num_BR) return 0;
+		}
+		if (num_BN == 2) {
+			if (pos->pieces[PAWN] | pos->pieces[QUEEN]) return endgameEval;
+			if (num_WN | num_WB | num_WR) return 0;
+		}
+		
+		// KRNKR KRBKR
+		if (num_WR && num_BR) {
+			if (pos->pieces[KNIGHT] | pos->pieces[BISHOP]) return endgameEval >> 4;
+		}
+		
+		//KBNKB KBNKN KBNKR
+		if (num_WN && num_WB && (num_BR || (num_BN | num_BB))) return 0;
+		if (num_BN && num_BB && (num_WR || (num_WN | num_WB))) return 0;
+		
+		// KBBKB
+		if (num_WB == 2) {
+			if (num_BB) return 0;
+			
+			// KBBKN
+			//difficult. avoid cursed wins and blessed losses
+			if (num_BN) return endgameEval >> 1;
+		}
+		if (num_BB == 2) {
+			if (num_WB) return 0;
+			
+			// KBBKN
+			//difficult. avoid cursed wins and blessed losses
+			if (num_WB) return endgameEval >> 1;
+		}
+		
+		//KRKBP
+		
+		if (num_WR && (num_BN | num_BB) && num_BP) {
+			return min(endgameEval, 0);
+		}
+		if (num_BR && (num_WN | num_WB) && num_WP) {
+			return max(endgameEval, 0);
+		}
+	}
+	
+	if (num_pieces == 4) {
+		// KNKP KBKP
+		if ((num_WN | num_WB) == 1 && num_BP == 1) {
+			return min(endgameEval, 0);
+		}
+		if ((num_BN | num_BB) == 1 && num_WP == 1) {
+			return max(endgameEval, 0);
+		}
+	}
+	if (num_pieces == 3) {
+		if (pos->pieces[ROOK] | pos->pieces[QUEEN]) {
+			if (BBkingLookup[pos->Wkingpos] & BBkingLookup[pos->Bkingpos]) {
+				return endgameEval << 1;
+			}
+			return endgameEval;
+		}
+	}
 	return endgameEval;
 }
 int finalEval(struct position *pos, int *openingEval, int *endgameEval) {
