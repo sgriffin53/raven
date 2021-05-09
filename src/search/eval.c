@@ -775,7 +775,14 @@ int taperedEval(struct position *pos) {
 	int openingEval = 0;
 	int endgameEval = 0;
 	
-	
+	if (pos->tomove == WHITE) {
+		openingEval += SideToMove_mg;
+		endgameEval += SideToMove_eg;
+	}
+	else {
+		openingEval -= SideToMove_mg;
+		endgameEval -= SideToMove_eg;
+	}
 	
 	evalMaterial(pos, &openingEval, &endgameEval);
 	
