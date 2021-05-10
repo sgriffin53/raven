@@ -235,10 +235,22 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		if (alpha >= beta) {
 			numbetacutoffs++;
 			if (legalmoves == 1) numinstantbetacutoffs++;
+			if (cappiece == NONE) {
+				killers[ply][1] = killers[ply][0];
+				killers[ply][0] = moves[i];
+				//history[pos->tomove][moves[i].from][moves[i].to] += pow(2.0,(double)depthleft);
+				//history[pos->tomove][moves[i].from][moves[i].to] += (depthleft / ONE_PLY) * (depthleft / ONE_PLY);
+				//struct move prevmove = movestack[movestackend - 1];
+				//countermoves[prevmove.from][prevmove.to] = moves[i];
+			}
 			break;
 		}
 		else {
 			// no beta cut off
+			if (cappiece == NONE) {
+				//butterfly[pos->tomove][moves[i].from][moves[i].to] += pow(2.0,(double)depthleft);
+				//butterfly[pos->tomove][moves[i].from][moves[i].to] += (depthleft / ONE_PLY) * (depthleft / ONE_PLY);
+			}
 		}
 		depthleft = allorigdepthleft;
 	}
