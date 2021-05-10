@@ -153,8 +153,8 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	if (isInsufficientMaterial(pos)) return 0;
 	int incheck = isCheck(pos);
 	if (depthleft <= 0) {
-		//return qSearch(pos, alpha, beta, ply + 1, endtime);
-		return taperedEval(pos);
+		return qSearch(pos, alpha, beta, ply + 1, endtime);
+		//return taperedEval(pos);
 
 	}
 	struct move bestmove = {.to=-1,.from=-1,.prom=NONE,.cappiece=NONE};;
@@ -184,6 +184,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	struct move moves[MAX_MOVES];
 	int num_moves = genMoves(pos,moves, 0);
 	sortMoves(pos,moves,num_moves,TTmove, ply);
+	
 	int allorigdepthleft = depthleft;
 	
 	int score = 0;
@@ -378,6 +379,22 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 			break;
 		}
 
+		// Check pv
+		
+		#ifndef DNDEBUG
+		int found = 0;
+		for(int i = 0; i < num_moves; ++i) {
+			if (moves[i].from == pv.from &&
+				moves[i].to == pv.to &&
+				moves[i].prom == pv.prom &&
+				moves[i].cappiece == pv.cappiece) {
+				found = 1;
+				break;
+			}
+		}
+		
+		assert(found);
+		#endif
 		 
 		time_spent_prevms = time_spentms;
 		
