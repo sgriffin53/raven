@@ -200,6 +200,38 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	
 	int staticeval = taperedEval(pos);
 	
+
+	if (!nullmove && !incheck && ply != 0 && depthleft >= 3 * ONE_PLY && (staticeval >= beta)) {
+		const int orighalfmoves = pos->halfmoves;
+		const int origepsquare = pos->epsquare;
+		pos->tomove = !pos->tomove;
+		pos->halfmoves = 0;
+		pos->epsquare = -1;
+		posstack[posstackend] = *pos;
+		posstackend++;
+		int verR = 3 * ONE_PLY;
+		int R = 3 * ONE_PLY;
+		const int val = -alphaBeta(pos,-beta,-beta+1, depthleft - ONE_PLY - R, 1, ply + 1, pv, endtime, !cut);
+		if (val == -NO_SCORE) {
+			return NO_SCORE;
+		}
+		U64 nullhash = generateHash(pos);
+		struct TTentry nullTTdata = getTTentry(&TT, nullhash);
+		if (nullhash == nullTTdata.hash) nullref = nullTTdata.bestmove;
+		pos->tomove = !pos->tomove;
+		pos->halfmoves = orighalfmoves;
+		pos->epsquare = origepsquare;
+		posstackend--;
+		if (val >= origBeta || val >= beta) {
+			const int verification = alphaBeta(pos,beta - 1,beta, depthleft - ONE_PLY - verR, 1, ply + 1, pv, endtime, !cut); // alpha_beta(p, md, beta - 1, beta, d, false, false);
+			if (verification == NO_SCORE) {
+				return NO_SCORE;
+			}
+			if (verification >= beta) return beta;
+		}
+	}
+	
+	
 	int bestscore = INT_MIN;
 	int searchedKiller0 = 0;
 	int searchedKiller1 = 0;
@@ -241,9 +273,12 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		legalmoves++;
 		
 		if (moves[i].cappiece == NONE) quiets++;
-
+		int r = reduction(&moves[i], depthleft, cappiece, legalmoves, incheck, givescheck);
 		
-		score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY, 0, ply + 1, pv, endtime, !cut);
+		score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY - r, 0, ply + 1, pv, endtime, !cut);
+		if (r > 0 && score > alpha) {
+			score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY, 0, ply + 1, pv, endtime, !cut);
+		}
 		
 		// Unmake the move
 		
@@ -304,7 +339,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	else {
 		newflag = EXACT;
 	}
-	if (bestscore != 0 && bestscore <= MATE_SCORE - 100 && bestscore >= -MATE_SCORE + 100) addTTentry(&TT, hash, origdepthleft, newflag, bestmove, bestscore);
+	if (bestscore <= MATE_SCORE - 100 && bestscore >= -MATE_SCORE + 100) addTTentry(&TT, hash, origdepthleft, newflag, bestmove, bestscore);
 	addPVTTentry(&PVTT, hash, bestmove, bestscore);
 	*pv = bestmove;
 	assert(bestmove.to >= 0 && bestmove.to <= 63 && bestmove.from >= 0 && bestmove.from <= 63);
@@ -416,7 +451,6 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 		
 		//Ignore the result if we ran out of time
 		if (d > 1 && score == NO_SCORE) {
-			printf("ran out of time\n");
 			break;
 		}
 
