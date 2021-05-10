@@ -168,9 +168,37 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	
 	
 	
-	int staticeval = taperedEval(pos);
 	U64 hash = generateHash(pos);
+	struct TTentry TTdata = getTTentry(&TT,hash);
+	if (TTdata.hash == hash) {
+		int isvalid = 1;
+		if (getColour(pos, TTdata.bestmove.from) != pos->tomove) isvalid = 0;
+		if (getColour(pos, TTdata.bestmove.to) == pos->tomove) isvalid = 0;
+		if (isvalid) {
+			if (TTdata.depth >= origdepthleft) {
+				int flag = TTdata.flag;
+				int score = TTdata.score;
+				
+				if (flag == EXACT && TTdata.depth == origdepthleft) { // only return exact hits at exact depth match
+					*pv = TTdata.bestmove;
+					return score;
+				}
+				else if (flag == LOWERBOUND) {
+					alpha = max(score, alpha);
+				}
+				else if (flag == UPPERBOUND) {
+					beta = min(beta, score);
+				}
+				if (alpha >= beta) {
+					*pv = TTdata.bestmove;
+					return score;
+				}
+			}
+			TTmove = TTdata.bestmove;
+		}
+	}
 	
+	int staticeval = taperedEval(pos);
 	
 	int bestscore = INT_MIN;
 	int searchedKiller0 = 0;
