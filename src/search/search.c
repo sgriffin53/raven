@@ -95,6 +95,7 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 	}
 	
 	// delta pruning
+
 	if (alpha < standpat) alpha = standpat;
 
 	struct move moves[MAX_MOVES];
@@ -152,6 +153,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	if (pos->halfmoves >= 100) return 0;
 	if (isInsufficientMaterial(pos)) return 0;
 	int incheck = isCheck(pos);
+	if (incheck) depthleft += ONE_PLY; // check extensions
 	if (depthleft <= 0) {
 		return qSearch(pos, alpha, beta, ply + 1, endtime);
 		//return taperedEval(pos);
@@ -165,7 +167,6 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	
 	
 	
-	// Mate distance pruning
 	
 	int staticeval = taperedEval(pos);
 	U64 hash = generateHash(pos);
