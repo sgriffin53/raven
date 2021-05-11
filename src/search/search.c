@@ -272,6 +272,41 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		
 		char cappiece = moves[i].cappiece;
 		
+		int histval = history[pos->tomove][moves[i].from][moves[i].to];
+		int butterflyval = butterfly[pos->tomove][moves[i].from][moves[i].to];
+		
+		int isTTmove = 0;
+		if (TTmove.from == moves[i].from && TTmove.to == moves[i].to && TTmove.prom == moves[i].prom) isTTmove = 1;
+		int isKiller = 0;
+		
+		if (killers[ply][0].from == moves[i].from && killers[ply][0].to == moves[i].to && killers[ply][0].prom == moves[i].prom) {
+			isKiller = 1;
+		}
+		if (killers[ply][1].from == moves[i].from && killers[ply][1].to == moves[i].to && killers[ply][1].prom == moves[i].prom) {
+			isKiller = 1;
+		}
+
+		
+		int histmargins[13] = { 120, 120, 120, 120, 150, 180, 180, 350, 550, 1000, 1500, 2000, 3000 };
+		int histmargin;
+		if (rootdepth <= 12) histmargin = histmargins[rootdepth];
+		else histmargin = 3000;
+		
+		double cutoffpercent = ((double)histval * 100.0 / (double)(histval + butterflyval));
+		
+		int escapesnr = 0;
+		if (nullref.to == moves[i].from) escapesnr = 1;
+		
+
+		int sortscore = sortScore(pos, &moves[i], TTmove, ply);
+		
+		// history pruning
+		
+		if (!escapesnr && !incheck && !nullmove && depthleft >= 3 * ONE_PLY && depthleft <= 21 * ONE_PLY && !isTTmove && moves[i].cappiece == NONE && !isKiller
+			&& bestmove.from != -1 && legalmoves >= 4 && (histval + butterflyval) > histmargin && cutoffpercent < 1.25 && ply != 0) {
+			continue;
+		}
+		
 		int ext = 0;
 		
 		// Make the move
