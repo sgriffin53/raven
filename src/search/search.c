@@ -203,6 +203,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		if (staticeval - eval_margin >= beta) return staticeval - eval_margin;
 	}
 	
+	
 	// null move pruning
 
 	if (!nullmove && !incheck && ply != 0 && depthleft >= 3 * ONE_PLY && (staticeval >= beta)) {
@@ -246,6 +247,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	&&   abs(alpha) < 9000
 	&&   staticeval + fmargin[depthleft / ONE_PLY] <= alpha)
 		 f_prune = 1;	
+		 
 		 
 	int bestscore = INT_MIN;
 	int searchedKiller0 = 0;
@@ -302,9 +304,19 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		
 		int r = reduction(&moves[i], depthleft, cappiece, legalmoves, incheck, givescheck);
 		
-		score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY - r, 0, ply + 1, pv, endtime, !cut);
-		if (r > 0 && score > alpha) {
-			score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY, 0, ply + 1, pv, endtime, !cut);
+
+		// PVS Search
+
+		if (legalmoves == 1) {
+			score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY + ext, 0, ply + 1, pv, endtime, !cut);
+		}
+		else {
+			// narrow window search with reductions
+			score = -alphaBeta(pos, -alpha - 1, -alpha, depthleft - ONE_PLY - r + ext, 0, ply + 1, pv, endtime, !cut);
+			if (score > alpha && score != -NO_SCORE) {
+				// full window research with no reduction
+				score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY + ext, 0, ply + 1, pv, endtime, !cut);
+			}
 		}
 		
 		// Unmake the move
