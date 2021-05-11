@@ -198,8 +198,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	
 	int staticeval = taperedEval(pos); // get static eval
 
-
-	if (depthleft < 3 * ONE_PLY && !incheck && abs(beta) - 1 > -MATE_SCORE + 100) {
+	if (depthleft < 3 * ONE_PLY && !incheck) {
 		int eval_margin = 120 * depthleft / ONE_PLY;
 		if (staticeval - eval_margin >= beta) return staticeval - eval_margin;
 	}
@@ -237,6 +236,17 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	}
 	
 	
+	
+	int f_prune = 0;
+	
+	//int fmargin[4] = { 0, 200, 300, 500 };
+	int fmargin[8] = {0, 150, 250, 350, 450, 550, 650, 750};
+	if (depthleft <= 7 * ONE_PLY
+	&&  !incheck
+	&&   abs(alpha) < 9000
+	&&   staticeval + fmargin[depthleft / ONE_PLY] <= alpha)
+		 f_prune = 1;	
+		 
 	int bestscore = INT_MIN;
 	int searchedKiller0 = 0;
 	int searchedKiller1 = 0;
@@ -278,6 +288,18 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		legalmoves++;
 		
 		if (moves[i].cappiece == NONE) quiets++;
+		
+		if (f_prune
+		&& legalmoves > 1
+		&&  moves[i].prom == NONE
+		&& !givescheck
+		&& ply != 0) {
+			if (cappiece == NONE) {
+			unmakeMove(pos);
+			continue;
+			}
+		}
+		
 		int r = reduction(&moves[i], depthleft, cappiece, legalmoves, incheck, givescheck);
 		
 		score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY - r, 0, ply + 1, pv, endtime, !cut);
