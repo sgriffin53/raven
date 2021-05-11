@@ -148,7 +148,6 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	if (outOfTime(endtime)) {
 		return NO_SCORE;
 	}
-	currenthash = 0;
 	if (isThreefold(pos)) return 0;
 	if (pos->halfmoves >= 100) return 0;
 	if (isInsufficientMaterial(pos)) return 0;
@@ -156,8 +155,6 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	if (incheck) depthleft += ONE_PLY; // check extensions
 	if (depthleft <= 0) {
 		return qSearch(pos, alpha, beta, ply + 1, endtime);
-		//return taperedEval(pos);
-
 	}
 	struct move bestmove = {.to=-1,.from=-1,.prom=NONE,.cappiece=NONE};;
 	struct move TTmove = {.to=-1,.from=-1,.prom=NONE,.cappiece=NONE};
@@ -167,6 +164,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	
 	
 	
+	// TT lookup
 	
 	U64 hash = generateHash(pos);
 	struct TTentry TTdata = getTTentry(&TT,hash);
@@ -198,8 +196,15 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		}
 	}
 	
-	int staticeval = taperedEval(pos);
+	int staticeval = taperedEval(pos); // get static eval
+
+
+	if (depthleft < 3 * ONE_PLY && !incheck && abs(beta) - 1 > -MATE_SCORE + 100) {
+		int eval_margin = 120 * depthleft / ONE_PLY;
+		if (staticeval - eval_margin >= beta) return staticeval - eval_margin;
+	}
 	
+	// null move pruning
 
 	if (!nullmove && !incheck && ply != 0 && depthleft >= 3 * ONE_PLY && (staticeval >= beta)) {
 		const int orighalfmoves = pos->halfmoves;
