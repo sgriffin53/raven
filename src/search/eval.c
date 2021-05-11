@@ -26,7 +26,7 @@ int IsolatedPawn_mg = 22;
 int IsolatedPawn_eg = 20;
 int ZeroOrEightPawns_mg = 10;
 int ZeroOrEightPawns_eg = 10;
-int PawnShield = 27;
+int PawnShield = 18;
 int PawnsInCentre_mg = 14;
 int PawnsInCentre_eg = 0;
 int PawnsAttackingCentre_mg = 9;
@@ -320,7 +320,7 @@ void evalPawns(struct position *pos, int *openingEval, int *endgameEval) {
 			*endgameEval += IsolatedPawn_eg;
 		}
 	}
-/*
+
 	// white pawn shield
 	
 	int Wkingpos = pos->Wkingpos;
@@ -334,7 +334,7 @@ void evalPawns(struct position *pos, int *openingEval, int *endgameEval) {
 	BBpawnshield = BBpawnshieldLookup[BLACK][Bkingpos];
 	BBpawnshield &= (pos->colours[BLACK] & pos->pieces[PAWN]);
 	*openingEval -= PawnShield * __builtin_popcountll(BBpawnshield);
-*/
+
 
 
 /*
