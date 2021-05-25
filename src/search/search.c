@@ -97,10 +97,26 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 	// delta pruning
 
 	if (alpha < standpat) alpha = standpat;
-
+	
+	U64 hash = generateHash(pos);
+	struct TTentry TTdata = getTTentry(&TT,hash);
+	if (TTdata.hash == hash) {
+		int isvalid = 1;
+		if (getColour(pos, TTdata.bestmove.from) != pos->tomove) isvalid = 0;
+		if (getColour(pos, TTdata.bestmove.to) == pos->tomove) isvalid = 0;
+		if (isvalid) {
+			int flag = TTdata.flag;
+			int score = TTdata.score;
+			if (flag == EXACT
+				|| (flag == LOWERBOUND && score >= beta)
+				|| (flag == UPPERBOUND && score <= alpha)) {
+					return score;
+			}
+			TTmove = TTdata.bestmove;
+		}
+	}
 	struct move moves[MAX_MOVES];
 	const int num_moves = genMoves(pos,moves, 1);
-	
 	struct move bestmove = {.to=-1,.from=-1,.prom=NONE,.cappiece=NONE};;
 	for (int i = 0;(i < num_moves);i++) {
 		if (moves[i].cappiece != NONE) {
@@ -254,11 +270,8 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	int searchedKiller1 = 0;
 	int searchedCM = 0;
 	int searchedTTmove = 0;
-	int beatsbeta = 0;
 	int legalmoves = 0;
 	int quiets = 0;
-	int extension = 0;
-	extension = 0;
 	struct move moves[MAX_MOVES];
 	int num_moves = genMoves(pos,moves, 0);
 	sortMoves(pos,moves,num_moves,TTmove, ply);
@@ -267,7 +280,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	
 	int score = 0;
 	
-	for (int i = 0;i < num_moves && !beatsbeta;i++) {
+	for (int i = 0;i < num_moves;i++) {
 		depthleft = allorigdepthleft;
 		
 		char cappiece = moves[i].cappiece;
@@ -338,7 +351,6 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		}
 		
 		int r = reduction(&moves[i], depthleft, cappiece, legalmoves, incheck, givescheck);
-		
 
 		// PVS Search
 
@@ -580,7 +592,8 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 			//printf("\n");
 		}
 		lastsearchdepth = d;
-		if (score == MATE_SCORE || score == -MATE_SCORE) break;
+			
+		if (score >= MATE_SCORE - 100 || score <= -MATE_SCORE + 100) break;
 	}
 	time_spentms = getClock() - begin;
 	time_spent = time_spentms / 1000.0;
