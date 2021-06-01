@@ -592,7 +592,12 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 			//printf("\n");
 		}
 		lastsearchdepth = d;
-			
+		// terrible hack to fix disconnection issue
+		// if we're at depth 25+ after less than 10ms
+		// we're probably going to crash
+		// so just return the result
+		if (d >= 25 && (int)(time_spent*1000) <= 10) break;
+		// return on mate score
 		if (score >= MATE_SCORE - 100 || score <= -MATE_SCORE + 100) break;
 	}
 	time_spentms = getClock() - begin;
