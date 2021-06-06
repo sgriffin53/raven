@@ -218,7 +218,11 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		int eval_margin = 120 * depthleft / ONE_PLY;
 		if (staticeval - eval_margin >= beta) return staticeval - eval_margin;
 	}
-	
+	if (!nullmove && beta <= MATE_SCORE) {
+		if (depthleft == 1 * ONE_PLY && staticeval - 300 > beta) return beta;
+		if (depthleft == 2 * ONE_PLY && staticeval - 475 > beta) return beta;
+		if (depthleft == 3 * ONE_PLY && staticeval - 900 > beta) depthleft -= ONE_PLY;
+	}
 	
 	// null move pruning
 
