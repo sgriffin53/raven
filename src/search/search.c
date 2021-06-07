@@ -37,6 +37,7 @@ int reduction(const struct move *move, const int depthleft, char cappiece, int l
 			int red = ONE_PLY;
 			if (depthleft >= 6 * ONE_PLY) red = 2 * ONE_PLY;
 			if (legalmoves >= 20) red += ONE_PLY;
+			if (legalmoves <= 10) red = ONE_PLY;
 			if (move->piece == PAWN) red = ONE_PLY;
 			return red;
 		}
@@ -213,11 +214,16 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	}
 	
 	int staticeval = taperedEval(pos); // get static eval
+	
+	// eval pruning
 
 	if (depthleft < 3 * ONE_PLY && !incheck) {
 		int eval_margin = 120 * depthleft / ONE_PLY;
 		if (staticeval - eval_margin >= beta) return staticeval - eval_margin;
 	}
+	
+	// static null move pruning
+	
 	if (!nullmove && beta <= MATE_SCORE) {
 		if (depthleft == 1 * ONE_PLY && staticeval - 300 > beta) return beta;
 		if (depthleft == 2 * ONE_PLY && staticeval - 475 > beta) return beta;
