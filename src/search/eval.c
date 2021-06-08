@@ -55,7 +55,7 @@ int QueenOn7th_mg = 0;
 int QueenOn7th_eg = 35;
 int KingPawnlessFlank_mg = 17;
 int KingPawnlessFlank_eg = 95;
-int ImbalanceFactor = 180;
+int ImbalanceFactor = 70;
 
 
 int FreePawnRankBonus[8] = {0, 0, 10, 20, 40, 60, 80, 120 };
@@ -639,6 +639,28 @@ void evalMinorAttacks(struct position *pos, int *openingEval, int *endgameEval) 
 }
 void evalMaterialImbalance(struct position *pos, int *openingEval, int *endgameEval) {
 
+	int num_BN = __builtin_popcountll(pos->colours[BLACK] & pos->pieces[KNIGHT]);
+	int num_BB = __builtin_popcountll(pos->colours[BLACK] & pos->pieces[BISHOP]);
+	int num_BR = __builtin_popcountll(pos->colours[BLACK] & pos->pieces[ROOK]);
+	int num_BQ = __builtin_popcountll(pos->colours[BLACK] & pos->pieces[QUEEN]);
+	int num_WN = __builtin_popcountll(pos->colours[WHITE] & pos->pieces[KNIGHT]);
+	int num_WB = __builtin_popcountll(pos->colours[WHITE] & pos->pieces[BISHOP]);
+	int num_WR = __builtin_popcountll(pos->colours[WHITE] & pos->pieces[ROOK]);
+	int num_WQ = __builtin_popcountll(pos->colours[WHITE] & pos->pieces[QUEEN]);
+	
+	int whitematval = num_WN * pieceval(KNIGHT) + num_WB * pieceval(BISHOP) + num_WR * pieceval(ROOK) + num_WQ * pieceval(QUEEN);
+	int blackmatval = num_BN * pieceval(KNIGHT) + num_BB * pieceval(BISHOP) + num_BR * pieceval(ROOK) + num_BQ * pieceval(QUEEN);
+	if (whitematval > blackmatval) {
+		double matimb = 1.0 - (blackmatval / whitematval);
+		*openingEval += matimb * ImbalanceFactor;
+		*endgameEval += matimb * ImbalanceFactor;
+	}
+	
+	else if (blackmatval > whitematval) {
+		double matimb = 1.0 - (whitematval / blackmatval);
+		*openingEval -= matimb * ImbalanceFactor;
+		*endgameEval -= matimb * ImbalanceFactor;
+	}
 }
 int evalEndgame(struct position *pos, int endgameEval) {
 	
