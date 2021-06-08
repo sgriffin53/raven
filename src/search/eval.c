@@ -43,7 +43,7 @@ int BishopsProtectedByPawn_mg = 6;
 int BishopsProtectedByPawn_eg = 12;
 int OpenBishops_mg = 0;
 int OpenBishops_eg = 0;
-int RookOpenFile_mg = 60;
+int RookOpenFile_mg = 20;
 int RookOpenFile_eg = 2;
 int RookSemiOpenFile_mg = 27;
 int RookSemiOpenFile_eg = 24;
@@ -422,7 +422,7 @@ void evalBishops(struct position *pos, int *openingEval, int *endgameEval) {
 void evalKRmate(struct position *pos, int *endgameEval) {
 }
 void evalRooks(struct position *pos, int *openingEval, int *endgameEval) {
-/*
+
 	// bonus for rooks being on 7th rank or (semi-)open files
 	
 	U64 BBwhiterooks = pos->colours[WHITE] & pos->pieces[ROOK];
@@ -513,7 +513,7 @@ void evalRooks(struct position *pos, int *openingEval, int *endgameEval) {
 		//*openingEval -= RookOn7th_mg;
 		//*endgameEval -= RookOn7th_eg;
 	}
-	 */
+	 
 }
 
 void evalQueens(struct position *pos, int *openingEval, int *endgameEval) {
