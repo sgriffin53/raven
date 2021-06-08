@@ -59,7 +59,7 @@ int ImbalanceFactor = 180;
 
 
 int FreePawnRankBonus[8] = {0, 0, 10, 20, 40, 60, 80, 120 };
-int PassedRankBonus[8] = { 0, 0, 0, 18, 52, 108, 186, 0 };
+int PassedRankBonus[8] = { 0, 10, 15, 25, 50, 90, 120, 0 };
 int PassedFileBonus_mg[8] = { 25, 11, -14, -14, -14, -14, 11, 25 };
 int PassedFileBonus_eg[8] = { 20, 15, 5, -7, -7, 5, 15, 20 };
 
@@ -187,14 +187,14 @@ void evalPawns(struct position *pos, int *openingEval, int *endgameEval) {
 			int bonus = PassedRankBonus[startrank];
 			
 			// blockage of stop square
-			
+			/*
 			int stopsquare = fileranktosquareidx(getfile(square), startrank + 1);
 			if ((1ULL << stopsquare) & pos->colours[BLACK] & (pos->pieces[BISHOP] | pos->pieces[KNIGHT] | pos->pieces[KING])) {
 				bonus = PassedRankBonus[startrank - 1];
 			}
-			
-			//*openingEval += (int)(0.5 * bonus);
-			//*endgameEval += 1 * bonus;
+			*/
+			*openingEval += (int)(0.5 * bonus);
+			*endgameEval += 1 * bonus;
 			
 			*openingEval += PassedFileBonus_mg[getfile(square)];
 			*endgameEval += PassedFileBonus_eg[getfile(square)];
@@ -264,13 +264,13 @@ void evalPawns(struct position *pos, int *openingEval, int *endgameEval) {
 			
 			// blockage of stop square
 			
-			int stopsquare = fileranktosquareidx(getfile(square), startrank - 1);
-			if ((1ULL << stopsquare) & pos->colours[WHITE] & (pos->pieces[BISHOP] | pos->pieces[KNIGHT] | pos->pieces[KING])) {
-				bonus = PassedRankBonus[7 - startrank - 1];
-			}
+//			int stopsquare = fileranktosquareidx(getfile(square), startrank - 1);
+//			if ((1ULL << stopsquare) & pos->colours[WHITE] & (pos->pieces[BISHOP] | pos->pieces[KNIGHT] | pos->pieces[KING])) {
+//				bonus = PassedRankBonus[7 - startrank - 1];
+//			}
 			
-//			*openingEval -= (int)(0.5 * bonus);
-//			*endgameEval -= 1 * bonus;
+			*openingEval -= (int)(0.5 * bonus);
+			*endgameEval -= 1 * bonus;
 			
 			*openingEval -= PassedFileBonus_mg[getfile(square)];
 			*endgameEval -= PassedFileBonus_eg[getfile(square)];
