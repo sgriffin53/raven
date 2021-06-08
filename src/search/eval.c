@@ -16,8 +16,8 @@
 
 int SideToMove_mg = 24;
 int SideToMove_eg = 27;
-int OppKingProximity = 16;
-int MyKingProximity = -10;
+int OppKingProximity = 8;
+int MyKingProximity = -5;
 int PawnChain_mg = 4;
 int PawnChain_eg = 2;
 int DoubledPawn_mg = 8;
@@ -210,8 +210,8 @@ void evalPawns(struct position *pos, int *openingEval, int *endgameEval) {
 			int mykingdisty = abs(getrank(pos->Wkingpos) - getrank(square));
 			int mykingdist = max(mykingdistx, mykingdisty);
 			
-			//*endgameEval += OppKingProximity * oppkingdist;
-			//*endgameEval += MyKingProximity * mykingdist;
+			*endgameEval += OppKingProximity * oppkingdist;
+			*endgameEval += MyKingProximity * mykingdist;
 			
 		}
 		
@@ -286,8 +286,8 @@ void evalPawns(struct position *pos, int *openingEval, int *endgameEval) {
 			int mykingdisty = abs(getrank(pos->Bkingpos) - getrank(square));
 			int mykingdist = max(mykingdistx, mykingdisty);
 			
-//			*endgameEval -= OppKingProximity * oppkingdist;
-//			*endgameEval -= MyKingProximity * mykingdist;
+			*endgameEval -= OppKingProximity * oppkingdist;
+			*endgameEval -= MyKingProximity * mykingdist;
 			
 		}
 		
