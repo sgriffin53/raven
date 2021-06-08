@@ -242,6 +242,12 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		posstackend++;
 		int verR = 3 * ONE_PLY;
 		int R = 3 * ONE_PLY;
+		if (gamephase(pos) >= 85) { // endgame
+			// decrease search reduction
+			
+			R = 2 * ONE_PLY;
+			verR = 2 * ONE_PLY;
+		}
 		const int val = -alphaBeta(pos,-beta,-beta+1, depthleft - ONE_PLY - R, 1, ply + 1, pv, endtime, !cut);
 		if (val == -NO_SCORE) {
 			return NO_SCORE;
