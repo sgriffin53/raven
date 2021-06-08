@@ -447,8 +447,8 @@ void evalRooks(struct position *pos, int *openingEval, int *endgameEval) {
 		}
 		if ((BBWpawnsonfile == 0) && (BBBpawnsonfile)) {
 			// white rook on semi-open file with black pawns
-		//	*openingEval += RookSemiOpenFile_mg;
-		//	*endgameEval += RookSemiOpenFile_eg;
+			*openingEval += RookSemiOpenFile_mg;
+			*endgameEval += RookSemiOpenFile_eg;
 		}
 		
 		// rook on same file as queen
@@ -490,8 +490,8 @@ void evalRooks(struct position *pos, int *openingEval, int *endgameEval) {
 		}
 		if ((BBBpawnsonfile == 0) && (BBWpawnsonfile)) {
 			// black rook on semi-open file with white pawns
-		//	*openingEval -= RookSemiOpenFile_mg;
-		//	*endgameEval -= RookSemiOpenFile_eg;
+			*openingEval -= RookSemiOpenFile_mg;
+			*endgameEval -= RookSemiOpenFile_eg;
 		}
 		// rook on same file as queen
 		
