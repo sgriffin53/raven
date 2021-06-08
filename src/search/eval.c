@@ -37,8 +37,8 @@ int KnightsProtectedByPawn_mg = 7;
 int KnightsProtectedByPawn_eg = 16;
 int ClosedKnights_mg = 50;
 int ClosedKnights_eg = 50;
-int BishopPair_mg = 28;
-int BishopPair_eg = 106;
+int BishopPair_mg = 15;
+int BishopPair_eg = 40;
 int BishopsProtectedByPawn_mg = 6;
 int BishopsProtectedByPawn_eg = 12;
 int OpenBishops_mg = 0;
@@ -383,14 +383,25 @@ void evalKnights(struct position *pos, int *openingEval, int *endgameEval) {
 	 */
 }
 void evalBishops(struct position *pos, int *openingEval, int *endgameEval) {
-	/*
-	U64 BBwhitepawns = (pos->colours[WHITE] & pos->pieces[PAWN]);
-	U64 BBblackpawns = (pos->colours[BLACK] & pos->pieces[PAWN]);
+	
+	//U64 BBwhitepawns = (pos->colours[WHITE] & pos->pieces[PAWN]);
+	//U64 BBblackpawns = (pos->colours[BLACK] & pos->pieces[PAWN]);
 	
 		
 	int num_BB = __builtin_popcountll(pos->colours[BLACK] & pos->pieces[BISHOP]);
 	int num_WB = __builtin_popcountll(pos->colours[WHITE] & pos->pieces[BISHOP]);
 	
+	// bishop pair bonus
+	
+	if (num_BB >= 2) {
+		*openingEval -= BishopPair_mg;
+		*endgameEval -= BishopPair_eg;
+	}
+	if (num_WB >= 2) {
+		*openingEval += BishopPair_mg;
+		*endgameEval += BishopPair_eg;
+	}
+	/*
 	// bonus for knights in closed positions
 	// bonus for bishops in open positions
 	
