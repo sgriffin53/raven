@@ -397,6 +397,14 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			}
 		}
 		 
+		// recapture extension
+		
+		struct move lastmove = movestack[movestackend - 2];
+		if (pieceval(lastmove.cappiece) == pieceval(lastmove.piece) && moves[i].to == lastmove.to) {
+			// recapture extension
+			ext = ONE_PLY;
+		}
+		
 		// PVS Search
 
 		if (legalmoves == 1) {
