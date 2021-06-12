@@ -292,6 +292,39 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	int num_moves = genMoves(pos,moves, 0);
 	sortMoves(pos,moves,num_moves,TTmove, ply);
 	
+
+	// multicut
+	
+	int MCR = 8;
+	int MCC = 3;
+	int MCM = 6;
+	if (!incheck && depthleft >= MCR * ONE_PLY && cut) {
+		int c = 0;
+		for (int i = 0;i < min(MCM,num_moves);i++) {
+			makeMove(&moves[i],pos);
+			pos->tomove = !pos->tomove;
+			if (isCheck(pos)) {
+				unmakeMove(pos);
+				continue;
+			}
+			pos->tomove = !pos->tomove;
+			int score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY - MCR * ONE_PLY, 0, ply + 1, pv, endtime, !cut);
+			unmakeMove(pos);
+			if (score == -NO_SCORE) {
+				return NO_SCORE;
+			}
+			if (score >= beta) {
+				c++;
+				if (c == MCC) {
+					return beta;
+				}
+			}
+			else {
+				if (i - c > MCM - MCC) break; // abort if we can't meet the cut off quota
+			}
+		}
+	}
+	
 	int allorigdepthleft = depthleft;
 	
 	int score = 0;
