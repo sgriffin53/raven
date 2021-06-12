@@ -338,11 +338,12 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		
 		// SEE pruning
 		
-		if (depthleft <= 8 * ONE_PLY && moves[i].cappiece != NONE) {
+		if (moves[i].cappiece != NONE) {
 			int SEEvalue = SEEcapture(pos, moves[i].from, moves[i].to, pos->tomove);
-			if (SEEvalue <= -80 * (depthleft / ONE_PLY) * (depthleft / ONE_PLY)) {
+			if (depthleft <= 8 * ONE_PLY && SEEvalue <= -80 * (depthleft / ONE_PLY) * (depthleft / ONE_PLY)) {
 				continue;
 			}
+			if (SEEvalue < 0) depthleft -= ONE_PLY; // SEE reduction
 		}
 		
 		int ext = 0;
