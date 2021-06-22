@@ -62,7 +62,7 @@ void parsefen(struct position *pos, const char *ofen) {
 		parsefen(pos, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 		return;
 	}
-	char fen[strlen(ofen)];
+	char fen[1024];
 	strcpy(fen, ofen);
 
 	char splitstr[100][8192];
