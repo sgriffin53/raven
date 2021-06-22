@@ -606,11 +606,12 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		int ispv = alpha != beta - 1;
 		if (!ispv && !cut && r > ONE_PLY) r -= ONE_PLY; // excepted ALL node - don't reduce as much
 		r = max(0, min(r,3 * ONE_PLY));
-			
+		/*	
 		if (cutoffpercent >= 20.0 && r >= 2 * ONE_PLY) {
 			// limit reduction of moves with good history to one ply
 			r = ONE_PLY;
 		}
+		 */
 		if (gamephase(pos) == 100) {
 			// no LMR in pawn endgames
 			r = 0;
@@ -848,7 +849,7 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 		rootdepth = d;
 		
 		// Predict whether we have enough time for next search and break if not
-		
+		/*
 		if (d > 1 && time_spentms > 30 && endtime == origendtime && !strictmovetime) {
 			if (time_spent_prevms == 0) time_spent_prevms = 1;
 			//double factor = time_spentms / time_spent_prevms;
@@ -856,7 +857,7 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 			int expectedendtime = getClock() + expectedtime;
 			if (expectedendtime > endtime) break;
 		}
-		
+		*/
 		score = alphaBeta(&pos, -MATE_SCORE, MATE_SCORE, d * ONE_PLY, 0, 0, &pv, endtime, 0);
 		
 		//Ignore the result if we ran out of time
@@ -917,6 +918,11 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 			//printf("\n");
 		}
 		lastsearchdepth = d;
+		// terrible hack to fix disconnection issue
+		// if we're at depth 25+ after less than 10ms
+		// we're probably going to crash
+		// so just return the result
+		if (d >= 25 && (int)(time_spent*1000) <= 10) break;
 		if (score == MATE_SCORE || score == -MATE_SCORE) break;
 	}
 	time_spentms = getClock() - begin;
