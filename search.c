@@ -153,7 +153,7 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 		}
 		if (score >= beta) {
 			if (TTdata.hash != hash) {
-				if (beta != 0 && beta <= MATE_SCORE - 100 && beta >= -MATE_SCORE + 100) addTTentry(&TT, hash, 0, LOWERBOUND, moves[i], beta);
+				addTTentry(&TT, hash, 0, LOWERBOUND, moves[i], beta);
 			}
 			return beta;
 		}
@@ -163,7 +163,7 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 		}
 	}
 	if (bestmove.from != -1 && TTdata.hash != hash) {
-		if (alpha != 0 && alpha <= MATE_SCORE - 100 && alpha >= -MATE_SCORE + 100) addTTentry(&TT, hash, 0, EXACT, bestmove, alpha);
+		addTTentry(&TT, hash, 0, EXACT, bestmove, alpha);
 	}
 	return alpha;
 }
@@ -219,7 +219,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		if (getColour(pos, TTdata.bestmove.from) != pos->tomove) isvalid = 0;
 		if (getColour(pos, TTdata.bestmove.to) == pos->tomove) isvalid = 0;
 		if (isvalid) {
-			if (TTdata.depth >= origdepthleft) {
+			if (ply >= 4 && TTdata.depth >= origdepthleft) {
 				int flag = TTdata.flag;
 				int score = TTdata.score;
 				
@@ -420,7 +420,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 				history[pos->tomove][curmove.from][curmove.to] += (depthleft / ONE_PLY) * (depthleft / ONE_PLY);
 				countermoves[prevmove.from][prevmove.to] = curmove;
 			}
-			if (bestscore != 0 && bestscore <= MATE_SCORE - 100 && bestscore >= -MATE_SCORE + 100) addTTentry(&TT, hash, origdepthleft, LOWERBOUND, bestmove, bestscore);
+			addTTentry(&TT, hash, origdepthleft, LOWERBOUND, bestmove, bestscore);
 			*pv = curmove;
 			return score;
 		}
@@ -737,7 +737,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	else {
 		newflag = EXACT;
 	}
-	if (bestscore != 0 && bestscore <= MATE_SCORE - 100 && bestscore >= -MATE_SCORE + 100) addTTentry(&TT, hash, origdepthleft, newflag, bestmove, bestscore);
+	addTTentry(&TT, hash, origdepthleft, newflag, bestmove, bestscore);
 	addPVTTentry(&PVTT, hash, bestmove, bestscore);
 	*pv = bestmove;
 	assert(bestmove.to >= 0 && bestmove.to <= 63 && bestmove.from >= 0 && bestmove.from <= 63);
@@ -863,7 +863,10 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 		if (d > 1 && score == NO_SCORE) {
 			break;
 		}
-
+		int time_left = endtime - getClock();
+		if (d > 1 && time_left <= 15) {
+			break;
+		}
 		// Check pv
 		
 		#ifndef DNDEBUG
