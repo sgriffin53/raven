@@ -731,7 +731,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	if (bestscore <= origAlpha) {
 		newflag = UPPERBOUND;
 	}
-	else if (bestscore >= beta) {
+	else if (bestscore >= origBeta) {
 		newflag = LOWERBOUND;
 	}
 	else {
