@@ -420,7 +420,9 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 				history[pos->tomove][curmove.from][curmove.to] += (depthleft / ONE_PLY) * (depthleft / ONE_PLY);
 				countermoves[prevmove.from][prevmove.to] = curmove;
 			}
-			addTTentry(&TT, hash, origdepthleft, LOWERBOUND, bestmove, bestscore);
+			int flag = EXACT;
+			if (alpha >= origBeta) flag = LOWERBOUND;
+			addTTentry(&TT, hash, origdepthleft, flag, bestmove, bestscore);
 			*pv = curmove;
 			return score;
 		}
