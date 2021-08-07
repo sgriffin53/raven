@@ -2,6 +2,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #include "position.h"
 #include "globals.h"
@@ -99,6 +100,35 @@ int sortScore(struct position *pos, struct move *move, struct move TTmove, int p
 		return (int)histscore;
 	}
 	return 0;
+}
+void rootSortMoves(struct position *pos, struct move *moves, const int num_moves, struct move TTmove) {
+	int scores[num_moves];
+	for (int i = 0; i < num_moves; i++) {
+		scores[i] = rootNodesSearched[moves[i].from][moves[i].to];
+		if (TTmove.from != -1
+			&& (moves[i].from == TTmove.from) && (moves[i].to == TTmove.to) && (moves[i].prom == TTmove.prom)) {
+				scores[i] = INT_MAX;
+		}
+	}
+	
+	
+	// selection sort
+	
+	int i, j;
+	for (i = 0;i < num_moves - 1;i++) {
+		int min_idx = i;
+		for (j = i+1; j < num_moves;j++) {
+			if (scores[j] > scores[min_idx]) min_idx = j;
+		}
+		int scorecopy = scores[i];
+		scores[i] = scores[min_idx];
+		scores[min_idx] = scorecopy;
+		
+		struct move movecopy = moves[i];
+		moves[i] = moves[min_idx];
+		moves[min_idx] = movecopy;
+	}
+	
 }
 void sortMoves(struct position *pos, struct move *moves, const int num_moves, struct move TTmove, int ply) {
 	assert(moves);

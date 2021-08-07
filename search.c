@@ -87,6 +87,8 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 	if (outOfTime(endtime)) {
 		return NO_SCORE;
 	}
+	nodesSearched++;
+	if (ply != 0) rootNodesSearched[rootmove.from][rootmove.to]++;
 	struct move TTmove = {.to=-1,.from=-1,.prom=NONE,.cappiece=NONE};
 	U64 hash;
 	if (currenthash == 0) {
@@ -141,8 +143,6 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 			continue;
 		}
 		pos->tomove = !pos->tomove;
-		nodesSearched++;
-		
 		currenthash = 0;
 		const int score = -qSearch(pos,-beta,-alpha, ply + 1, endtime);
 		
@@ -178,6 +178,8 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	if (outOfTime(endtime)) {
 		return NO_SCORE;
 	}
+	nodesSearched++;
+	if (ply != 0) rootNodesSearched[rootmove.from][rootmove.to]++;
 	currenthash = 0;
 	if (isThreefold(pos)) return 0;
 	if (pos->halfmoves >= 100) return 0;
@@ -390,7 +392,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		if (SEEvalue < 0) r = ONE_PLY; // reduce bad captures
 		makeMove(&curmove,pos);
 		legalmoves++;
-		nodesSearched++;
+		if (ply == 0) rootmove = curmove;
 		if (curmove.cappiece == NONE) quiets++;
 		
 		int score = -alphaBeta(pos, -beta, -alpha, depthleft - ONE_PLY + extension - r, 0, ply + 1, pv, endtime, !cut);
@@ -439,7 +441,8 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	int num_moves = 0;
 	if (!beatsbeta) {
 		num_moves = genMoves(pos,moves, 0);
-		sortMoves(pos,moves,num_moves,TTmove,ply);
+		if (ply == 0 && rootdepth >= 4) rootSortMoves(pos, moves, num_moves, TTmove);
+		else sortMoves(pos,moves,num_moves,TTmove,ply);
 	}
 	
 	// Prob Cut
@@ -579,7 +582,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		
 		pos->tomove = !pos->tomove;
 		
-		nodesSearched++;
+		if (ply == 0) rootmove = moves[i];
 		int givescheck = isCheck(pos);
 		legalmoves++;
 		
@@ -821,6 +824,11 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 	const int num_moves = genMoves(&pos, moves, 0);
 
 	clearHistory();
+	for (int i = 0;i < 64;i++) {
+		for (int j = 0;j < 64;j++) {
+			rootNodesSearched[i][j] = 0;
+		}
+	}
 	
 	// set a PV in case one doesn't get set due to threefold or 50 move rule returning without setting a pv
 	struct move pv;
@@ -928,6 +936,16 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 		// so just return the result
 		if (d >= 25 && (int)(time_spent*1000) <= 10) break;
 		if (score == MATE_SCORE || score == -MATE_SCORE) break;
+		/*
+		for (int i = 0;i < num_moves;i++) {
+			lastRootNodesSearched[moves[i].from][moves[i].to] = rootNodesSearched[moves[i].from][moves[i].to];
+		}
+		for (int i = 0;i < 64;i++) {
+			for (int j = 0;j < 64;j++) {
+				rootNodesSearched[i][j] = 0;
+			}
+		}
+		*/
 	}
 	time_spentms = getClock() - begin;
 	time_spent = time_spentms / 1000.0;

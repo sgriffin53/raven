@@ -45,5 +45,8 @@ int numgoodhist;
 U64 totNodesSearched;
 int silentsearch;
 clock_t totalendtime;
+U64 rootNodesSearched[64][64];
+U64 lastRootNodesSearched[64][64];
+struct move rootmove;
 
 #endif
