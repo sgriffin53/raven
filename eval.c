@@ -745,7 +745,7 @@ void evalRooks(struct position *pos, int *openingEval, int *endgameEval) {
 void evalQueens(struct position *pos, int *openingEval, int *endgameEval) {
 	
 	// bonus for rooks/queens being on 7th rank
-	
+	/*
 	U64 BBwhitequeens = pos->colours[WHITE] & pos->pieces[QUEEN];
 	U64 BBblackqueens = pos->colours[BLACK] & pos->pieces[QUEEN];
 	
@@ -774,6 +774,7 @@ void evalQueens(struct position *pos, int *openingEval, int *endgameEval) {
 		*openingEval -= QueenOn7th_mg;
 		*endgameEval -= QueenOn7th_eg;
 	}
+	 */
 }
 void evalKings(struct position *pos, int *openingEval, int *endgameEval) {
 	
@@ -1162,7 +1163,7 @@ int taperedEval(struct position *pos) {
 	evalKnights(pos, &openingEval, &endgameEval);
 	evalBishops(pos, &openingEval, &endgameEval);
 	evalRooks(pos, &openingEval, &endgameEval);
-	evalQueens(pos, &openingEval, &endgameEval);
+	//evalQueens(pos, &openingEval, &endgameEval);
 	evalKings(pos, &openingEval, &endgameEval);
 	
 	// mop up evaluation for basic checkmate
