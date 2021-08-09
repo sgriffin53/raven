@@ -221,7 +221,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		if (getColour(pos, TTdata.bestmove.from) != pos->tomove) isvalid = 0;
 		if (getColour(pos, TTdata.bestmove.to) == pos->tomove) isvalid = 0;
 		if (isvalid) {
-			if (ply >= 4 && TTdata.depth >= origdepthleft) {
+			if (alpha == beta - 1 && ply >= 4 && TTdata.depth >= origdepthleft) {
 				int flag = TTdata.flag;
 				int score = TTdata.score;
 				
