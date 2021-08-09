@@ -829,7 +829,9 @@ void evalMobility(struct position *pos, int *openingEval, int *endgameEval) {
 	double centremult = 0.5;
 	double hrattackbonus = 1;
 	struct mobreturn WNmobility = Nmobility(pos,WHITE);
-	idx = min(8, max(0, WNmobility.mobility - WNmobility.unsafe * 2 + WNmobility.centre * centremult));
+	double unsafemult = 1.5;
+	
+	idx = min(8, max(0, WNmobility.mobility - WNmobility.unsafe * unsafemult + WNmobility.centre * centremult));
 	*openingEval += knightMgMobility[idx];
 	*endgameEval += knightEgMobility[idx];
 	*openingEval += WNmobility.pstO;
@@ -839,7 +841,7 @@ void evalMobility(struct position *pos, int *openingEval, int *endgameEval) {
 	kingattackers += WNmobility.kingattackers;
 	
 	struct mobreturn WBmobility = Bmobility(pos,WHITE);
-	idx = min(13, max(0, WBmobility.mobility - WBmobility.unsafe * 2 + WBmobility.centre * centremult));
+	idx = min(13, max(0, WBmobility.mobility - WBmobility.unsafe * unsafemult + WBmobility.centre * centremult));
 	*openingEval += bishopMgMobility[idx];
 	*endgameEval += bishopEgMobility[idx];
 	*openingEval += WBmobility.pstO;
@@ -849,7 +851,7 @@ void evalMobility(struct position *pos, int *openingEval, int *endgameEval) {
 	kingattackers += WBmobility.kingattackers;
 	
 	struct mobreturn WRmobility = Rmobility(pos,WHITE);
-	idx = min(14, max(0, WRmobility.mobility - WRmobility.unsafe * 2 + WRmobility.centre * centremult));
+	idx = min(14, max(0, WRmobility.mobility - WRmobility.unsafe * unsafemult + WRmobility.centre * centremult));
 	*openingEval += rookMgMobility[idx];
 	*endgameEval += rookEgMobility[idx];
 	*openingEval += WRmobility.pstO;
@@ -859,7 +861,7 @@ void evalMobility(struct position *pos, int *openingEval, int *endgameEval) {
 	kingattackers += WRmobility.kingattackers;
 	
 	struct mobreturn WQmobility = Qmobility(pos,WHITE);
-	idx = min(27, max(0, WQmobility.mobility - WQmobility.unsafe * 2 + WQmobility.centre * centremult));
+	idx = min(27, max(0, WQmobility.mobility - WQmobility.unsafe * unsafemult + WQmobility.centre * centremult));
 	*openingEval += queenMgMobility[idx];
 	*endgameEval += queenEgMobility[idx];
 	*openingEval += WQmobility.pstO;
@@ -880,7 +882,7 @@ void evalMobility(struct position *pos, int *openingEval, int *endgameEval) {
 	kingattackers = 0;
 	// black
 	struct mobreturn BNmobility = Nmobility(pos,BLACK);
-	idx = min(8, max(0, BNmobility.mobility - BNmobility.unsafe * 2 + BNmobility.centre * centremult));
+	idx = min(8, max(0, BNmobility.mobility - BNmobility.unsafe * unsafemult + BNmobility.centre * centremult));
 	*openingEval -= knightMgMobility[idx];
 	*endgameEval -= knightEgMobility[idx];
 	*openingEval += BNmobility.pstO;
@@ -890,7 +892,7 @@ void evalMobility(struct position *pos, int *openingEval, int *endgameEval) {
 	kingattackers += BNmobility.kingattackers;
 	
 	struct mobreturn BBmobility = Bmobility(pos,BLACK);
-	idx = min(13, max(0, BBmobility.mobility - BBmobility.unsafe * 2 + BBmobility.centre * centremult));
+	idx = min(13, max(0, BBmobility.mobility - BBmobility.unsafe * unsafemult + BBmobility.centre * centremult));
 	*openingEval -= bishopMgMobility[idx];
 	*endgameEval -= bishopEgMobility[idx];
 	*openingEval += BBmobility.pstO;
@@ -900,7 +902,7 @@ void evalMobility(struct position *pos, int *openingEval, int *endgameEval) {
 	kingattackers += BBmobility.kingattackers;
 	
 	struct mobreturn BRmobility = Rmobility(pos,BLACK);
-	idx = min(14, max(0, BRmobility.mobility - BRmobility.unsafe * 2 + BRmobility.centre * centremult));
+	idx = min(14, max(0, BRmobility.mobility - BRmobility.unsafe * unsafemult + BRmobility.centre * centremult));
 	*openingEval -= rookMgMobility[idx];
 	*endgameEval -= rookEgMobility[idx];
 	*openingEval += BRmobility.pstO;
@@ -910,7 +912,7 @@ void evalMobility(struct position *pos, int *openingEval, int *endgameEval) {
 	kingattackers += BRmobility.kingattackers;
 	
 	struct mobreturn BQmobility = Qmobility(pos,BLACK);
-	idx = min(27, max(0, BQmobility.mobility - BQmobility.unsafe * 2 + BQmobility.centre * centremult));
+	idx = min(27, max(0, BQmobility.mobility - BQmobility.unsafe * unsafemult + BQmobility.centre * centremult));
 	*openingEval -= queenMgMobility[idx];
 	*endgameEval -= queenEgMobility[idx];
 	*openingEval += BQmobility.pstO;
