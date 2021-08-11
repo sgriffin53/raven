@@ -547,7 +547,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		int histmargin;
 		if (rootdepth <= 12) histmargin = histmargins[rootdepth];
 		else histmargin = 3000;
-		
+		if (alpha != beta - 1) histmargin *= 4; // increase margin on pv nodes
 		double cutoffpercent = ((double)histval * 100.0 / (double)(histval + butterflyval));
 		
 		int escapesnr = 0;
