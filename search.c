@@ -312,6 +312,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	if (depthleft <= 7 * ONE_PLY
 	&&  !incheck
 	&&   abs(alpha) < 9000
+	&&   abs(beta) < 9000
 	&&   staticeval + fmargin[depthleft / ONE_PLY] <= alpha)
 		 f_prune = 1;	
 	
