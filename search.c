@@ -125,7 +125,7 @@ int qSearch(struct position *pos, int alpha, int beta, int ply, clock_t endtime)
 
 	struct move moves[MAX_MOVES];
 	const int num_moves = genMoves(pos,moves, 1);
-	sortMoves(pos,moves,num_moves,TTmove, ply);
+	//sortMoves(pos,moves,num_moves,TTmove, ply);
 	
 	struct move bestmove = {.to=-1,.from=-1,.prom=NONE,.cappiece=NONE};;
 	for (int i = 0;(i < num_moves);i++) {
@@ -224,8 +224,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			if (alpha == beta - 1 && ply >= 4 && TTdata.depth >= origdepthleft) {
 				int flag = TTdata.flag;
 				int score = TTdata.score;
-				
-				if (flag == EXACT && TTdata.depth == origdepthleft) { // only return exact hits at exact depth match
+				if (flag == EXACT && TTdata.depth == origdepthleft && abs(score) < 9000) { // only return exact hits at exact depth match
 					*pv = TTdata.bestmove;
 					return score;
 				}
@@ -725,7 +724,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		// no legal moves
 		if (incheck) {
 			// side to move is in checkmate
-			return -MATE_SCORE;
+			return -MATE_SCORE + ply;
 		}
 		else {
 			// stalemate
