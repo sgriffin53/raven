@@ -224,7 +224,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			if (alpha == beta - 1 && ply >= 4 && TTdata.depth >= origdepthleft) {
 				int flag = TTdata.flag;
 				int score = TTdata.score;
-				if (flag == EXACT && TTdata.depth == origdepthleft && abs(score) < 9000) { // only return exact hits at exact depth match
+				if (flag == EXACT && TTdata.depth == origdepthleft) { // only return exact hits at exact depth match
 					*pv = TTdata.bestmove;
 					return score;
 				}
