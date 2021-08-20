@@ -190,15 +190,15 @@ void sortMoves(struct position *pos, struct move *moves, const int num_moves, st
 		else if ((killers[ply - 2][1].to == moves[i].to) && (killers[ply - 2][1].from == moves[i].from) && (killers[ply - 2][1].prom == moves[i].prom)) {
 			scores[i] = 825000;
 		}
+		else if (moves[i].from == countermove.from && moves[i].to == countermove.to) {
+			scores[i] = 800000;
+		}
 		else if (histscore > 0.0) {
 			histscore = 1000.0 + histscore * 100.0;
 			if (histscore > 700000.0) {
 				histscore = 700000.0;
 			}
 			scores[i] = (int)histscore;
-		}
-		if (moves[i].from == countermove.from && moves[i].to == countermove.to) {
-			scores[i] += 350000;
 		}
 	}
 	
