@@ -602,9 +602,11 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			}
 		}
 		int r = reduction(&moves[i], depthleft, cappiece, legalmoves, incheck, givescheck, ply);
+		
 		if (r >= ONE_PLY && sortscore == 0) { // increase reduction for moves with sort score of 0
 			r += ONE_PLY;
 		}
+		/*
 		if (r > ONE_PLY && sortscore > 0) { // decrease reduction for moves with good sort scores
 			r -= ONE_PLY;
 		}
@@ -616,10 +618,13 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			// limit reduction of moves with good history to one ply
 			r = ONE_PLY;
 		}
+		 */
+		r = max(0, min(r,3 * ONE_PLY));
 		if (gamephase(pos) == 100) {
 			// no LMR in pawn endgames
 			r = 0;
 		}
+		 
 		// passed pawn extension
 		
 		if ((moves[i].prom == NONE || moves[i].prom == QUEEN) && moves[i].piece == PAWN && pos->tomove == WHITE) {
