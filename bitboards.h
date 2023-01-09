@@ -3,34 +3,34 @@
 
 #include "hash.h"
 
-const U64 BBfileA;
-const U64 BBfileB;
-const U64 BBfileAB;
-const U64 BBfileC;
-const U64 BBfileD;
-const U64 BBfileD;
-const U64 BBfileE;
-const U64 BBfileF;
-const U64 BBfileG;
-const U64 BBfileH;
-const U64 BBfileGH;
-const U64 BBrank1;
-const U64 BBrank2;
-const U64 BBrank3;
-const U64 BBrank4;
-const U64 BBrank5;
-const U64 BBrank6;
-const U64 BBrank7;
-const U64 BBrank8;
+extern const U64 BBfileA;
+extern const U64 BBfileB;
+extern const U64 BBfileAB;
+extern const U64 BBfileC;
+extern const U64 BBfileD;
+extern const U64 BBfileD;
+extern const U64 BBfileE;
+extern const U64 BBfileF;
+extern const U64 BBfileG;
+extern const U64 BBfileH;
+extern const U64 BBfileGH;
+extern const U64 BBrank1;
+extern const U64 BBrank2;
+extern const U64 BBrank3;
+extern const U64 BBrank4;
+extern const U64 BBrank5;
+extern const U64 BBrank6;
+extern const U64 BBrank7;
+extern const U64 BBrank8;
 
-const U64 BBcentre;
-const U64 BBbigcentre;
+extern const U64 BBcentre;
+extern const U64 BBbigcentre;
 
-const U64 BBdiagA8H1;
-const U64 BBdiagA1H8;
+extern const U64 BBdiagA8H1;
+extern const U64 BBdiagA1H8;
 
-const U64 BBdarksquares;
-const U64 BBlightsquares;
+extern const U64 BBdarksquares;
+extern const U64 BBlightsquares;
 
 U64 arrFiles[8];
 
