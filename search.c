@@ -559,7 +559,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		// history pruning
 		
 		if (!escapesnr && !incheck && !nullmove && depthleft <= 21 * ONE_PLY && !isTTmove && moves[i].cappiece == NONE && !isKiller
-			&& bestmove.from != -1 && legalmoves >= 4 && (histval + butterflyval) > histmargin && cutoffpercent < 1.25 && ply != 0) {
+			&& bestmove.from != -1 && legalmoves >= 4 && (histval + butterflyval) > histmargin && cutoffpercent < 2.25 && ply != 0) {
 			continue;
 		}
 		
