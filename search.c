@@ -224,7 +224,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			if (alpha == beta - 1 && ply >= 4 && TTdata.depth >= origdepthleft) {
 				int flag = TTdata.flag;
 				int score = TTdata.score;
-				if (flag == EXACT && TTdata.depth == origdepthleft) { // only return exact hits at exact depth match
+				if (flag == EXACT) {
 					*pv = TTdata.bestmove;
 					return score;
 				}
@@ -559,7 +559,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		// history pruning
 		
 		if (!escapesnr && !incheck && !nullmove && depthleft <= 21 * ONE_PLY && !isTTmove && moves[i].cappiece == NONE && !isKiller
-			&& bestmove.from != -1 && legalmoves >= 4 && (histval + butterflyval) > histmargin && cutoffpercent < 2.25 && ply != 0) {
+			&& bestmove.from != -1 && legalmoves >= 2 && (histval + butterflyval) > histmargin && cutoffpercent < 2.25 && ply != 0) {
 			continue;
 		}
 		
