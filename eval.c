@@ -116,7 +116,7 @@ const int arrCenterManhattanDistance[64] = { // char is sufficient as well, also
   5, 4, 3, 2, 2, 3, 4, 5,
   6, 5, 4, 3, 3, 4, 5, 6
 };
-int piecevalues[7] = { 110, 300, 300, 500, 900, 9999, 0 };
+int piecevalues[7] = { 110, 300, 300, 525, 900, 9999, 0 };
 int pieceval(const char inpiece) {
 	return piecevalues[inpiece];
 }
