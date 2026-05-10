@@ -80,6 +80,7 @@ int sortScore(struct position *pos, struct move *move, struct move TTmove, int p
 		&& piece > cappiece) {
 			return 700000 + mvvlva(piece, cappiece);
 	}
+	/*
 	else if ((killers[ply][0].to == move->to) && (killers[ply][0].from == move->from) && (killers[ply][0].prom == move->prom)) {
 		return 900000;
 	}
@@ -92,6 +93,7 @@ int sortScore(struct position *pos, struct move *move, struct move TTmove, int p
 	else if ((killers[ply - 2][1].to == move->to) && (killers[ply - 2][1].from == move->from) && (killers[ply - 2][1].prom == move->prom)) {
 		return 825000;
 	}
+	*/
 	else if (histscore > 0.0) {
 		histscore = 1000.0 + histscore * 100.0;
 		if (histscore > 700000.0) {
