@@ -5,8 +5,8 @@
 
 typedef unsigned long long U64;
 
-#define WHITE 1
-#define BLACK 0
+#define WHITE 0
+#define BLACK 1
 #define MATE_SCORE 9999
 #define NO_SCORE 10000
 
