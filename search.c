@@ -451,6 +451,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		int rbeta = min(MATE_SCORE, beta + 100);
 		int probcutcount = 0;
 		for (int i = 0;i < num_moves;i++) {
+			if (moves[i].cappiece == NONE) continue;
 			makeMove(&moves[i],pos);
 			pos->tomove = !pos->tomove;
 			if (isCheck(pos)) {
@@ -460,7 +461,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			pos->tomove = !pos->tomove;
 			probcutcount++;
 			int probcutscore;
-			probcutscore = -alphaBeta(pos, -rbeta, -rbeta + 1, depthleft - 4 * ONE_PLY, 0, ply + 1, pv, endtime, !cut);
+			probcutscore = -alphaBeta(pos, -rbeta, -rbeta + 1, depthleft - 2 * ONE_PLY, 0, ply + 1, pv, endtime, !cut);
 			unmakeMove(pos);
 			if (probcutscore == -NO_SCORE) {
 				return NO_SCORE;
