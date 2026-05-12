@@ -382,10 +382,12 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 				}
 			}
 		}
-		struct move lastmove = movestack[movestackend - 1];
-		if (pieceval(lastmove.cappiece) == pieceval(lastmove.piece) && curmove.to == lastmove.to) {
-			// recapture extension
-			extension = ONE_PLY;
+		if (movestackend >= 1) {
+			struct move lastmove = movestack[movestackend - 1];
+			if (pieceval(lastmove.cappiece) >= pieceval(lastmove.piece) && curmove.to == lastmove.to && lastmove.cappiece != NONE && curmove.cappiece != NONE) {
+				// recapture extension
+				extension = ONE_PLY;
+			}
 		}
 		int r = 0;
 		int SEEvalue = SEEcapture(pos, curmove.from, curmove.to, pos->tomove);
@@ -656,13 +658,13 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		}
 		
 		// recapture extension
-		
-		struct move lastmove = movestack[movestackend - 2];
-		if (pieceval(lastmove.cappiece) == pieceval(lastmove.piece) && moves[i].to == lastmove.to) {
-			// recapture extension
-			extension = ONE_PLY;
+		if (movestackend >= 2) {
+			struct move lastmove = movestack[movestackend - 2];
+			if (pieceval(lastmove.cappiece) >= pieceval(lastmove.piece) && moves[i].to == lastmove.to && moves[i].cappiece != NONE && lastmove.cappiece != NONE) {
+				// recapture extension
+				extension = ONE_PLY;
+			}
 		}
-		
 		// SEE reduction
 		
 		if (SEEvalue < 0) depthleft -= ONE_PLY; // reduce bad captures
