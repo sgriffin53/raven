@@ -478,10 +478,11 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	
 	int MCR = 8;
 	int MCC = 3;
-	int MCM = 6;
+	int MCM = 8;
 	if (!incheck && depthleft >= MCR * ONE_PLY && cut) {
 		int c = 0;
 		for (int i = 0;i < min(MCM,num_moves);i++) {
+			if (moves[i].cappiece == NONE) continue;
 			makeMove(&moves[i],pos);
 			pos->tomove = !pos->tomove;
 			if (isCheck(pos)) {
