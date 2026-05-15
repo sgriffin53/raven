@@ -349,8 +349,24 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		premoves[num_premoves] = TTmove;
 		num_premoves++;
 	}
-	struct move prevmove = movestack[movestackend - 1];
-	struct move countermove = countermoves[prevmove.from][prevmove.to];
+	struct move prevmove;
+
+	if (movestackend > 0)
+		prevmove = movestack[movestackend - 1];
+	else {
+		prevmove.from = -1;
+		prevmove.to = -1;
+		prevmove.prom = -1;
+	}
+	struct move countermove;
+	if (prevmove.from != -1) {
+		countermove = countermoves[prevmove.from][prevmove.to];
+	} 
+	else {
+		countermove.from = -1;
+		countermove.to = -1;
+		countermove.prom = -1;
+	}
 	struct move curmove;
 	for (int i = 0;i < num_premoves;i++) {
 		curmove = premoves[i];
@@ -570,7 +586,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		// SEE pruning
 		
 		int SEEvalue = SEEcapture(pos, moves[i].from, moves[i].to, pos->tomove);
-		if (depthleft <= 8 * ONE_PLY && bestscore > -MATE_SCORE && SEEvalue <= -80 * (depthleft / ONE_PLY) * (depthleft / ONE_PLY)) {
+		if (!incheck && depthleft <= 8 * ONE_PLY && bestscore > -MATE_SCORE && SEEvalue <= -80 * (depthleft / ONE_PLY) * (depthleft / ONE_PLY)) {
 			continue;
 		}
 		int extension = 0;
