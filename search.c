@@ -172,6 +172,9 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 	assert(pos);
 	assert(alpha >= -MATE_SCORE && beta <= MATE_SCORE);
 	assert(beta > alpha);
+	assert(movestackend >= 0);
+	assert(movestackend < 1010);
+	assert(ply >= 0);
 	if (ply > seldepth) seldepth = ply;
 	int origdepthleft = depthleft;
 	if (depthleft <= 0) depthleft = 0;
@@ -586,7 +589,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		// SEE pruning
 		
 		int SEEvalue = SEEcapture(pos, moves[i].from, moves[i].to, pos->tomove);
-		if (!incheck && depthleft <= 8 * ONE_PLY && bestscore > -MATE_SCORE && SEEvalue <= -80 * (depthleft / ONE_PLY) * (depthleft / ONE_PLY)) {
+		if (depthleft <= 8 * ONE_PLY && bestscore > -MATE_SCORE && SEEvalue <= -80 * (depthleft / ONE_PLY) * (depthleft / ONE_PLY)) {
 			continue;
 		}
 		int extension = 0;
@@ -903,6 +906,14 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 		}
 		int time_left = endtime - getClock();
 		if (d > 1 && time_left <= 15) {
+			break;
+		}
+		// temporary fix for disconnect bug
+		// engine crashes sometimes on dead drawn or mate positions
+		// search goes to depth 50+ in less than 500k nodes and then crashes
+		// this will automatically break if that behaviour is happening to prevent a crash
+		// needs to be fixed by finding what's causing the actual crash
+		if (d > 30 && nodesSearched < 1000000 && (score == 0 || abs(score) >= MATE_SCORE - 20)) {
 			break;
 		}
 		// Check pv
