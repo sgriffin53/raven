@@ -889,15 +889,33 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 		rootdepth = d;
 		
 		// Predict whether we have enough time for next search and break if not
-		/*
+		
+		// Predict whether we have enough time for next search and break if not
 		if (d > 1 && time_spentms > 30 && endtime == origendtime && !strictmovetime) {
-			if (time_spent_prevms == 0) time_spent_prevms = 1;
-			//double factor = time_spentms / time_spent_prevms;
-			double expectedtime = time_spentms * 2;
-			int expectedendtime = getClock() + expectedtime;
-			if (expectedendtime > endtime) break;
+
+			if (time_spent_prevms == 0) {
+				time_spent_prevms = 1; // avoid divide-by-zero
+			}
+
+			// compute growth factor (how much each depth is slowing down)
+			double factor = (double)time_spentms / (double)time_spent_prevms;
+
+			// clamp factor to avoid pathological jumps (very important in practice)
+			if (factor < 1.05) factor = 1.05;
+			if (factor > 3.0)  factor = 3.0;
+
+			// predict next iteration cost
+			double expectedtime = (double)time_spentms * factor;
+
+			int now = getClock();
+			int remaining = endtime - now;
+
+			// if next iteration likely won't fit, stop here
+			if (expectedtime > remaining) {
+				break;
+			}
 		}
-		*/
+		
 		score = alphaBeta(&pos, -MATE_SCORE, MATE_SCORE, d * ONE_PLY, 0, 0, &pv, endtime, 0);
 		
 		//Ignore the result if we ran out of time
