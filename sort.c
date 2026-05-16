@@ -66,24 +66,8 @@ int sortScore(struct position *pos, struct move *move, struct move TTmove, int p
 	double histscore = (double)histval;
 	if (butterflyval != 0) histscore = (double)histval / (double)butterflyval;
 	
-	struct move prevmove;
-
-	if (movestackend > 0)
-		prevmove = movestack[movestackend - 1];
-	else {
-		prevmove.from = -1;
-		prevmove.to = -1;
-		prevmove.prom = -1;
-	}
-	struct move countermove;
-	if (prevmove.from != -1) {
-		countermove = countermoves[prevmove.from][prevmove.to];
-	} 
-	else {
-		countermove.from = -1;
-		countermove.to = -1;
-		countermove.prom = -1;
-	}
+	struct move prevmove = movestack[movestackend - 1];
+	struct move countermove = countermoves[prevmove.from][prevmove.to];
 	if (TTmove.from != -1
 		&& (move->from == TTmove.from) && (move->to == TTmove.to) && (move->prom == TTmove.prom)) {
 			return 5000000;
@@ -169,15 +153,6 @@ void sortMoves(struct position *pos, struct move *moves, const int num_moves, st
 		SEEvalue[i] = SEEval;
 	}
 	
-	int ply0 = ply;
-	int ply2 = (ply >= 2) ? ply - 2 : ply;
-
-	struct move *killer1 = &killers[ply][0];
-	struct move *killer2 = &killers[ply][1];
-
-	struct move *killer1_prev = &killers[ply2][0];
-	struct move *killer2_prev = &killers[ply2][1];
-
 	// Score
 	for (int i = 0; i < num_moves; i++) {
 		scores[i] = 0;
@@ -187,24 +162,9 @@ void sortMoves(struct position *pos, struct move *moves, const int num_moves, st
 		int butterflyval = butterfly[pos->tomove][moves[i].from][moves[i].to];
 		double histscore = (double)histval;
 		if (butterflyval != 0) histscore = (double)histval / (double)butterflyval;
-		struct move prevmove;
-
-		if (movestackend > 0)
-			prevmove = movestack[movestackend - 1];
-		else {
-			prevmove.from = -1;
-			prevmove.to = -1;
-			prevmove.prom = -1;
-		}
-		struct move countermove;
-		if (prevmove.from != -1) {
-			countermove = countermoves[prevmove.from][prevmove.to];
-		} 
-		else {
-			countermove.from = -1;
-			countermove.to = -1;
-			countermove.prom = -1;
-		}
+		
+		struct move prevmove = movestack[movestackend - 1];
+		struct move countermove = countermoves[prevmove.from][prevmove.to];
 		if (TTmove.from != -1
 			&& (moves[i].from == TTmove.from) && (moves[i].to == TTmove.to) && (moves[i].prom == TTmove.prom)) {
 				scores[i] = 5000000;
@@ -214,30 +174,22 @@ void sortMoves(struct position *pos, struct move *moves, const int num_moves, st
 		}
 		else if (cappiece != NONE
 			&& SEEvalue[i] >= 0) {
-				scores[i] = 1000000 + mvvlva(piece, cappiece);
+				scores[i] = 1000000 + SEEvalue[i];
 		}
 		else if (cappiece != NONE
 			&& SEEvalue[i] < 0) {
 				scores[i] = 700000 + mvvlva(piece, cappiece);
 		}
-		else if (moves[i].from == killer1->from &&
-				moves[i].to   == killer1->to &&
-				moves[i].prom == killer1->prom) {
+		else if ((killers[ply][0].to == moves[i].to) && (killers[ply][0].from == moves[i].from) && (killers[ply][0].prom == moves[i].prom)) {
 			scores[i] = 900000;
 		}
-		else if (moves[i].from == killer2->from &&
-				moves[i].to   == killer2->to &&
-				moves[i].prom == killer2->prom) {
-			scores[i] = 850000;
-		}
-		else if (moves[i].from == killer1_prev->from &&
-				moves[i].to   == killer1_prev->to &&
-				moves[i].prom == killer1_prev->prom) {
+		else if ((killers[ply - 2][0].to == moves[i].to) && (killers[ply - 2][0].from == moves[i].from) && (killers[ply - 2][0].prom == moves[i].prom)) {
 			scores[i] = 875000;
 		}
-		else if (moves[i].from == killer2_prev->from &&
-				moves[i].to   == killer2_prev->to &&
-				moves[i].prom == killer2_prev->prom) {
+		else if ((killers[ply][1].to == moves[i].to) && (killers[ply][1].from == moves[i].from) && (killers[ply][1].prom == moves[i].prom)) {
+			scores[i] = 850000;
+		}
+		else if ((killers[ply - 2][1].to == moves[i].to) && (killers[ply - 2][1].from == moves[i].from) && (killers[ply - 2][1].prom == moves[i].prom)) {
 			scores[i] = 825000;
 		}
 		else if (moves[i].from == countermove.from && moves[i].to == countermove.to) {
