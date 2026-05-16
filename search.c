@@ -737,6 +737,13 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 				killers[ply][0] = moves[i];
 				//history[pos->tomove][moves[i].from][moves[i].to] += pow(2.0,(double)depthleft);
 				history[pos->tomove][moves[i].from][moves[i].to] += (depthleft / ONE_PLY) * (depthleft / ONE_PLY);
+				int bonus = (depthleft / ONE_PLY) * (depthleft / ONE_PLY);
+				int malus = bonus / 32;
+				for (int j = 0;j < legalmoves - 1;j++) {
+					if (moves[j].cappiece == NONE) {
+						history[pos->tomove][moves[j].from][moves[j].to] -= malus;
+					}
+				}
 				struct move prevmove = movestack[movestackend - 1];
 				countermoves[prevmove.from][prevmove.to] = moves[i];
 			}
@@ -887,8 +894,6 @@ struct move search(struct position pos, int searchdepth, int movetime, int stric
 		time_spentms = getClock() - begin;
 		//time_spent = time_spentms / 1000.0;
 		rootdepth = d;
-		
-		// Predict whether we have enough time for next search and break if not
 		
 		// Predict whether we have enough time for next search and break if not
 		if (d > 1 && time_spentms > 30 && endtime == origendtime && !strictmovetime) {
