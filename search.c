@@ -618,6 +618,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		&&  moves[i].prom == NONE
 		&& !givescheck
 		&& sortscore <= 700000
+		&& quiets >= 3
 		&& ply != 0) {
 			if (cappiece == NONE) {
 			unmakeMove(pos);
@@ -633,6 +634,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			r += ONE_PLY;
 		}
 		if (quiets >= 15 && r >= ONE_PLY) r += ONE_PLY; 
+		if (quiets <= 5 && r>= ONE_PLY) r -= ONE_PLY;
 		/*
 		if (r > ONE_PLY && sortscore > 0) { // decrease reduction for moves with good sort scores
 			r -= ONE_PLY;
