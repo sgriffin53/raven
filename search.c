@@ -632,6 +632,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		if (r > 0 && TTdata.hash == hash && TTmove.cappiece != NONE) {
 			r += ONE_PLY;
 		}
+		if (quiets >= 10 && r >= ONE_PLY) r += ONE_PLY; 
 		/*
 		if (r > ONE_PLY && sortscore > 0) { // decrease reduction for moves with good sort scores
 			r -= ONE_PLY;
