@@ -35,7 +35,7 @@ int reduction(const struct move *move, const int depthleft, char cappiece, int l
 		if (cappiece == NONE) {
 			int red = ONE_PLY;
 			if (depthleft >= 6 * ONE_PLY) red = 2 * ONE_PLY;
-			if (legalmoves >= 20) red += ONE_PLY;
+			//if (legalmoves >= 20) red += ONE_PLY;
 			if (move->piece == PAWN) red = ONE_PLY;
 			return red;
 		}
@@ -634,7 +634,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 			r += ONE_PLY;
 		}
 		if (quiets >= 15 && r >= ONE_PLY) r += ONE_PLY; 
-		if (quiets <= 5 && r>= ONE_PLY) r -= ONE_PLY;
+		if (quiets <= 5 && r >= ONE_PLY) r -= ONE_PLY;
 		/*
 		if (r > ONE_PLY && sortscore > 0) { // decrease reduction for moves with good sort scores
 			r -= ONE_PLY;
