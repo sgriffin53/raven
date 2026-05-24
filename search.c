@@ -279,7 +279,7 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		posstack[posstackend] = *pos;
 		posstackend++;
 		int verR = 3 * ONE_PLY;
-		int R = 3 * ONE_PLY;
+		int R = 4 * ONE_PLY;
 		if (gamephase(pos) >= 85) { // endgame
 			// decrease search reduction
 			
