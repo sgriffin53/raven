@@ -502,6 +502,8 @@ int alphaBeta(struct position *pos, int alpha, int beta, int depthleft, int null
 		int c = 0;
 		for (int i = 0;i < min(MCM,num_moves);i++) {
 			if (moves[i].cappiece == NONE) continue;
+			int SEEvalue = SEEcapture(pos, moves[i].from, moves[i].to, pos->tomove);
+			if (SEEvalue < 0) continue;
 			makeMove(&moves[i],pos);
 			pos->tomove = !pos->tomove;
 			if (isCheck(pos)) {
